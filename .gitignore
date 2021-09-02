@@ -47,3 +47,7 @@ ndkpath.txt
 extern/
 Android.mk.backup
 qpm.shared.json
+
+# CLION
+cmake-build-debug/
+.idea/
