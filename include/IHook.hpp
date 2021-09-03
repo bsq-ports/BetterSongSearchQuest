@@ -13,14 +13,14 @@ namespace BetterSongSearch {
 
     class IHook {
     private:
-        static std::vector<IHook> hooks;
+        static std::vector<IHook*> hooks;
         protected:
             std::string name;
 
     public:
         static bool InstallHooks();
 
-        IHook(const std::string& name);
+        explicit IHook(const std::string& name);
 
         virtual void AddHooks();
     };
@@ -30,14 +30,15 @@ namespace BetterSongSearch {
      */
 
     bool IHook::InstallHooks() {
-        for (IHook hook : IHook::hooks) {
-            hook.AddHooks();
-            getLogger().info("Installed %s Hook", hook.name.c_str());
+        for (IHook* hook : IHook::hooks) {
+            hook->AddHooks();
+            getLogger().info("Installed %s Hook", hook->name.c_str());
         }
     }
 
     IHook::IHook(const std::string& name) {
         this->name = name;
+        hooks.push_back(this);
     }
 
     void IHook::AddHooks() {
