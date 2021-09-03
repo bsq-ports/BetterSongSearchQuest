@@ -3,6 +3,9 @@
 #include "IHook.hpp"
 using namespace BetterSongSearch;
 
+#include "Hooks/DismissFlowCoordinatorHook.hpp"
+using namespace BetterSongSearch::Hooks;
+
 static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
 // Loads the config from disk using our modInfo, then returns it for use
@@ -31,6 +34,8 @@ extern "C" void setup(ModInfo& info) {
 // Called later on in the game loading - a good time to install function hooks
 extern "C" void load() {
     il2cpp_functions::Init();
+
+    new DismissFlowCoordinatorHook("SoloExitHook");
 
     getLogger().info("Installing hooks...");
     if (!IHook::InstallHooks()) {
