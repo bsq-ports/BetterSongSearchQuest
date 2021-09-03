@@ -1,0 +1,71 @@
+The system is: Windows - 10.0.19042 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: E:/Visual Studio/VC/Tools/MSVC/14.28.29910/bin/Hostx86/x86/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.28.29915 for x86
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCCompilerId.c
+Microsoft (R) Incremental Linker Version 14.28.29915.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCCompilerId.exe 
+CMakeCCompilerId.obj 
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+
+The C compiler identification is MSVC, found in "E:/BSMG/BetterSongSearchQuest/cmake-build-debug/CMakeFiles/3.20.2/CompilerIdC/CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: E:/Visual Studio/VC/Tools/MSVC/14.28.29910/bin/Hostx86/x86/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.28.29915 for x86
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCXXCompilerId.cpp
+Microsoft (R) Incremental Linker Version 14.28.29915.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCXXCompilerId.exe 
+CMakeCXXCompilerId.obj 
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "E:/BSMG/BetterSongSearchQuest/cmake-build-debug/CMakeFiles/3.20.2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: E:/BSMG/BetterSongSearchQuest/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake -f Makefile /nologo cmTC_64efb\fast && 	"E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\HostX86\x86\nmake.exe"  -f CMakeFiles\cmTC_64efb.dir\build.make /nologo -L                  CMakeFiles\cmTC_64efb.dir\build
+Building C object CMakeFiles/cmTC_64efb.dir/CMakeCCompilerABI.c.obj
+	"E:\CLion 2021.2\bin\cmake\win\bin\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\cmTC_64efb.dir\CMakeCCompilerABI.c.obj.d --working-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles\CMakeTmp --filter-prefix="" -- "E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\Hostx86\x86\cl.exe" @C:\Users\Family\AppData\Local\Temp\nm4E6B.tmp
+Linking C executable cmTC_64efb.exe
+	"E:\CLion 2021.2\bin\cmake\win\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_64efb.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100190~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100190~1.0\x86\mt.exe --manifests -- "E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\Hostx86\x86\link.exe" /nologo @CMakeFiles\cmTC_64efb.dir\objects1.rsp @C:\Users\Family\AppData\Local\Temp\nm509E.tmp
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: E:/BSMG/BetterSongSearchQuest/cmake-build-debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):nmake -f Makefile /nologo cmTC_df337\fast && 	"E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\HostX86\x86\nmake.exe"  -f CMakeFiles\cmTC_df337.dir\build.make /nologo -L                  CMakeFiles\cmTC_df337.dir\build
+Building CXX object CMakeFiles/cmTC_df337.dir/CMakeCXXCompilerABI.cpp.obj
+	"E:\CLion 2021.2\bin\cmake\win\bin\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\cmTC_df337.dir\CMakeCXXCompilerABI.cpp.obj.d --working-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles\CMakeTmp --filter-prefix="" -- "E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\Hostx86\x86\cl.exe" @C:\Users\Family\AppData\Local\Temp\nm54D3.tmp
+Linking CXX executable cmTC_df337.exe
+	"E:\CLion 2021.2\bin\cmake\win\bin\cmake.exe" -E vs_link_exe --intdir=CMakeFiles\cmTC_df337.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100190~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100190~1.0\x86\mt.exe --manifests -- "E:\Visual Studio\VC\Tools\MSVC\14.28.29910\bin\Hostx86\x86\link.exe" /nologo @CMakeFiles\cmTC_df337.dir\objects1.rsp @C:\Users\Family\AppData\Local\Temp\nm5571.tmp
+
+
+

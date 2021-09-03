@@ -17,6 +17,31 @@
           "src/inline-hook"
         ]
       }
+    },
+    {
+      "id": "codegen",
+      "versionRange": "*",
+      "additionalData": {}
+    },
+    {
+      "id": "questui",
+      "versionRange": "*",
+      "additionalData": {}
+    },
+    {
+      "id": "sombrero",
+      "versionRange": "*",
+      "additionalData": {}
+    },
+    {
+      "id": "questui_components",
+      "versionRange": "*",
+      "additionalData": {}
+    },
+    {
+      "id": "custom-types",
+      "versionRange": "*",
+      "additionalData": {}
     }
   ],
   "additionalData": {}
