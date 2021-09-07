@@ -6,7 +6,23 @@ using namespace BetterSongSearch::UI;
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
+#include "CustomComponents.hpp"
+#include "questui_components/shared/components/ViewComponent.hpp"
+#include "questui_components/shared/components/Text.hpp"
+#include "questui_components/shared/components/ScrollableContainer.hpp"
+#include "questui_components/shared/components/HoverHint.hpp"
+#include "questui_components/shared/components/Button.hpp"
+#include "questui_components/shared/components/Modal.hpp"
+#include "questui_components/shared/components/list/CustomCelledList.hpp"
+#include "questui_components/shared/components/layouts/VerticalLayoutGroup.hpp"
+#include "questui_components/shared/components/layouts/HorizontalLayoutGroup.hpp"
+#include "questui_components/shared/components/settings/ToggleSetting.hpp"
+#include "questui_components/shared/components/settings/StringSetting.hpp"
+#include "questui_components/shared/components/settings/IncrementSetting.hpp"
+#include "questui_components/shared/components/settings/DropdownSetting.hpp"
+using namespace QuestUI_Components;
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
 using namespace QuestUI;
 
@@ -23,33 +39,47 @@ UnityEngine::UI::VerticalLayoutGroup* songListLayout;
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
 
-    songListLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_rectTransform());
+    static ViewComponent* view;
 
-    UnityEngine::UI::LayoutElement* songListElement = songListLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    songListLayout->set_childAlignment(UnityEngine::TextAnchor::UpperCenter);
-    songListLayout->set_childControlWidth(true);
-    songListLayout->set_childControlHeight(true);
-    songListElement->set_preferredWidth(120);
+    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Worst local score", "Most Downloads"};
 
+    if (view) {
+        delete view;
+        view = nullptr;
+    }
 
-    auto backgroundSongList = songListLayout->get_gameObject()->AddComponent<Backgroundable*>();
-    backgroundSongList->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
+    // async ui because this causes lag spike
+    std::thread([this, sortModes]{
+        view = new ViewComponent(this->get_transform(), {
+            new SongListVerticalLayoutGroup({
+                new SongListHorizontalFilterBar({
+                    new Button("RANDOM", [](Button* button, UnityEngine::Transform* parentTransform){
 
-    //BeatSaberUI::CreateText(songListLayout->get_rectTransform(), "Song List");
+                    }),
+                    new Button("MULTI", [](Button* button, UnityEngine::Transform* parentTransform){
 
-    UnityEngine::UI::HorizontalLayoutGroup* filterContainer = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(songListLayout->get_rectTransform());
-    filterContainer->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);
-    filterContainer->set_childForceExpandWidth(false);
-    filterContainer->set_childControlWidth(false);
-    filterContainer->get_gameObject()->AddComponent<Backgroundable*>();
-    auto background = filterContainer->get_gameObject()->AddComponent<Backgroundable*>();
-    background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
-    UnityEngine::UI::LayoutElement* element = filterContainer->GetComponent<UnityEngine::UI::LayoutElement*>();
-    element->set_preferredHeight(10);
+                    }),
+                    new StringSetting("Search", "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                        getLogger().debug("Input! %s", input.c_str());
+                    }),
 
-    std::function<void()> randomButtonOnClick = [=]() {
+                    new DropdownSetting("", "Newest", sortModes, [](DropdownSetting*, const std::string& input, UnityEngine::Transform*){
+                        getLogger().debug("DropDown! %s", input.c_str());
+                    }),
+                }),
+                new SongListHorizontalLayout({
+                    new ScrollableContainer({
+                        //CUSOTM LIST GO HERE
+                    }),
+                    new VerticalLayoutGroup({
+                        new Text("Song Details"),
+                    })
+                })
+            })
+        });
 
-    };
-
-    auto randomButton = BeatSaberUI::CreateUIButton(filterContainer->get_rectTransform(), "RANDOM", randomButtonOnClick);
+        QuestUI::MainThreadScheduler::Schedule([]{
+            view->render();
+        });
+    }).detach();
 }

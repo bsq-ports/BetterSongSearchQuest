@@ -32,6 +32,7 @@
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/shared"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/libil2cpp/il2cpp/libil2cpp"/>
+					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/questui_components"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/codegen/include"/>
 					<Add directory="E:/BSMG/Android/android-ndk-r22b"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/."/>
@@ -66,6 +67,7 @@
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/shared"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/libil2cpp/il2cpp/libil2cpp"/>
+					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/questui_components"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/extern/codegen/include"/>
 					<Add directory="E:/BSMG/Android/android-ndk-r22b"/>
 					<Add directory="E:/BSMG/BetterSongSearchQuest/."/>

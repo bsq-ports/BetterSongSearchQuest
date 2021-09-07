@@ -27,6 +27,7 @@ set(CMAKE_CXX_TARGET_INCLUDE_PATH
   "../extern"
   "../shared"
   "../extern/libil2cpp/il2cpp/libil2cpp"
+  "../extern/questui_components"
   "../extern/codegen/include"
   "E:/BSMG/Android/android-ndk-r22b"
   "../."
