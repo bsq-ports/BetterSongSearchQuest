@@ -31,13 +31,13 @@ LOCAL_EXPORT_C_INCLUDES := extern/beatsaber-hook
 LOCAL_SRC_FILES := extern/libbeatsaber-hook_2_3_0.so
 LOCAL_CPP_FEATURES += exceptions
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: codegen - version: 0.13.0
+# Creating prebuilt for dependency: codegen - version: 0.13.1
 include $(CLEAR_VARS)
-LOCAL_MODULE := codegen_0_13_0
+LOCAL_MODULE := codegen_0_13_1
 LOCAL_EXPORT_C_INCLUDES := extern/codegen
-LOCAL_SRC_FILES := extern/libcodegen_0_13_0.so
+LOCAL_SRC_FILES := extern/libcodegen_0_13_1.so
 include $(PREBUILT_SHARED_LIBRARY)
-# Creating prebuilt for dependency: questui - version: 0.11.0
+# Creating prebuilt for dependency: questui - version: 0.11.1
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui
 LOCAL_EXPORT_C_INCLUDES := extern/questui
@@ -55,6 +55,24 @@ LOCAL_MODULE := questui_components
 LOCAL_EXPORT_C_INCLUDES := extern/questui_components
 LOCAL_SRC_FILES := extern/libquestui_components.a
 include $(PREBUILT_STATIC_LIBRARY)
+# Creating prebuilt for dependency: codegen - version: 0.14.0
+include $(CLEAR_VARS)
+LOCAL_MODULE := codegen
+LOCAL_EXPORT_C_INCLUDES := extern/codegen
+LOCAL_SRC_FILES := extern/libcodegen.so
+include $(PREBUILT_SHARED_LIBRARY)
+# Creating prebuilt for dependency: questui_components - version: 0.1.15
+include $(CLEAR_VARS)
+LOCAL_MODULE := questui_components.a
+LOCAL_EXPORT_C_INCLUDES := extern/questui_components
+LOCAL_SRC_FILES := extern/libquestui_components.a
+include $(PREBUILT_STATIC_LIBRARY)
+# Creating prebuilt for dependency: songdatacore - version: 0.3.1
+include $(CLEAR_VARS)
+LOCAL_MODULE := android-libsong_data_core_rust
+LOCAL_EXPORT_C_INCLUDES := extern/songdatacore
+LOCAL_SRC_FILES := extern/libandroid-libsong_data_core_rust.so
+include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := BetterSongSearch
@@ -63,12 +81,15 @@ LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.cpp)
 LOCAL_SRC_FILES += $(call rwildcard,extern/beatsaber-hook/src/inline-hook,*.c)
 LOCAL_SHARED_LIBRARIES += modloader
 LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_0
-LOCAL_SHARED_LIBRARIES += codegen_0_13_0
+LOCAL_SHARED_LIBRARIES += codegen_0_13_1
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += custom-types
-LOCAL_STATIC_LIBRARIES += questui_components
+LOCAL_SHARED_LIBRARIES += codegen
+LOCAL_STATIC_LIBRARIES += questui_components.a
+LOCAL_SHARED_LIBRARIES += android-libsong_data_core_rust
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"BetterSongSearch"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'
 LOCAL_CPPFLAGS += -std=c++2a -frtti
 LOCAL_C_INCLUDES += ./include ./src
+LOCAL_STATIC_LIBRARIES += questui_components
 include $(BUILD_SHARED_LIBRARY)
