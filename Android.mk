@@ -53,8 +53,8 @@ include $(PREBUILT_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := questui_components
 LOCAL_EXPORT_C_INCLUDES := extern/questui_components
-LOCAL_SRC_FILES := extern/libquestui_components.so
-include $(PREBUILT_SHARED_LIBRARY)
+LOCAL_SRC_FILES := extern/libquestui_components.a
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := BetterSongSearch
@@ -66,7 +66,7 @@ LOCAL_SHARED_LIBRARIES += beatsaber-hook_2_3_0
 LOCAL_SHARED_LIBRARIES += codegen_0_13_0
 LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += custom-types
-LOCAL_SHARED_LIBRARIES += questui_components
+LOCAL_STATIC_LIBRARIES += questui_components
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"BetterSongSearch"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'
 LOCAL_CPPFLAGS += -std=c++2a -frtti

@@ -112,6 +112,8 @@
         "xstddef": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "format": "cpp",
+        "stop_token": "cpp"
     }
 }

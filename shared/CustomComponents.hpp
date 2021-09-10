@@ -20,6 +20,7 @@ namespace BetterSongSearch::UI {
     class SongListVerticalLayoutGroup : public QuestUI_Components::VerticalLayoutGroup {
     public:
         explicit SongListVerticalLayoutGroup(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : VerticalLayoutGroup(children) {}
+        CONSTRUCT_AFTER_COMPONENT(SongListVerticalLayoutGroup)
 
     protected:
         virtual Component *render(UnityEngine::Transform *parentTransform) override {
@@ -40,9 +41,27 @@ namespace BetterSongSearch::UI {
         }
     };
 
+    class SongListDropDown : public QuestUI_Components::DropdownSetting {
+    public:
+        explicit SongListDropDown(std::string_view text, std::string_view currentValue,
+                                 std::vector<std::string> const& values,
+                                 OnCallback callback = nullptr) : DropdownSetting(text, currentValue, values, callback) {}
+        CONSTRUCT_AFTER_COMPONENT(SongListDropDown)
+
+    protected:
+        virtual Component *render(UnityEngine::Transform *parentTransform) override {
+            DropdownSetting::render(parentTransform);
+            uiDropdown->numberOfVisibleCells = 9;
+            uiDropdown->ReloadData();
+            return this;
+        }
+    };
+
     class SongListHorizontalFilterBar : public QuestUI_Components::HorizontalLayoutGroup {
     public:
         explicit SongListHorizontalFilterBar(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
+
+        CONSTRUCT_AFTER_COMPONENT(SongListHorizontalFilterBar)
 
     protected:
         virtual Component *render(UnityEngine::Transform *parentTransform) override {
@@ -67,6 +86,8 @@ namespace BetterSongSearch::UI {
     class SongListHorizontalLayout : public QuestUI_Components::HorizontalLayoutGroup {
     public:
         explicit SongListHorizontalLayout(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
+
+        CONSTRUCT_AFTER_COMPONENT(SongListHorizontalLayout)
 
     protected:
         virtual Component *render(UnityEngine::Transform *parentTransform) override {
