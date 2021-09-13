@@ -169,7 +169,7 @@ float CustomComponents::CustomCellListTableData::CellSize()
 }
 int CustomComponents::CustomCellListTableData::NumberOfCells()
 {
-    return 5;
+    return 6;
 }
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
@@ -223,8 +223,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             //asshit->uiDropdown->ReloadData();
 
             //Make Lists
-            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform());
-            reinterpret_cast<UnityEngine::RectTransform*>(list->get_transform())->set_sizeDelta(UnityEngine::Vector2(70, 6.0f * list->CellSize()));
+            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6*11.7f));
             auto layout = list->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
             layout->set_preferredWidth(70);
             layout->set_preferredHeight(6.0f * list->CellSize());
@@ -233,10 +232,12 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Two"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
                 il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Three"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
                 il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Four"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Five"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value()
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Five"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(),
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Reality Check Through The Skull"), il2cpp_utils::newcsstr("haha mapper lol"), il2cpp_utils::newcsstr("idk what this is")).value()
             };
             list->tableView->ReloadData();
             list->get_transform()->get_parent()->SetAsFirstSibling();
+
         });
     }).detach();
 }
