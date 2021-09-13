@@ -118,18 +118,13 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         fitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
         fitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
 
-        auto layout = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layout->set_preferredHeight(11.7f);
-        layout->set_preferredWidth(70);
-        reinterpret_cast<UnityEngine::RectTransform*>(tableCell->get_transform())->set_sizeDelta(UnityEngine::Vector2(70, 11.7f));
-
         auto verticalLayoutGroup = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(tableCell->get_transform());
         tableCell->bg = verticalLayoutGroup->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         tableCell->bg->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("round-rect-panel"), 0.6f);
-        
-        auto fitter2 = verticalLayoutGroup->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
-        fitter2->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
-        fitter2->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
+
+        auto layout = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
+        layout->set_preferredHeight(11.75f);
+        layout->set_preferredWidth(70);
 
         tableCell->get_transform()->SetParent(tableView->get_transform()->GetChild(0)->GetChild(0), false);
 
@@ -164,7 +159,7 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->songText->set_fontSize(2.7f);
         tableCell->songText->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
     }
-    tableCell->RefreshData(il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song " + std::to_string(idx)), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value());
+    tableCell->RefreshData(data[idx]);
     return tableCell;
 }
 
@@ -179,16 +174,6 @@ int CustomComponents::CustomCellListTableData::NumberOfCells()
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
-    auto shit = song_data_core::Beatstar_RetrieveDatabase();
-    auto count = song_data_core::BeatStarDataFile_map_SongsLen(shit);
-    auto songspre = shit->songs;
-
-    std::vector<song_data_core::BeatStarSong> songs;
-
-    for (int i = 0; i < count; i++)
-    {
-
-    }
 
     static ViewComponent* view;
 
@@ -230,16 +215,26 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             })
         });
 
-        QuestUI::MainThreadScheduler::Schedule([shitass, &songs]{
+        QuestUI::MainThreadScheduler::Schedule([shitass]{
             view->render();
 
+            //Fix Drop Down and Keyboard
+            //asshit->uiDropdown->numberOfVisibleCells = 9;
+            //asshit->uiDropdown->ReloadData();
+
             //Make Lists
-            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6.0f * 11.7f));
+            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform());
             reinterpret_cast<UnityEngine::RectTransform*>(list->get_transform())->set_sizeDelta(UnityEngine::Vector2(70, 6.0f * list->CellSize()));
             auto layout = list->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
             layout->set_preferredWidth(70);
             layout->set_preferredHeight(6.0f * list->CellSize());
-            list->data = songs;
+            list->data = { 
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song One"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Two"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Three"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Four"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
+                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Five"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value()
+            };
             list->tableView->ReloadData();
             list->get_transform()->get_parent()->SetAsFirstSibling();
         });

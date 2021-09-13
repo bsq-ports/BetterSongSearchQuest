@@ -13,8 +13,6 @@
 #include "questui/shared/CustomTypes/Components/List/CustomCellListWrapper.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "../Sprites.hpp"
-#include "songdatacore/shared/bindings.hpp"
-#include "songdatacore/shared/easybindings.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
@@ -45,8 +43,7 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(CustomComponents, CustomCellListTableData, I
 
     public:
         QuestUI::CustomCellListWrapper* listWrapper = nullptr;
-        std::vector<song_data_core::BeatStarSong> data;
-        int count = 0;
+        std::vector<CustomComponents::SongListCellData*> data;
 )
 
 DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,

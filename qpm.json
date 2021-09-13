@@ -42,11 +42,6 @@
       "id": "custom-types",
       "versionRange": "*",
       "additionalData": {}
-    },
-    {
-      "id": "songdatacore",
-      "versionRange": "*",
-      "additionalData": {}
     }
   ],
   "additionalData": {}
