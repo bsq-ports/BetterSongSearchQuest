@@ -266,6 +266,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             list->data = songList;
             list->tableView->ReloadData();
             list->get_transform()->get_parent()->SetAsFirstSibling();
+
         });
     }).detach();
 }
