@@ -13,7 +13,11 @@
 #include "questui/shared/CustomTypes/Components/List/CustomCellListWrapper.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "../Sprites.hpp"
+#include "sdc-wrapper/shared/BeatStarSong.hpp"
+#include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
+#include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 
+extern std::vector<const SDC_wrapper::BeatStarSong*> songList;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 // ):
@@ -43,7 +47,7 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(CustomComponents, CustomCellListTableData, I
 
     public:
         QuestUI::CustomCellListWrapper* listWrapper = nullptr;
-        std::vector<CustomComponents::SongListCellData*> data;
+        std::vector<const SDC_wrapper::BeatStarSong*> data;
 )
 
 DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
@@ -54,8 +58,7 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, mapperText);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, songText);
     DECLARE_INSTANCE_FIELD(QuestUI::Backgroundable*, bg);
-
-
+    DECLARE_INSTANCE_FIELD(UnityEngine::GameObject*, diffsGroup);
 
     DECLARE_CTOR(ctor);
 
@@ -63,7 +66,9 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
     DECLARE_OVERRIDE_METHOD(void, HighlightDidChange, il2cpp_utils::il2cpp_type_check::MetadataGetter<&HMUI::SelectableCell::HighlightDidChange>::get(), HMUI::SelectableCell::TransitionType transitionType);
 
     DECLARE_INSTANCE_METHOD(void, RefreshVisuals);
-    DECLARE_INSTANCE_METHOD(void, RefreshData, SongListCellData* data);
+    public:
+    std::vector<TMPro::TextMeshProUGUI*> texts;
+    void RefreshData(const SDC_wrapper::BeatStarSong* data);
 )
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewController, HMUI::ViewController,

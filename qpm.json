@@ -47,6 +47,11 @@
       "id": "songdatacore",
       "versionRange": "*",
       "additionalData": {}
+    },
+    {
+      "id": "sdc-wrapper",
+      "versionRange": "*",
+      "additionalData": {}
     }
   ],
   "additionalData": {}

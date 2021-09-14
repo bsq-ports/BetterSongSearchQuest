@@ -51,4 +51,8 @@ extern "C" void load() {
     custom_types::Register::AutoRegister();
 
     QuestUI::Register::RegisterMainMenuModSettingsFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>(modInfo);
+    std::thread([]{
+        songList = SDC_wrapper::BeatStarSong::GetAllSongs();
+        getLogger().info("yes");
+    }).detach();
 }

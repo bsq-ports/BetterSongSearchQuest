@@ -29,11 +29,14 @@ using namespace QuestUI;
 
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
+#include "UnityEngine/Resources.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"
 
 #include "HMUI/ImageView.hpp"
 #include "HMUI/Touchable.hpp"
+#include "HMUI/ScrollView.hpp"
+#include "GlobalNamespace/IVRPlatformHelper.hpp"
 
 #include "sombrero/shared/Vector2Utils.hpp"
 
@@ -41,6 +44,9 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_TYPE(CustomComponents, CustomCellListTableData);
 DEFINE_TYPE(CustomComponents, SongListCellTableCell);
 DEFINE_TYPE(CustomComponents, SongListCellData);
+
+std::vector<const SDC_wrapper::BeatStarSong*> songList;
+
 //SongListCellData
 void CustomComponents::SongListCellData::ctor(Il2CppString* _songName, Il2CppString* _author, Il2CppString* _mapper)
 {
@@ -93,10 +99,31 @@ void CustomComponents::SongListCellTableCell::RefreshVisuals()
     UpdateGOList(neitherGroup, !(isSelected || isHighlighted));
 }
 
-void CustomComponents::SongListCellTableCell::RefreshData(SongListCellData* data)
+void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::BeatStarSong* data)
 {
-    songText->set_text(System::String::Concat(data->author, il2cpp_utils::newcsstr(" - "), data->songName));
-    mapperText->set_text(data->mapper);
+    songText->set_text(il2cpp_utils::newcsstr(std::string(data->GetSongAuthor()) + " - " + std::string(data->GetName())));
+    mapperText->set_text(il2cpp_utils::newcsstr(data->GetAuthor()));
+    //"cache" texts
+    //for (int i = 0; i < data->GetDifficultyVector().size(); i++)
+    //{
+    //    if(texts.size() < i)
+    //    {
+    //        auto shit = QuestUI::BeatSaberUI::CreateText(diffsGroup->get_transform(), "Deez Nuts loolollolool");
+    //        shit->set_fontSize(2.5f);
+    //        texts.push_back(shit);
+    //    }
+    //    texts[i]->get_gameObject()->SetActive(true);
+    //    auto diff = data->GetDifficulty(i);
+    //    getLogger().info("%s", std::string(diff->GetName()).c_str());
+    //    texts[i]->set_text(il2cpp_utils::newcsstr(diff->GetName()));
+    //}
+    //if(data->GetDifficultyVector().size() < texts.size())
+    //{
+    //    for (int i = data->GetDifficultyVector().size(); i < texts.size(); i++)
+    //    {
+    //        texts[i]->get_gameObject()->SetActive(false);
+    //    }
+    //}
 }
 //CustomCellListTableData
 HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::TableView* tableView, int idx)
@@ -129,14 +156,14 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->get_transform()->SetParent(tableView->get_transform()->GetChild(0)->GetChild(0), false);
 
         auto topHoriz = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(verticalLayoutGroup->get_transform());
-        auto topfitter = topHoriz->get_gameObject()->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
-        topfitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
-        topfitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+        //auto topfitter = topHoriz->get_gameObject()->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
+        //topfitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+        //topfitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
 
         auto midHoriz = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(verticalLayoutGroup->get_transform());
-        auto midfitter = midHoriz->get_gameObject()->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
-        midfitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
-        midfitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+        //auto midfitter = midHoriz->get_gameObject()->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
+        //midfitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+        //midfitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
 
         auto bottomHoriz = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(verticalLayoutGroup->get_transform());
         auto bottomfitter = bottomHoriz->get_gameObject()->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
@@ -158,6 +185,8 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->songText = QuestUI::BeatSaberUI::CreateText(topHoriz->get_transform(), "Deez Nuts loolollolool");
         tableCell->songText->set_fontSize(2.7f);
         tableCell->songText->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
+
+        tableCell->diffsGroup = bottomHoriz->get_gameObject();
     }
     tableCell->RefreshData(data[idx]);
     return tableCell;
@@ -169,7 +198,7 @@ float CustomComponents::CustomCellListTableData::CellSize()
 }
 int CustomComponents::CustomCellListTableData::NumberOfCells()
 {
-    return 5;
+    return data.size();
 }
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
@@ -214,27 +243,27 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                     })
             })
         });
-
-        QuestUI::MainThreadScheduler::Schedule([shitass]{
+        QuestUI::MainThreadScheduler::Schedule([this, shitass]{
             view->render();
-
-            //Fix Drop Down and Keyboard
-            //asshit->uiDropdown->numberOfVisibleCells = 9;
-            //asshit->uiDropdown->ReloadData();
+            
+            //fix scrolling lol
+            GlobalNamespace::IVRPlatformHelper* mewhen;
+            auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
+            for (size_t i = 0; i < scrolls->Length(); i++)
+            {
+                mewhen = scrolls->get(i)->platformHelper;
+                if(mewhen != nullptr)
+                    break;
+            }
+            auto scrolls2 = this->GetComponentsInChildren<HMUI::ScrollView*>();
+            for (size_t i = 0; i < scrolls2->Length(); i++)
+            {
+                scrolls2->get(i)->platformHelper = mewhen;
+            }
 
             //Make Lists
-            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform());
-            reinterpret_cast<UnityEngine::RectTransform*>(list->get_transform())->set_sizeDelta(UnityEngine::Vector2(70, 6.0f * list->CellSize()));
-            auto layout = list->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-            layout->set_preferredWidth(70);
-            layout->set_preferredHeight(6.0f * list->CellSize());
-            list->data = { 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song One"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Two"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Three"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Four"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value(), 
-                il2cpp_utils::New<CustomComponents::SongListCellData*>(il2cpp_utils::newcsstr("Song Five"), il2cpp_utils::newcsstr("Joe Mama"), il2cpp_utils::newcsstr("FutureMapper")).value()
-            };
+            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
+            list->data = songList;
             list->tableView->ReloadData();
             list->get_transform()->get_parent()->SetAsFirstSibling();
         });
