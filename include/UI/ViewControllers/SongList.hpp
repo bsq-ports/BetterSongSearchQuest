@@ -18,6 +18,7 @@
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 
 extern std::vector<const SDC_wrapper::BeatStarSong*> songList;
+extern std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 // ):
@@ -56,6 +57,8 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
     DECLARE_INSTANCE_FIELD(List<UnityEngine::GameObject*>*, neitherGroup);
 
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, mapperText);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, uploadDateText);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, ratingText);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, songText);
     DECLARE_INSTANCE_FIELD(QuestUI::Backgroundable*, bg);
     DECLARE_INSTANCE_FIELD(UnityEngine::GameObject*, diffsGroup);
@@ -74,3 +77,4 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewController, HMUI::ViewController,
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
 )
+static CustomComponents::CustomCellListTableData* tableData;

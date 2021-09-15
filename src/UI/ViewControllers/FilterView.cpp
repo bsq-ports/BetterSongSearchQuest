@@ -18,12 +18,41 @@ using namespace QuestUI;
 #include "UnityEngine/RectOffset.hpp"
 
 #include "HMUI/CurvedCanvasSettingsHelper.hpp"
+#include "HMUI/TimeSlider.hpp"
+
 #include "TMPro/TextMeshProUGUI.hpp"
+
+#include "System/Collections/IEnumerator.hpp"
+#include "custom-types/shared/coroutine.hpp"
+#include "UnityEngine/WaitForEndOfFrame.hpp"
+
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 UnityEngine::UI::VerticalLayoutGroup* filterViewLayout;
 
+custom_types::Helpers::Coroutine MergeSliders(UnityEngine::GameObject* mergeSlider) {
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
+    auto ourContainer =  mergeSlider->get_transform();
+    auto prevContainer = ourContainer->get_parent()->GetChild(ourContainer->GetSiblingIndex()-1);
+
+    (reinterpret_cast<UnityEngine::RectTransform*>(prevContainer))->set_offsetMax(UnityEngine::Vector2(-20, 0));
+    (reinterpret_cast<UnityEngine::RectTransform*>(ourContainer))->set_offsetMin(UnityEngine::Vector2(-20, 0));
+    ourContainer->set_position(prevContainer->get_position());
+
+    auto minTimeSlider = prevContainer->GetComponentInChildren<HMUI::TimeSlider*>();
+    auto maxTimeSlider = ourContainer->GetComponentInChildren<HMUI::TimeSlider*>();
+
+    maxTimeSlider->set_valueSize(maxTimeSlider->get_valueSize()/2.1f);
+    minTimeSlider->set_valueSize(minTimeSlider->get_valueSize()/2.1f);
+
+    ourContainer->GetComponent<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
+    static auto NameText = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("NameText");
+    static auto Empty = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("");
+    ourContainer->Find(NameText)->GetComponent<TMPro::TextMeshProUGUI*>()->set_text(Empty);
+
+    co_return;
+}
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
@@ -39,7 +68,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     auto topBarBG = topBar->get_gameObject()->AddComponent<Backgroundable*>();
     topBarBG->ApplyBackground(il2cpp_utils::newcsstr("panel-top-gradient"));
     auto imageView = topBarBG->GetComponentInChildren<HMUI::ImageView*>();
-    imageView->set_color(UnityEngine::Color(0.05,0.71,0.94, 1));
+    imageView->set_color0(UnityEngine::Color(0.0f,0.75f, 1.0f, 1));
+    imageView->set_color1(UnityEngine::Color(0.0f,0.37f, 0.5f, 1));
+    imageView->gradient = true;
+    imageView->SetAllDirty();
     imageView->curvedCanvasSettingsHelper->Reset();
     std::function<void()> settingsButtonClick = [=]() {
 
@@ -108,18 +140,16 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     std::function<void(float)> maxLengthChange = [=](float value) {
 
     };
-    auto horizontal = BeatSaberUI::CreateHorizontalLayoutGroup(leftOptionsLayout->get_transform());
-    auto horizontalBG = horizontal->get_gameObject()->AddComponent<Backgroundable*>();
-    horizontalBG->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
-    horizontal->set_childControlWidth(true);
-    auto horizontalElement = horizontal->GetComponent<UnityEngine::UI::LayoutElement*>();
-    horizontalElement->set_preferredWidth(40);
+    //auto horizontal = BeatSaberUI::CreateHorizontalLayoutGroup(leftOptionsLayout->get_transform());
+    //auto horizontalBG = horizontal->get_gameObject()->AddComponent<Backgroundable*>();
+    //horizontalBG->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
+    //horizontal->set_childControlWidth(true);
+    //auto horizontalElement = horizontal->GetComponent<UnityEngine::UI::LayoutElement*>();
+    //horizontalElement->set_preferredWidth(40);
 
-    auto minLengthSlider = BeatSaberUI::CreateSliderSetting(horizontal->get_transform(), "Length", 0.25, 0, 0, 10, minLengthChange);
-    auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(horizontal->get_transform(), "", 0.25, 0, 0, 10, maxLengthChange);
+    auto minLengthSlider = BeatSaberUI::CreateSliderSetting(leftOptionsLayout->get_transform(), "Length", 0.25, 0, 0, 10, minLengthChange);
+    auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(leftOptionsLayout->get_transform(), "MERGE_TO_PREV", 0.25, 0, 0, 10, maxLengthChange);
 
-    auto ourContainer = maxLengthSlider->get_transform()->get_parent();
-    auto prevContainer = minLengthSlider->get_transform()->get_parent();
-
-    ourContainer
+    //MergeSliders(maxLengthSlider->get_gameObject());
+    StartCoroutine(reinterpret_cast<System::Collections::IEnumerator*>(custom_types::Helpers::CoroutineHelper::New(MergeSliders(maxLengthSlider->get_gameObject()))));
 }

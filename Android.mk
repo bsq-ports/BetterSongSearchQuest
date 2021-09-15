@@ -55,11 +55,17 @@ LOCAL_MODULE := questui_components
 LOCAL_EXPORT_C_INCLUDES := extern/questui_components
 LOCAL_SRC_FILES := extern/libquestui_components.a
 include $(PREBUILT_STATIC_LIBRARY)
-# Creating prebuilt for dependency: songdatacore - version: 0.4.1
+# Creating prebuilt for dependency: songdatacore - version: 0.4.3
 include $(CLEAR_VARS)
 LOCAL_MODULE := android-libsong_data_core_rust
 LOCAL_EXPORT_C_INCLUDES := extern/songdatacore
 LOCAL_SRC_FILES := extern/libandroid-libsong_data_core_rust.so
+include $(PREBUILT_SHARED_LIBRARY)
+# Creating prebuilt for dependency: songloader - version: 0.7.1
+include $(CLEAR_VARS)
+LOCAL_MODULE := songloader
+LOCAL_EXPORT_C_INCLUDES := extern/songloader
+LOCAL_SRC_FILES := extern/libsongloader.so
 include $(PREBUILT_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
@@ -73,6 +79,7 @@ LOCAL_SHARED_LIBRARIES += questui
 LOCAL_SHARED_LIBRARIES += custom-types
 LOCAL_SHARED_LIBRARIES += codegen
 LOCAL_SHARED_LIBRARIES += android-libsong_data_core_rust
+LOCAL_SHARED_LIBRARIES += songloader
 LOCAL_STATIC_LIBRARIES += questui_components
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"BetterSongSearch"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'

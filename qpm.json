@@ -52,6 +52,11 @@
       "id": "sdc-wrapper",
       "versionRange": "*",
       "additionalData": {}
+    },
+    {
+      "id": "songloader",
+      "versionRange": "*",
+      "additionalData": {}
     }
   ],
   "additionalData": {}

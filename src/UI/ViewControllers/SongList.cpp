@@ -37,8 +37,18 @@ using namespace QuestUI;
 #include "HMUI/Touchable.hpp"
 #include "HMUI/ScrollView.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
-
+#include "System/DateTime.hpp"
+#include "System/DateTimeOffset.hpp"
+#include "System/DateTimeParse.hpp"
+#include "System/DateTimeResult.hpp"
+#include "System/Globalization/DateTimeFormatInfo.hpp"
+#include "System/Globalization/DateTimeStyles.hpp"
+#include "System/Globalization/CultureInfo.hpp"
+#include "System/TimeSpan.hpp"
 #include "sombrero/shared/Vector2Utils.hpp"
+#include "songloader/shared/API.hpp"
+#include <iomanip>
+#include <sstream>
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_TYPE(CustomComponents, CustomCellListTableData);
@@ -46,6 +56,7 @@ DEFINE_TYPE(CustomComponents, SongListCellTableCell);
 DEFINE_TYPE(CustomComponents, SongListCellData);
 
 std::vector<const SDC_wrapper::BeatStarSong*> songList;
+std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 
 //SongListCellData
 void CustomComponents::SongListCellData::ctor(Il2CppString* _songName, Il2CppString* _author, Il2CppString* _mapper)
@@ -101,8 +112,19 @@ void CustomComponents::SongListCellTableCell::RefreshVisuals()
 
 void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::BeatStarSong* data)
 {
+    static auto uploadFormat = il2cpp_utils::createcsstr("dd. MMM yyyy", il2cpp_utils::StringType::Manual);
+    static auto lengthFormat = il2cpp_utils::createcsstr("mm\\:ss", il2cpp_utils::StringType::Manual);
+    static auto culture = System::Globalization::CultureInfo::New_ctor(il2cpp_utils::createcsstr("en-US"));
     songText->set_text(il2cpp_utils::newcsstr(std::string(data->GetSongAuthor()) + " - " + std::string(data->GetName())));
+    songText->set_color(RuntimeSongLoader::API::GetLevelByHash(std::string(data->GetHash())).has_value() ? UnityEngine::Color(0.53f, 0.53f, 0.53f, 1.0f) : UnityEngine::Color::get_white());
     mapperText->set_text(il2cpp_utils::newcsstr(data->GetAuthor()));
+
+    auto result = System::DateTimeParse::Parse(il2cpp_utils::newcsstr(data->GetUploaded()), System::Globalization::DateTimeFormatInfo::get_CurrentInfo(), System::Globalization::DateTimeStyles::None);
+    uploadDateText->set_text(result.ToString(uploadFormat, reinterpret_cast<System::IFormatProvider*>(culture)));
+
+    System::TimeSpan spanDeezNutzz = System::TimeSpan::FromSeconds(data->duration_secs);
+    std::string displayTime = to_utf8(csstrtostr(spanDeezNutzz.ToString(lengthFormat)));
+    ratingText->set_text(il2cpp_utils::newcsstr("Length: " + displayTime + " Upvotes: " + std::to_string(data->upvotes) + " Downvotes: " + std::to_string(data->downvotes)));
     //"cache" texts
     //for (int i = 0; i < data->GetDifficultyVector().size(); i++)
     //{
@@ -148,6 +170,7 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         auto verticalLayoutGroup = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(tableCell->get_transform());
         tableCell->bg = verticalLayoutGroup->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         tableCell->bg->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("round-rect-panel"), 0.6f);
+        verticalLayoutGroup->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 1, 1));
 
         auto layout = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
         layout->set_preferredHeight(11.75f);
@@ -181,10 +204,28 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->mapperText->set_fontSize(2.3f);
         tableCell->mapperText->set_color(UnityEngine::Color(0.8f, 0.8f, 0.8f, 1));
         tableCell->mapperText->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
+        tableCell->mapperText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+        tableCell->mapperText->set_enableWordWrapping(false);
 
         tableCell->songText = QuestUI::BeatSaberUI::CreateText(topHoriz->get_transform(), "Deez Nuts loolollolool");
         tableCell->songText->set_fontSize(2.7f);
         tableCell->songText->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
+        tableCell->songText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+        tableCell->songText->set_enableWordWrapping(false);
+        
+        tableCell->uploadDateText = QuestUI::BeatSaberUI::CreateText(topHoriz->get_transform(), "Failed To Parse");
+        tableCell->uploadDateText->set_fontSize(2.7f);
+        tableCell->uploadDateText->set_color(UnityEngine::Color(0.66f, 0.66f, 0.66f, 1));
+        tableCell->uploadDateText->set_alignment(TMPro::TextAlignmentOptions::MidlineRight);
+        tableCell->uploadDateText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+        tableCell->uploadDateText->set_enableWordWrapping(false);
+
+        tableCell->ratingText = QuestUI::BeatSaberUI::CreateText(midHoriz->get_transform(), "Deez Nuts loolollolool");
+        tableCell->ratingText->set_fontSize(2.5f);
+        tableCell->ratingText->set_color(UnityEngine::Color(0.8f, 0.8f, 0.8f, 1));
+        tableCell->ratingText->set_alignment(TMPro::TextAlignmentOptions::MidlineRight);
+        tableCell->ratingText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+        tableCell->ratingText->set_enableWordWrapping(false);
 
         tableCell->diffsGroup = bottomHoriz->get_gameObject();
     }
@@ -200,18 +241,127 @@ int CustomComponents::CustomCellListTableData::NumberOfCells()
 {
     return data.size();
 }
+
+void SortAndFilterSongs(int sort)
+{
+    //"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"
+    std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            int struct1UploadEpoch;
+            {
+                std::string s{struct1->GetUploaded()};
+                std::tm t{};
+                std::istringstream ss(s);
+
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+                if (ss.fail()) {
+                    throw std::runtime_error{"failed to parse time string"};
+                }   
+                std::time_t time_stamp = mktime(&t);
+                struct1UploadEpoch = time_stamp;
+            }
+
+            int struct2UploadEpoch;
+            {
+                std::string s{struct2->GetUploaded()};
+                std::tm t{};
+                std::istringstream ss(s);
+
+                ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+                if (ss.fail()) {
+                    throw std::runtime_error{"failed to parse time string"};
+                }   
+                std::time_t time_stamp = mktime(&t);
+                struct2UploadEpoch = time_stamp;
+            }
+            return (struct1UploadEpoch > struct2UploadEpoch);
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            float struct1Stars = 0.0f;
+            auto struct1Vector = struct1->GetDifficultyVector();
+            for (int i = 0; i < struct1Vector.size(); i++)
+            {
+                if(struct1Vector[i]->ranked)
+                    struct1Stars = std::max(struct1Vector[i]->stars, struct1Stars);
+            }
+
+            float struct2Stars = 0.0f;
+            auto struct2Vector = struct2->GetDifficultyVector();
+            for (int i = 0; i < struct2Vector.size(); i++)
+            {
+                if(struct2Vector[i]->ranked)
+                    struct2Stars = std::max(struct2Vector[i]->stars, struct2Stars);
+            }
+            
+            return struct1Stars > struct2Stars;
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            float struct1Stars = 0.0f;
+            auto struct1Vector = struct1->GetDifficultyVector();
+            for (int i = 0; i < struct1Vector.size(); i++)
+            {
+                if(struct1Vector[i]->ranked)
+                    struct1Stars = std::max(struct1Vector[i]->stars, struct1Stars);
+            }
+
+            float struct2Stars = 0.0f;
+            auto struct2Vector = struct2->GetDifficultyVector();
+            for (int i = 0; i < struct2Vector.size(); i++)
+            {
+                if(struct2Vector[i]->ranked)
+                    struct2Stars = std::max(struct2Vector[i]->stars, struct2Stars);
+            }
+            
+            return struct1Stars < struct2Stars;
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            return (struct1->GetRating() > struct2->GetRating());
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            return (struct1->GetRating() < struct2->GetRating());
+        },
+        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+        {
+            return (struct1->downloads > struct2->downloads);
+        }
+    };
+
+    std::sort(songList.begin(), songList.end(), 
+        sortFuncs[sort]
+    );
+
+    filteredSongList = songList;
+
+    for(auto song : filteredSongList)
+    {
+
+    }
+}
+
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
 
     static ViewComponent* view;
 
-    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Worst local score", "Most Downloads"};
-
     if (view) {
         delete view;
         view = nullptr;
     }
+    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
     SongListHorizontalLayout* shitass;
 
     // async ui because this causes lag spike
@@ -225,12 +375,17 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                     new Button("MULTI", [](Button* button, UnityEngine::Transform* parentTransform){
 
                     }),
-                    new StringSetting("Search", "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                    new StringSetting("Search " + std::to_string(songList.size()) + " songs" , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("Input! %s", input.c_str());
                     }),
 
-                    new SongListDropDown("", "Newest", sortModes, [](DropdownSetting*, const std::string& input, UnityEngine::Transform*){
+                    new SongListDropDown("", "Newest", sortModes, [sortModes](DropdownSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("DropDown! %s", input.c_str());
+                        auto itr = std::find(sortModes.begin(), sortModes.end(), input);
+                        SortAndFilterSongs(std::distance(sortModes.begin(), itr));
+
+                        tableData->data = filteredSongList;
+                        tableData->tableView->ReloadDataKeepingPosition();
                     }),
                 }),
                 (new SongListHorizontalLayout({
@@ -245,7 +400,16 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         });
         QuestUI::MainThreadScheduler::Schedule([this, shitass]{
             view->render();
-            
+
+            SortAndFilterSongs(0);
+
+            //Make Lists
+            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
+            list->data = filteredSongList;
+            list->tableView->ReloadData();
+            list->get_transform()->get_parent()->SetAsFirstSibling();
+            tableData = list;
+
             //fix scrolling lol
             GlobalNamespace::IVRPlatformHelper* mewhen;
             auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
@@ -255,17 +419,15 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 if(mewhen != nullptr)
                     break;
             }
-            auto scrolls2 = this->GetComponentsInChildren<HMUI::ScrollView*>();
-            for (size_t i = 0; i < scrolls2->Length(); i++)
+            for (size_t i = 0; i < scrolls->Length(); i++)
             {
-                scrolls2->get(i)->platformHelper = mewhen;
+                if(scrolls->get(i)->platformHelper == nullptr) scrolls->get(i)->platformHelper = mewhen;
             }
-
-            //Make Lists
-            auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
-            list->data = songList;
-            list->tableView->ReloadData();
-            list->get_transform()->get_parent()->SetAsFirstSibling();
+            //auto scrolls2 = this->GetComponentsInChildren<HMUI::ScrollView*>();
+            //for (size_t i = 0; i < scrolls2->Length(); i++)
+            //{
+            //    scrolls2->get(i)->platformHelper = mewhen;
+            //}
 
         });
     }).detach();
