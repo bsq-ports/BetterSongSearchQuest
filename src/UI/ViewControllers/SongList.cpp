@@ -47,6 +47,7 @@ using namespace QuestUI;
 #include "System/TimeSpan.hpp"
 #include "sombrero/shared/Vector2Utils.hpp"
 #include "songloader/shared/API.hpp"
+#include "System/StringComparison.hpp"
 #include <iomanip>
 #include <sstream>
 
@@ -135,16 +136,16 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     //        shit->set_fontSize(2.5f);
     //        texts.push_back(shit);
     //    }
-    //    texts[i]->get_gameObject()->SetActive(true);
+    //    texts.at(i)->get_gameObject()->SetActive(true);
     //    auto diff = data->GetDifficulty(i);
     //    getLogger().info("%s", std::string(diff->GetName()).c_str());
-    //    texts[i]->set_text(il2cpp_utils::newcsstr(diff->GetName()));
+    //    texts.at(i)->set_text(il2cpp_utils::newcsstr(diff->GetName()));
     //}
     //if(data->GetDifficultyVector().size() < texts.size())
     //{
     //    for (int i = data->GetDifficultyVector().size(); i < texts.size(); i++)
     //    {
-    //        texts[i]->get_gameObject()->SetActive(false);
+    //        texts.at(i)->get_gameObject()->SetActive(false);
     //    }
     //}
 }
@@ -243,8 +244,57 @@ int CustomComponents::CustomCellListTableData::NumberOfCells()
     return data.size();
 }
 
-void SortAndFilterSongs(int sort)
+std::vector<std::string> split(std::string buffer, const std::string delimeter = " ") {
+  std::vector<std::string> ret{};
+  std::decay_t<decltype(std::string::npos)> pos{};
+  while ((pos = buffer.find(delimeter)) != std::string::npos) {
+    const auto match = buffer.substr(0, pos);
+    if (!match.empty()) ret.push_back(match);
+    buffer = buffer.substr(pos + delimeter.size());
+  }
+  if (!buffer.empty()) ret.push_back(buffer);
+  return ret;
+}
+
+bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
 {
+    int words = 0;
+    int matches = 0;
+
+    auto songName = il2cpp_utils::newcsstr(song->GetName());
+    auto songSubName = il2cpp_utils::newcsstr(song->GetSubName());
+    auto songAuthorName = il2cpp_utils::newcsstr(song->GetSongAuthor());
+    auto levelAuthorName = il2cpp_utils::newcsstr(song->GetAuthor());
+
+    for (int i = 0; i < searchTexts.size(); i++)
+    {
+        //if (!searchTexts[i])
+        //{
+            words++;
+            auto searchTerm = il2cpp_utils::newcsstr(searchTexts[i]);
+            if (i == searchTexts.size() - 1)
+            {
+                searchTerm = searchTerm->Substring(0, searchTerm->get_Length() - 1);
+            }
+
+            if (songName->IndexOf(searchTerm, 0, System::StringComparison::CurrentCultureIgnoreCase) != -1 || 
+                songSubName->IndexOf(searchTerm, 0, System::StringComparison::CurrentCultureIgnoreCase) != -1 ||
+                songAuthorName->IndexOf(searchTerm, 0, System::StringComparison::CurrentCultureIgnoreCase) != -1 ||
+                levelAuthorName->IndexOf(searchTerm, 0, System::StringComparison::CurrentCultureIgnoreCase) != -1)
+            {
+                matches++;
+            }
+        //}
+    }
+
+    return matches == words;
+}
+std::string prevSearch = "";
+int prevSort = 0;
+void SortAndFilterSongs(int sort, std::string search)
+{
+    prevSort = sort;
+    prevSearch = search;
     //"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"
     std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
         [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
@@ -340,15 +390,16 @@ void SortAndFilterSongs(int sort)
         }
     };
 
-    std::sort(songList.begin(), songList.end(), 
-        sortFuncs[sort]
-    );
-
-    filteredSongList = songList;
-
-    for(auto song : filteredSongList)
+    //std::sort(songList.begin(), songList.end(), 
+    //    sortFuncs[sort]
+    //);
+    filteredSongList.clear();
+    for(auto song : songList)
     {
-
+        if(deezContainsDat(song, split(search, " ")))
+        {
+            filteredSongList.push_back(song);
+        }
     }
 }
 
@@ -378,15 +429,19 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                     }),
                     new StringSetting("Search " + std::to_string(songList.size()) + " songs" , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("Input! %s", input.c_str());
+                        //SortAndFilterSongs(prevSort, input);
+
+                        //tableData->data = filteredSongList;
+                        //tableData->tableView->ReloadData();
                     }),
 
                     new SongListDropDown("", "Newest", sortModes, [sortModes](DropdownSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("DropDown! %s", input.c_str());
                         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-                        SortAndFilterSongs(std::distance(sortModes.begin(), itr));
+                        SortAndFilterSongs(std::distance(sortModes.begin(), itr), prevSearch);
 
                         tableData->data = filteredSongList;
-                        tableData->tableView->ReloadDataKeepingPosition();
+                        tableData->tableView->ReloadData();
                     }),
                 }),
                 (new SongListHorizontalLayout({
@@ -402,7 +457,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         QuestUI::MainThreadScheduler::Schedule([this, shitass]{
             view->render();
 
-            SortAndFilterSongs(0);
+            SortAndFilterSongs(0, "");
 
             //Make Lists
             auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
