@@ -73,6 +73,7 @@ void CustomComponents::SongListCellTableCell::ctor()
     neitherGroup = List<UnityEngine::GameObject*>::New_ctor();
 }
 
+
 void CustomComponents::SongListCellTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
 {
     getLogger().info("Selection Changed");
