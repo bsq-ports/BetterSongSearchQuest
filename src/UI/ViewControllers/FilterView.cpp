@@ -59,14 +59,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     filterViewLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_transform());
     auto filterViewLayoutElement = filterViewLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    filterViewLayoutElement->set_preferredWidth(130);
+    //filterViewLayoutElement->set_preferredWidth(130);
     filterViewLayout->set_childControlHeight(false);
     filterViewLayout->get_rectTransform()->set_anchorMin(UnityEngine::Vector2(filterViewLayout->get_rectTransform()->get_anchorMin().x, 1));
 
     //Top Bar
     auto topBar = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
     auto topBarBG = topBar->get_gameObject()->AddComponent<Backgroundable*>();
-    topBarBG->ApplyBackground(il2cpp_utils::newcsstr("panel-top-gradient"));
+    topBarBG->ApplyBackground(il2cpp_utils::newcsstr("title-gradient"));
     auto imageView = topBarBG->GetComponentInChildren<HMUI::ImageView*>();
     imageView->set_color0(UnityEngine::Color(0.0f,0.75f, 1.0f, 1));
     imageView->set_color1(UnityEngine::Color(0.0f,0.37f, 0.5f, 1));

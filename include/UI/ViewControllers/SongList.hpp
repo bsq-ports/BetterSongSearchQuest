@@ -16,6 +16,7 @@
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
+#include "UI/SelectedSongController.hpp"
 
 extern std::vector<const SDC_wrapper::BeatStarSong*> songList;
 extern std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
@@ -25,13 +26,6 @@ extern std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 static std::vector<Il2CppClass*> GetInterfaces() {
 	return { classof(HMUI::TableView::IDataSource*) };
 }
-
-DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellData, System::Object,
-    DECLARE_INSTANCE_FIELD(Il2CppString*, songName);
-    DECLARE_INSTANCE_FIELD(Il2CppString*, author);
-    DECLARE_INSTANCE_FIELD(Il2CppString*, mapper);
-    DECLARE_CTOR(ctor, Il2CppString* _songName, Il2CppString* _author, Il2CppString* _mapper);
-)
 
 ___DECLARE_TYPE_WRAPPER_INHERITANCE(CustomComponents, CustomCellListTableData, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, UnityEngine::MonoBehaviour, "QuestUI", GetInterfaces(), 0, nullptr,
     DECLARE_INSTANCE_FIELD(Il2CppString*, cellTemplate);
@@ -79,5 +73,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewControl
 
 public:
     TMPro::TextMeshProUGUI* songDetailsText;
+    BetterSongSearch::UI::SelectedSongController* selectedSongController;
 )
 static CustomComponents::CustomCellListTableData* tableData;

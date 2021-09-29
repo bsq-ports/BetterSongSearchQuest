@@ -22,5 +22,5 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
     downloadHistoryLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_transform());
 
-    BeatSaberUI::CreateText(downloadHistoryLayout->get_rectTransform(), "Download History");
+    BeatSaberUI::CreateText(downloadHistoryLayout->get_rectTransform(), "DOWNLOAD HISTORY");
 }
