@@ -17,7 +17,7 @@
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 #include "UI/SelectedSongController.hpp"
-
+#include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
 extern std::vector<const SDC_wrapper::BeatStarSong*> songList;
 extern std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
@@ -55,7 +55,6 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, ratingText);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, songText);
     DECLARE_INSTANCE_FIELD(QuestUI::Backgroundable*, bg);
-    DECLARE_INSTANCE_FIELD(UnityEngine::GameObject*, diffsGroup);
 
     DECLARE_CTOR(ctor);
 
@@ -64,8 +63,9 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
 
     DECLARE_INSTANCE_METHOD(void, RefreshVisuals);
     public:
-    std::vector<TMPro::TextMeshProUGUI*> texts;
+    QuestUI::CustomTextSegmentedControlData* diffs;
     void RefreshData(const SDC_wrapper::BeatStarSong* data);
+    
 )
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewController, HMUI::ViewController,

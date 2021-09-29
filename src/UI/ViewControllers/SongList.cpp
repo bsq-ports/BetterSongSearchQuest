@@ -100,11 +100,11 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     auto name = std::string(data->GetName());
     auto author = std::string(data->GetSongAuthor());
     auto combined = author + " - " + name;
-    if(combined.length() > 40)
-    {
-        combined.resize(std::min(27, (int)combined.length()));
-        combined += "...";
-    }
+    //if(combined.length() > 40)
+    //{
+    //    combined.resize(std::min(27, (int)combined.length()));
+    //    combined += "...";
+    //}
     songText->set_text(il2cpp_utils::newcsstr(combined));
     auto ranked = data->GetMaxStarValue() > 0;
     songText->set_color( ranked ? UnityEngine::Color(1,0.647f,0, 1) : (RuntimeSongLoader::API::GetLevelByHash(std::string(data->GetHash())).has_value() ? UnityEngine::Color(0.53f, 0.53f, 0.53f, 1.0f) : UnityEngine::Color::get_white()));
@@ -134,18 +134,19 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell = UnityEngine::GameObject::New_ctor()->AddComponent<CustomComponents::SongListCellTableCell*>();
         tableCell->set_reuseIdentifier(QuestUICustomCellListCell_cs);
         tableCell->set_name(QuestUICustomTableCell_cs);
-
-        tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();
-        tableCell->set_interactable(true);
-
         auto fitter = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
         fitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
         fitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
 
+        tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();
+        tableCell->set_interactable(true);
+
         auto verticalLayoutGroup = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(tableCell->get_transform());
         tableCell->bg = verticalLayoutGroup->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         tableCell->bg->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("round-rect-panel"), 0.6f);
-        verticalLayoutGroup->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 1, 1));
+        verticalLayoutGroup->set_padding(UnityEngine::RectOffset::New_ctor(1, 1, 1, 2));
+        auto fitter2 = verticalLayoutGroup->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+        fitter2->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
 
         auto layout = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
         layout->set_preferredHeight(11.75f);
@@ -197,7 +198,8 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->ratingText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
         tableCell->ratingText->set_enableWordWrapping(false);
 
-        tableCell->diffsGroup = bottomHoriz->get_gameObject();
+        //tableCell->diffs = QuestUI::BeatSaberUI::CreateTextSegmentedControl(bottomHoriz->get_transform());
+        //tableCell->diffs->set_texts(std::vector<std::u16string>{u"Ex", u"Lmao"});
     }
     tableCell->RefreshData(data[idx]);
     return tableCell;
