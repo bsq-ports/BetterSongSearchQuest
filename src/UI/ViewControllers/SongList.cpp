@@ -312,6 +312,45 @@ void SortAndFilterSongs(int sort, std::string search)
             return (struct1->downloads > struct2->downloads);
         }
     };
+    //"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"\
+    //This is so unranked songs dont show up in the Least Stars Sort
+    std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*)>> sortFilterFuncs = {
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            return true;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            return true;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            auto ranked = song->GetMaxStarValue() > 0;
+            return ranked;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            auto ranked = song->GetMaxStarValue() > 0;
+            return ranked;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            auto ranked = song->GetMaxStarValue() > 0;
+            return ranked;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            return true;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            return true;
+        },
+        [] (const SDC_wrapper::BeatStarSong* song)
+        {
+            return true;
+        }
+    };
 
     std::sort(songList.begin(), songList.end(), 
         sortFuncs[sort]
@@ -320,7 +359,7 @@ void SortAndFilterSongs(int sort, std::string search)
     filteredSongList.clear();
     for(auto song : songList)
     {
-        if(deezContainsDat(song, split(search, " ")))
+        if(deezContainsDat(song, split(search, " ")) && sortFilterFuncs[sort](song))
         {
             filteredSongList.push_back(song);
         }
@@ -388,6 +427,10 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             selectedSongView->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>()->set_preferredWidth(40);
             auto controller = selectedSongView->get_gameObject()->AddComponent<SelectedSongController*>();
             selectedSongController = controller;
+            controller->defaultImage = QuestUI::ArrayUtil::First(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>(), 
+            [](UnityEngine::Sprite* x) { 
+                return to_utf8(csstrtostr(x->get_name())) == "CustomLevelsPack"; 
+            });
             //Meta
             {
                 auto metaLayout = QuestUI::BeatSaberUI::CreateVerticalLayoutGroup(selectedSongView);
@@ -413,7 +456,11 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
 
             //Cover Image
             {
+                auto metaLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(selectedSongView);
 
+                auto cover = QuestUI::BeatSaberUI::CreateImage(metaLayout->get_transform(), controller->defaultImage, UnityEngine::Vector2(0, 0), UnityEngine::Vector2(60, 60));
+                cover->set_preserveAspect(true);
+                controller->coverImage = cover;
             }
             
             //Min-Max Diff Info
@@ -443,7 +490,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
             list->data = filteredSongList;
             list->tableView->ReloadData();
-            auto click = std::function([&](HMUI::TableView* tableView, int row)
+            auto click = std::function([=](HMUI::TableView* tableView, int row)
             {
                 this->selectedSongController->SetSong(filteredSongList[row]);
             });

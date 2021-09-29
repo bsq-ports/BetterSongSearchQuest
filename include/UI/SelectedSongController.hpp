@@ -4,6 +4,7 @@
 
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/UI/Button.hpp"
+#include "UnityEngine/Sprite.hpp"
 #include "HMUI/ImageView.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
@@ -18,4 +19,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI, SelectedSongController, UnityEngine:
     TMPro::TextMeshProUGUI* authorText = nullptr;
     TMPro::TextMeshProUGUI* songNameText = nullptr;
     TMPro::TextMeshProUGUI* dateText = nullptr;
+    HMUI::ImageView* coverImage = nullptr;
+    UnityEngine::Sprite* defaultImage = nullptr;
 )
