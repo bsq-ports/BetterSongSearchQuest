@@ -18,6 +18,7 @@
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 #include "UI/SelectedSongController.hpp"
 #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
+#include "FilterOptions.hpp"
 extern std::vector<const SDC_wrapper::BeatStarSong*> songList;
 extern std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
@@ -75,4 +76,9 @@ public:
     TMPro::TextMeshProUGUI* songDetailsText;
     BetterSongSearch::UI::SelectedSongController* selectedSongController;
 )
+
+extern void Sort();
+
+extern FilterOptions* filterOptions;
+extern BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
 static CustomComponents::CustomCellListTableData* tableData;

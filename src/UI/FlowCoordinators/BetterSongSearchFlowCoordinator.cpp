@@ -14,6 +14,7 @@ using namespace QuestUI;
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
+    fcInstance = this;
     if (!SongListViewController) {
         SongListViewController = BeatSaberUI::CreateViewController<ViewControllers::SongListViewController*>();
     }
@@ -26,7 +27,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Aw
 }
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling) {
-    if (!firstActivation) return;
+    //if (!firstActivation) return;
 
     SetTitle(il2cpp_utils::newcsstr("Better Song Search"), HMUI::ViewController::AnimationType::In);
     showBackButton = true;

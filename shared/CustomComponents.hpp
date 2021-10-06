@@ -35,8 +35,8 @@ namespace BetterSongSearch::UI {
 
             auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
             element->set_preferredWidth(120);
-            auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
+            //auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
+            //background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
             return this;
         }
     };
@@ -53,6 +53,19 @@ namespace BetterSongSearch::UI {
             DropdownSetting::render(parentTransform);
             uiDropdown->numberOfVisibleCells = 9;
             uiDropdown->ReloadData();
+            return this;
+        }
+    };
+
+    class SongListStringSetting : public QuestUI_Components::StringSetting {
+    public:
+        explicit SongListStringSetting(std::string_view text, std::string_view currentValue,
+                               OnCallback callback = nullptr, std::optional<InitStringSettingsData> stringData = std::nullopt) : StringSetting(text, currentValue, callback, stringData) {}
+        CONSTRUCT_AFTER_COMPONENT(SongListStringSetting)
+
+    protected:
+        virtual Component *render(UnityEngine::Transform *parentTransform) override {
+            StringSetting::render(parentTransform);
             return this;
         }
     };
@@ -77,8 +90,8 @@ namespace BetterSongSearch::UI {
 
             auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
             element->set_preferredHeight(10);
-            auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
+            //auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
+            //background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
             return this;
         }
     };

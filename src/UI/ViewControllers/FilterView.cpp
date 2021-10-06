@@ -16,9 +16,13 @@ using namespace QuestUI;
 #include "UnityEngine/UI/LayoutElement.hpp"
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
 #include "UnityEngine/RectOffset.hpp"
+#include "UnityEngine/RectTransform.hpp"
+#include "UnityEngine/Material.hpp"
+#include "UnityEngine/Resources.hpp"
 
 #include "HMUI/CurvedCanvasSettingsHelper.hpp"
 #include "HMUI/TimeSlider.hpp"
+#include "HMUI/Touchable.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"
 
@@ -26,51 +30,54 @@ using namespace QuestUI;
 #include "custom-types/shared/coroutine.hpp"
 #include "UnityEngine/WaitForEndOfFrame.hpp"
 
+#include "FilterOptions.hpp"
+#include "UI/ViewControllers/SongList.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 UnityEngine::UI::VerticalLayoutGroup* filterViewLayout;
 
-custom_types::Helpers::Coroutine MergeSliders(UnityEngine::GameObject* mergeSlider) {
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
-    auto ourContainer =  mergeSlider->get_transform();
-    auto prevContainer = ourContainer->get_parent()->GetChild(ourContainer->GetSiblingIndex()-1);
-
-    (reinterpret_cast<UnityEngine::RectTransform*>(prevContainer))->set_offsetMax(UnityEngine::Vector2(-20, 0));
-    (reinterpret_cast<UnityEngine::RectTransform*>(ourContainer))->set_offsetMin(UnityEngine::Vector2(-20, 0));
-    ourContainer->set_position(prevContainer->get_position());
-
-    auto minTimeSlider = prevContainer->GetComponentInChildren<HMUI::TimeSlider*>();
-    auto maxTimeSlider = ourContainer->GetComponentInChildren<HMUI::TimeSlider*>();
-
-    maxTimeSlider->set_valueSize(maxTimeSlider->get_valueSize()/2.1f);
-    minTimeSlider->set_valueSize(minTimeSlider->get_valueSize()/2.1f);
-
-    ourContainer->GetComponent<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
-    static auto NameText = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("NameText");
-    static auto Empty = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("");
-    ourContainer->Find(NameText)->GetComponent<TMPro::TextMeshProUGUI*>()->set_text(Empty);
-
-    co_return;
+int getIndex(std::vector<std::string> v, std::string K)
+{
+    auto it = std::find(v.begin(), v.end(), K);
+    if (it != v.end())
+    {
+        int index = it - v.begin();
+        return index;
+    }
+    else {
+        return -1;
+    }
 }
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
+    get_rectTransform()->set_offsetMax(UnityEngine::Vector2(20, 22));
+    get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>()->set_preferredWidth(130);
 
     filterViewLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_transform());
     auto filterViewLayoutElement = filterViewLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    //filterViewLayoutElement->set_preferredWidth(130);
+    filterViewLayoutElement->set_preferredWidth(130);
     filterViewLayout->set_childControlHeight(false);
+    filterViewLayout->get_gameObject()->AddComponent<HMUI::Touchable*>();
     filterViewLayout->get_rectTransform()->set_anchorMin(UnityEngine::Vector2(filterViewLayout->get_rectTransform()->get_anchorMin().x, 1));
 
     //Top Bar
     auto topBar = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
+    auto topBarElement = topBar->GetComponent<UnityEngine::UI::LayoutElement*>();
+    topBarElement->set_preferredWidth(130);
     auto topBarBG = topBar->get_gameObject()->AddComponent<Backgroundable*>();
-    topBarBG->ApplyBackground(il2cpp_utils::newcsstr("title-gradient"));
-    auto imageView = topBarBG->GetComponentInChildren<HMUI::ImageView*>();
+    topBarBG->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("panel-top-gradient"), 1);
+    auto imageView = (HMUI::ImageView*)topBarBG->background;
+    imageView->skew = 0.18f;
+    imageView->gradientDirection = HMUI::ImageView::GradientDirection::Vertical;
     imageView->set_color0(UnityEngine::Color(0.0f,0.75f, 1.0f, 1));
     imageView->set_color1(UnityEngine::Color(0.0f,0.37f, 0.5f, 1));
     imageView->gradient = true;
+    imageView->set_material(QuestUI::ArrayUtil::First(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Material*>(), 
+    [](UnityEngine::Material* x) { 
+        return to_utf8(csstrtostr(x->get_name())) == "AnimatedButton"; 
+    }));
     imageView->SetAllDirty();
     imageView->curvedCanvasSettingsHelper->Reset();
     std::function<void()> settingsButtonClick = [=]() {
@@ -84,9 +91,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     };
     auto topBarSettingsButtonLayout = BeatSaberUI::CreateHorizontalLayoutGroup(topBar->get_transform());
     topBarSettingsButtonLayout->set_padding(UnityEngine::RectOffset::New_ctor(5,0,0,0));
-    auto topBarSettingsButton = BeatSaberUI::CreateUIButton(topBarSettingsButtonLayout->get_transform(), "Settings", settingsButtonClick);
+    auto topBarSettingsButton = BeatSaberUI::CreateUIButton(topBarSettingsButtonLayout->get_transform(), "Settings", UnityEngine::Vector2(0, 0), UnityEngine::Vector2(18, 7.74f), settingsButtonClick);
+    BeatSaberUI::SetButtonTextSize(topBarSettingsButton, 4);
     auto topBarTitleLayout = BeatSaberUI::CreateHorizontalLayoutGroup(topBar->get_transform());
     auto topBarTitleLayoutElement = topBarTitleLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
+    topBarTitleLayoutElement->set_preferredWidth(130);
     topBarTitleLayoutElement->set_ignoreLayout(true);
     auto topBarTitle = BeatSaberUI::CreateText(topBarTitleLayout->get_transform(), "FILTERS", true);
     topBarTitle->set_fontSize(7);
@@ -95,10 +104,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     auto topBarButtonsLayoutFitter = topBarButtonsLayout->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
     topBarButtonsLayoutFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
     topBarButtonsLayout->set_spacing(2);
-    topBarButtonsLayout->set_padding(UnityEngine::RectOffset::New_ctor(77,0,0,0));
-    auto topBarClearButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Clear", clearButtonClick);
-    auto topBarPresetsButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Presets", presetsButtonClick);
-
+    topBarButtonsLayout->set_padding(UnityEngine::RectOffset::New_ctor(0,0,0,0));
+    auto topBarClearButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Clear", UnityEngine::Vector2(0, 0), UnityEngine::Vector2(14, 7.74f), clearButtonClick);
+    BeatSaberUI::SetButtonTextSize(topBarClearButton, 4);
+    auto topBarPresetsButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Presets", UnityEngine::Vector2(0, 0), UnityEngine::Vector2(17, 7.74f), presetsButtonClick);
+    BeatSaberUI::SetButtonTextSize(topBarPresetsButton, 4);
+    
     //Filter Options
     auto filterOptionsLayout = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
     auto filterOptionsLayoutElement = filterOptionsLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
@@ -111,11 +122,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     //LeftSide
     auto leftOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(filterOptionsLayout->get_transform());
     auto leftOptionsLayoutElement = leftOptionsLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    /*auto leftOptionsLayoutBG = leftOptionsLayout->get_gameObject()->AddComponent<Backgroundable*>();
-    leftOptionsLayoutBG->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));*/
     leftOptionsLayout->set_childForceExpandHeight(false);
     leftOptionsLayout->set_childControlHeight(false);
-    leftOptionsLayout->set_childScaleWidth(true);
+    leftOptionsLayout->set_childScaleWidth(false);
     leftOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(0,2,0,0));
     leftOptionsLayoutElement->set_preferredWidth(65);
 
@@ -127,7 +136,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     std::vector<std::string> downloadFilterOptions = {"Show all", "Only downloaded", "Hide downloaded"};
     std::function<void(std::string_view)> downloadFilterChange = [=](std::string_view value) {
-
+        FilterOptions::DownloadFilterType type = FilterOptions::DownloadFilterType::All;
+        filterOptions->downloadType = (FilterOptions::DownloadFilterType)getIndex(downloadFilterOptions, std::string(value));
+        Sort();
     };
     auto downloadFilterDropdown = BeatSaberUI::CreateDropdown(leftOptionsLayout->get_transform(), "Downloaded", "Show all", downloadFilterOptions, downloadFilterChange);
     std::vector<std::string> scoreFilterOptions = {"Show all", "Hide passed", "Only passed"};
@@ -213,7 +224,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     scoresaberText->set_alignment(TMPro::TextAlignmentOptions::Center);
     scoresaberText->set_fontStyle(TMPro::FontStyles::Underline);
 
-    std::vector<std::string> rankedFilterOptions = {"Show all", "Only Ranked", "Only Qualified"};
+    std::vector<std::string> rankedFilterOptions = {"Show all", "Only Ranked"};
     std::function<void(std::string_view)> rankedFilterChange = [=](std::string_view value) {
 
     };
@@ -258,19 +269,22 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     beatsaverText->set_alignment(TMPro::TextAlignmentOptions::Center);
     beatsaverText->set_fontStyle(TMPro::FontStyles::Underline);
 
+    QuestUI::SliderSetting* minUploadDateSlider;
     std::function<void(float)> minUploadDateChange = [=](float value) {
 
     };
+    QuestUI::SliderSetting* minRatingSlider;
     std::function<void(float)> minRatingChange = [=](float value) {
-
+        //minRatingSlider->text->set_text(il2cpp_utils::newcsstr(std::to_string((int)value) + ".0%"));
     };
+    QuestUI::SliderSetting* minVotesSlider;
     std::function<void(float)> minVotesChange = [=](float value) {
 
     };
 
-    auto minUploadDateSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Min upload date", 1, 0, 0, 10, minUploadDateChange);
-    auto minRatingSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Rating", 0.05, 0, 0, 0.9, minRatingChange);
-    auto minVotesSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
+    minUploadDateSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Min upload date", 1, 0, 0, 10, minUploadDateChange);
+    minRatingSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Rating", 5, 0, 0, 90, minRatingChange);
+    minVotesSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
 
     auto chardifTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(rightOptionsLayout->get_transform());
     auto chardifText = BeatSaberUI::CreateText(chardifTextLayout->get_transform(), "[ Characteristic / Difficulty ]");
@@ -278,7 +292,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     chardifText->set_alignment(TMPro::TextAlignmentOptions::Center);
     chardifText->set_fontStyle(TMPro::FontStyles::Underline);
 
-    std::vector<std::string> charFilterOptions = {"Any", "Custom", "Standard", "OneSaber", "NoArrows", "NinetyDegree", "ThreeSixtyDegree", "Lightshow", "Lawless"};
+    std::vector<std::string> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
     std::function<void(std::string_view)> charFilterChange = [=](std::string_view value) {
 
     };

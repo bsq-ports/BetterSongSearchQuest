@@ -14,11 +14,14 @@
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI, SelectedSongController, UnityEngine::MonoBehaviour,
     public:
     void SetSong(const SDC_wrapper::BeatStarSong*);
+    void DownloadSong();
+    void PlaySong();
+    const SDC_wrapper::BeatStarSong* currentSong;
     UnityEngine::UI::Button* playButton = nullptr;
     UnityEngine::UI::Button* downloadButton = nullptr;
     TMPro::TextMeshProUGUI* authorText = nullptr;
     TMPro::TextMeshProUGUI* songNameText = nullptr;
-    TMPro::TextMeshProUGUI* dateText = nullptr;
+    TMPro::TextMeshProUGUI* infoText = nullptr;
     HMUI::ImageView* coverImage = nullptr;
     UnityEngine::Sprite* defaultImage = nullptr;
 )

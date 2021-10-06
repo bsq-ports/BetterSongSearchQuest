@@ -31,12 +31,15 @@ using namespace QuestUI;
 #include "UnityEngine/UI/ContentSizeFitter.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/Transform.hpp"
+#include "UnityEngine/Events/UnityAction.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"
 
 #include "HMUI/ImageView.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/Touchable.hpp"
 #include "HMUI/ScrollView.hpp"
+#include "HMUI/VerticalScrollIndicator.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
 #include "sombrero/shared/Vector2Utils.hpp"
 #include "songloader/shared/API.hpp"
@@ -54,6 +57,7 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_TYPE(CustomComponents, CustomCellListTableData);
 DEFINE_TYPE(CustomComponents, SongListCellTableCell);
 
+std::vector<const SDC_wrapper::BeatStarSong*> downloadedSongList;
 std::vector<const SDC_wrapper::BeatStarSong*> songList;
 std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 
@@ -100,14 +104,11 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     auto name = std::string(data->GetName());
     auto author = std::string(data->GetSongAuthor());
     auto combined = author + " - " + name;
-    //if(combined.length() > 40)
-    //{
-    //    combined.resize(std::min(27, (int)combined.length()));
-    //    combined += "...";
-    //}
     songText->set_text(il2cpp_utils::newcsstr(combined));
     auto ranked = data->GetMaxStarValue() > 0;
-    songText->set_color( ranked ? UnityEngine::Color(1,0.647f,0, 1) : (RuntimeSongLoader::API::GetLevelByHash(std::string(data->GetHash())).has_value() ? UnityEngine::Color(0.53f, 0.53f, 0.53f, 1.0f) : UnityEngine::Color::get_white()));
+    auto it = std::find(downloadedSongList.begin(), downloadedSongList.end(), data);
+    bool downloaded = it != downloadedSongList.end();
+    songText->set_color( ranked ? UnityEngine::Color(1,0.647f,0, 1) : (downloaded ? UnityEngine::Color(0.53f, 0.53f, 0.53f, 1.0f) : UnityEngine::Color::get_white()));
     mapperText->set_text(il2cpp_utils::newcsstr(data->GetAuthor()));
 
     char date[100];
@@ -119,21 +120,26 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     std::chrono::seconds sec(dur);
     int minutes = std::chrono::duration_cast<std::chrono::minutes>(sec).count();
     dur = dur % 60;
-    std::string displayTime = std::to_string(minutes) + ":" + std::to_string(dur);
+    std::string secondsStr = std::to_string(dur);
+    if(secondsStr.length() < 2)
+    {
+        secondsStr += "0";
+    }
+    std::string displayTime = std::to_string(minutes) + ":" + secondsStr;
     ratingText->set_text(il2cpp_utils::newcsstr("Length: " + displayTime + " Upvotes: " + std::to_string(data->upvotes) + " Downvotes: " + std::to_string(data->downvotes)));
 }
 //CustomCellListTableData
 HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::TableView* tableView, int idx)
 {
-    static auto QuestUICustomCellListCell_cs = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("SongListCellTableCell");
-    static auto QuestUICustomTableCell_cs = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("QuestUICustomTableCell");
+    static auto SongListCustomCellListCell_cs = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("SongListCellTableCell");
+    static auto SongListCustomTableCell_cs = il2cpp_utils::newcsstr<il2cpp_utils::CreationType::Manual>("SongListCustomTableCell");
 
-    CustomComponents::SongListCellTableCell* tableCell = reinterpret_cast<CustomComponents::SongListCellTableCell*>(tableView->DequeueReusableCellForIdentifier(QuestUICustomCellListCell_cs));
+    CustomComponents::SongListCellTableCell* tableCell = reinterpret_cast<CustomComponents::SongListCellTableCell*>(tableView->DequeueReusableCellForIdentifier(SongListCustomCellListCell_cs));
     if(!tableCell)
     {
         tableCell = UnityEngine::GameObject::New_ctor()->AddComponent<CustomComponents::SongListCellTableCell*>();
-        tableCell->set_reuseIdentifier(QuestUICustomCellListCell_cs);
-        tableCell->set_name(QuestUICustomTableCell_cs);
+        tableCell->set_reuseIdentifier(SongListCustomCellListCell_cs);
+        tableCell->set_name(SongListCustomTableCell_cs);
         auto fitter = tableCell->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
         fitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
         fitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
@@ -197,9 +203,6 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->ratingText->set_alignment(TMPro::TextAlignmentOptions::MidlineRight);
         tableCell->ratingText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
         tableCell->ratingText->set_enableWordWrapping(false);
-
-        //tableCell->diffs = QuestUI::BeatSaberUI::CreateTextSegmentedControl(bottomHoriz->get_transform());
-        //tableCell->diffs->set_texts(std::vector<std::u16string>{u"Ex", u"Lmao"});
     }
     tableCell->RefreshData(data[idx]);
     return tableCell;
@@ -215,15 +218,15 @@ int CustomComponents::CustomCellListTableData::NumberOfCells()
 }
 
 std::vector<std::string> split(std::string buffer, const std::string delimeter = " ") {
-  std::vector<std::string> ret{};
-  std::decay_t<decltype(std::string::npos)> pos{};
-  while ((pos = buffer.find(delimeter)) != std::string::npos) {
-    const auto match = buffer.substr(0, pos);
-    if (!match.empty()) ret.push_back(match);
-    buffer = buffer.substr(pos + delimeter.size());
-  }
-  if (!buffer.empty()) ret.push_back(buffer);
-  return ret;
+    std::vector<std::string> ret{};
+    std::decay_t<decltype(std::string::npos)> pos{};
+    while ((pos = buffer.find(delimeter)) != std::string::npos) {
+        const auto match = buffer.substr(0, pos);
+        if (!match.empty()) ret.push_back(match);
+        buffer = buffer.substr(pos + delimeter.size());
+    }
+    if (!buffer.empty()) ret.push_back(buffer);
+    return ret;
 }
 
 std::string toLower(std::string_view str) 
@@ -271,103 +274,133 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 }
 std::string prevSearch = "";
 int prevSort = 0;
+FilterOptions* filterOptions = new FilterOptions();
+BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
+
+bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
+{
+    auto it = std::find(downloadedSongList.begin(), downloadedSongList.end(), song);
+    bool downloaded = it != downloadedSongList.end();
+    if(downloaded)
+    {
+        if(filterOptions->downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+            return false;
+    }
+    else
+    {
+        if(filterOptions->downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+            return false;
+    }
+    return true;
+}
+
 void SortAndFilterSongs(int sort, std::string search)
 {
-    
+    if(tableData != nullptr)
+    {
+        tableData->tableView->ClearSelection();
+        tableData->tableView->ClearHighlights();
+    }
     prevSort = sort;
     prevSearch = search;
-    //"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"
-    std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
+    //std::thread([&]{
+        std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
+            {
+                return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
+            {
+                return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Ranked time
+            {
+                return true;
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
+            {
+                return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
+            {
+                return struct1->GetMaxStarValue() < struct2->GetMaxStarValue();
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
+            {
+                return (struct1->GetRating() > struct2->GetRating());
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
+            {
+                return (struct1->GetRating() < struct2->GetRating());
+            },
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
+            {
+                return (struct1->downloads > struct2->downloads);
+            }
+        };
+        //This is so unranked songs dont show up in the Least Stars Sort
+        std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*)>> sortFilterFuncs = {
+            [] (const SDC_wrapper::BeatStarSong* song)//Newest
+            {
+                return true;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Oldest
+            {
+                return true;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Ranked time
+            {
+                auto ranked = song->GetMaxStarValue() > 0;
+                return ranked;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Most Stars
+            {
+                auto ranked = song->GetMaxStarValue() > 0;
+                return ranked;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Least Stars
+            {
+                auto ranked = song->GetMaxStarValue() > 0;
+                return ranked;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Best rated
+            {
+                return true;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Worst rated
+            {
+                return true;
+            },
+            [] (const SDC_wrapper::BeatStarSong* song)//Most Downloads
+            {
+                return true;
+            }
+        };
+        std::sort(songList.begin(), songList.end(), 
+            sortFuncs[sort]
+        );
+        //filteredSongList = songList;
+        filteredSongList.clear();
+        for(auto song : songList)
         {
-            return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return true;
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            
-            return struct1->GetMaxStarValue() < struct2->GetMaxStarValue();
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return (struct1->GetRating() > struct2->GetRating());
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return (struct1->GetRating() < struct2->GetRating());
-        },
-        [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)
-        {
-            return (struct1->downloads > struct2->downloads);
+            if(deezContainsDat(song, split(search, " ")) && sortFilterFuncs[sort](song) && MeetsFilter(song))
+            {
+                filteredSongList.push_back(song);
+            }
         }
-    };
-    //"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"\
-    //This is so unranked songs dont show up in the Least Stars Sort
-    std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*)>> sortFilterFuncs = {
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            return true;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            return true;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            auto ranked = song->GetMaxStarValue() > 0;
-            return ranked;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            auto ranked = song->GetMaxStarValue() > 0;
-            return ranked;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            auto ranked = song->GetMaxStarValue() > 0;
-            return ranked;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            return true;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            return true;
-        },
-        [] (const SDC_wrapper::BeatStarSong* song)
-        {
-            return true;
-        }
-    };
+    //}).detach();
+}
 
-    std::sort(songList.begin(), songList.end(), 
-        sortFuncs[sort]
-    );
-    //filteredSongList = songList;
-    filteredSongList.clear();
-    for(auto song : songList)
-    {
-        if(deezContainsDat(song, split(search, " ")) && sortFilterFuncs[sort](song))
-        {
-            filteredSongList.push_back(song);
-        }
-    }
+void Sort()
+{
+    SortAndFilterSongs(prevSort, prevSearch);
+    tableData->data = filteredSongList;
+    tableData->tableView->ReloadData();
 }
 
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
+    songListController = this;
     if (!firstActivation) return;
 
     static ViewComponent* view;
@@ -376,11 +409,22 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         delete view;
         view = nullptr;
     }
-    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked/Qualified time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
+    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
     SongListHorizontalLayout* shitass;
-
+    auto downloadedSongs = RuntimeSongLoader::API::GetLoadedSongs();
     // async ui because this causes lag spike
-    std::thread([this, sortModes, &shitass]{
+    std::thread([this, sortModes, &shitass, downloadedSongs]{
+        for(GlobalNamespace::CustomPreviewBeatmapLevel* song : downloadedSongs)
+        {
+            auto levelID = to_utf8(csstrtostr(song->levelID));
+            auto it = find_if(songList.begin(), songList.end(), [levelID](const SDC_wrapper::BeatStarSong* obj) {return levelID.ends_with(obj->GetHash());});
+
+            if (it != songList.end())
+            {
+                auto index = std::distance(songList.begin(), it);
+                downloadedSongList.push_back(songList[index]);
+            }
+        }
         view = new ViewComponent(this->get_transform(), {
             new SongListVerticalLayoutGroup({
                 new SongListHorizontalFilterBar({
@@ -390,7 +434,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                     new Button("MULTI", [](Button* button, UnityEngine::Transform* parentTransform){
 
                     }),
-                    new StringSetting("Search " + std::to_string(songList.size()) + " songs" , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                    new StringSetting("Search songs" , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("Input! %s", input.c_str());
                         SortAndFilterSongs(prevSort, input);
 
@@ -457,15 +501,28 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             //Cover Image
             {
                 auto metaLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(selectedSongView);
+                auto metaFitter = metaLayout->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+                metaFitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+                metaFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+                auto metaElement = metaLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
+                metaElement->set_preferredWidth(28);
+                metaElement->set_preferredHeight(28);
 
-                auto cover = QuestUI::BeatSaberUI::CreateImage(metaLayout->get_transform(), controller->defaultImage, UnityEngine::Vector2(0, 0), UnityEngine::Vector2(60, 60));
+                auto cover = QuestUI::BeatSaberUI::CreateImage(metaLayout->get_transform(), controller->defaultImage, UnityEngine::Vector2(0, 0), UnityEngine::Vector2(28, 28));
+                auto coverElement = cover->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
+                coverElement->set_preferredWidth(28);
+                coverElement->set_preferredHeight(28);
                 cover->set_preserveAspect(true);
                 controller->coverImage = cover;
             }
             
             //Min-Max Diff Info
             {
-
+                auto infoLayout = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(selectedSongView);
+                auto infoFitter = infoLayout->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+                infoFitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+                infoFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+                controller->infoText = QuestUI::BeatSaberUI::CreateText(infoLayout->get_transform(), "details");
             }
 
             //Play-Download Buttonss
@@ -475,10 +532,10 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 buttonFitter->set_verticalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
                 buttonFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
 
-                auto downloadButton = QuestUI::BeatSaberUI::CreateUIButton(buttonLayout->get_transform(), "Download", "PlayButton", nullptr);
+                auto downloadButton = QuestUI::BeatSaberUI::CreateUIButton(buttonLayout->get_transform(), "Download", "PlayButton", [controller](){controller->DownloadSong();});
                 controller->downloadButton = downloadButton;
 
-                auto playButton = QuestUI::BeatSaberUI::CreateUIButton(buttonLayout->get_transform(), "Play", "PlayButton", nullptr);
+                auto playButton = QuestUI::BeatSaberUI::CreateUIButton(buttonLayout->get_transform(), "Play", "PlayButton", [controller](){controller->PlaySong();});
                 controller->playButton = playButton;
 
                 auto infoButton = QuestUI::BeatSaberUI::CreateUIButton(buttonLayout->get_transform(), "Song Details", "PracticeButton", nullptr);
@@ -488,6 +545,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
 
             //Make Lists
             auto list = QuestUI::BeatSaberUI::CreateScrollableCustomSourceList<CustomComponents::CustomCellListTableData*>(shitass->getTransform(), UnityEngine::Vector2(70, 6 * 11.7f));
+            tableData = list;
             list->data = filteredSongList;
             list->tableView->ReloadData();
             auto click = std::function([=](HMUI::TableView* tableView, int row)
@@ -497,7 +555,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView*, int>*>(classof(System::Action_2<HMUI::TableView*, int>*), click);
             list->tableView->add_didSelectCellWithIdxEvent(yes);
             list->get_transform()->get_parent()->SetAsFirstSibling();
-            tableData = list;
 
             //fix scrolling lol
             GlobalNamespace::IVRPlatformHelper* mewhen;
@@ -512,11 +569,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             {
                 if(scrolls->get(i)->platformHelper == nullptr) scrolls->get(i)->platformHelper = mewhen;
             }
-            //auto scrolls2 = this->GetComponentsInChildren<HMUI::ScrollView*>();
-            //for (size_t i = 0; i < scrolls2->Length(); i++)
-            //{
-            //    scrolls2->get(i)->platformHelper = mewhen;
-            //}
 
         });
     }).detach();
