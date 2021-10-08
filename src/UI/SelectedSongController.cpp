@@ -10,6 +10,7 @@
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/UI/Button.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
+#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
@@ -23,6 +24,10 @@
 #include "custom-types/shared/coroutine.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/WaitForEndOfFrame.hpp"
+#include "GlobalNamespace/IDifficultyBeatmap.hpp"
+#include "GlobalNamespace/IBeatmapLevelPack.hpp"
+#include "System/Nullable_1.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator_State.hpp"
 #include <iomanip>
 #include <sstream>
 
@@ -122,34 +127,21 @@ std::string str_tolower(std::string s) {
     return s;
 }
 
-custom_types::Helpers::Coroutine coroutine(const SDC_wrapper::BeatStarSong* currentSong) {
-
-    //co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
-
-    GlobalNamespace::LevelFilteringNavigationController* levelFilteringNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelFilteringNavigationController*>()->values[0];
-    levelFilteringNavigationController->UpdateCustomSongs();
-    levelFilteringNavigationController->UpdateSecondChildControllerContent(4);
-
-    //co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
-
-    auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(currentSong->GetHash()));
-    if(level.has_value())
-    { 
-        GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>()->values[0];
-        if(!levelCollectionNavigationController)
-            co_return;
-        levelCollectionNavigationController->SelectLevel((GlobalNamespace::IPreviewBeatmapLevel*)(level.value()));
-    }
-
+custom_types::Helpers::Coroutine coroutine(GlobalNamespace::SoloFreePlayFlowCoordinator* solo) {
+    solo->levelSelectionNavigationController->levelFilteringNavigationController->UpdateCustomSongs();
     co_return;
 }
 
 void BetterSongSearch::UI::SelectedSongController::PlaySong()
 {
-    GlobalNamespace::MainFlowCoordinator* mfc = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::MainFlowCoordinator*>()->values[0];
+    GlobalNamespace::MainFlowCoordinator* mfc = QuestUI::BeatSaberUI::GetMainFlowCoordinator();//UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::MainFlowCoordinator*>()->values[0];
     auto sfpfc = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SoloFreePlayFlowCoordinator*>()->values[0];
-    fcInstance->PresentFlowCoordinator(sfpfc, il2cpp_utils::MakeDelegate<System::Action*>(classof(System::Action*), std::function([this](){
-        GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator*>(custom_types::Helpers::CoroutineHelper::New(coroutine(this->currentSong))));
-    })), HMUI::ViewController::AnimationDirection::Horizontal, false, false);
-    GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(reinterpret_cast<System::Collections::IEnumerator*>(custom_types::Helpers::CoroutineHelper::New(coroutine(this->currentSong))));
+    
+    auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(currentSong->GetHash()));
+    if(level.has_value())
+    { 
+        currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+    }
+    inBSS = true;
+    fcInstance->PresentFlowCoordinator(sfpfc, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }

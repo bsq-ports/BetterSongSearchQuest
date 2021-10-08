@@ -13,6 +13,20 @@
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
+#include "GlobalNamespace/BeatmapLevelsModel.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator_State.hpp"
+#include "GlobalNamespace/LevelFilteringNavigationController.hpp"
+#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/IDifficultyBeatmap.hpp"
+#include "GlobalNamespace/IBeatmapLevelPack.hpp"
+#include "GlobalNamespace/SongPackMask.hpp"
+#include "GlobalNamespace/BeatmapDifficultyMask.hpp"
+#include "GlobalNamespace/BeatmapCharacteristicSO.hpp"
+#include "System/Nullable_1.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "UnityEngine/WaitForEndOfFrame.hpp"
 
 using namespace QuestUI;
 
@@ -31,22 +45,37 @@ Logger& getLogger() {
     return *logger;
 }
 
-MAKE_HOOK_MATCH(BetterSongSearch_HandleSoloFreePlayFlowCoordinatorDidFinish, &GlobalNamespace::MainFlowCoordinator::HandleSoloFreePlayFlowCoordinatorDidFinish, void, GlobalNamespace::MainFlowCoordinator* self, GlobalNamespace::LevelSelectionFlowCoordinator* flowCoordinator)
+custom_types::Helpers::Coroutine coroutine(GlobalNamespace::LevelSelectionNavigationController* thing, std::function<void()> callback) {
+    thing->levelFilteringNavigationController->UpdateCustomSongs();
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
+    callback();
+    co_return;
+}
+
+MAKE_HOOK_MATCH(BetterSongSearch_HandleSelectedSong, &GlobalNamespace::LevelSelectionNavigationController::Setup, void, GlobalNamespace::LevelSelectionNavigationController* self, GlobalNamespace::SongPackMask songPackMask, GlobalNamespace::BeatmapDifficultyMask allowedBeatmapDifficultyMask, ::Array<GlobalNamespace::BeatmapCharacteristicSO*>* notAllowedCharacteristics, bool hidePacksIfOneOrNone, bool hidePracticeButton, bool showPlayerStatsInDetailView, ::Il2CppString* actionButtonText, GlobalNamespace::IBeatmapLevelPack* levelPackToBeSelectedAfterPresent, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory startLevelCategory, GlobalNamespace::IPreviewBeatmapLevel* beatmapLevelToBeSelectedAfterPresent, bool enableCustomLevels)
 {
-    if(fcInstance != nullptr)
+    getLogger().info("Setup");
+    if(inBSS)
     {
-        if(fcInstance->isActivated)
-        {
-            fcInstance->DismissFlowCoordinator(flowCoordinator, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, false);
-            self->PresentFlowCoordinator(fcInstance, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
-        }
-        else
-        {
-            BetterSongSearch_HandleSoloFreePlayFlowCoordinatorDidFinish(self, flowCoordinator);
-        }
+        getLogger().info("In BSS");
+        self->levelFilteringNavigationController->SetupBeatmapLevelPacks();
+        BetterSongSearch_HandleSelectedSong(self, songPackMask, allowedBeatmapDifficultyMask, notAllowedCharacteristics, hidePacksIfOneOrNone, hidePracticeButton, showPlayerStatsInDetailView, actionButtonText, self->levelFilteringNavigationController->customLevelPacks->values[0], GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::Favorites, currentLevel, enableCustomLevels);
+        inBSS = false;
         return;
     }
-    BetterSongSearch_HandleSoloFreePlayFlowCoordinatorDidFinish(self, flowCoordinator);
+    BetterSongSearch_HandleSelectedSong(self, songPackMask, allowedBeatmapDifficultyMask, notAllowedCharacteristics, hidePacksIfOneOrNone, hidePracticeButton, showPlayerStatsInDetailView, actionButtonText, levelPackToBeSelectedAfterPresent, startLevelCategory, beatmapLevelToBeSelectedAfterPresent, enableCustomLevels);
+}
+
+MAKE_HOOK_MATCH(BetterSongSearch_HandleSelectedSongCategory, &GlobalNamespace::SelectLevelCategoryViewController::Setup, void, GlobalNamespace::SelectLevelCategoryViewController* self, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory selectedCategory, ::Array<GlobalNamespace::SelectLevelCategoryViewController::LevelCategory>* enabledLevelCategories)
+{
+    if(inBSS)
+    {
+        BetterSongSearch_HandleSelectedSongCategory(self, 4, enabledLevelCategories);
+    }
+    else
+    {
+        BetterSongSearch_HandleSelectedSongCategory(self, selectedCategory, enabledLevelCategories);
+    }
 }
 
 MAKE_HOOK_MATCH(BetterSongSearch_BackButtonWasPressed, &GlobalNamespace::SinglePlayerLevelSelectionFlowCoordinator::BackButtonWasPressed, void, GlobalNamespace::SinglePlayerLevelSelectionFlowCoordinator* self, HMUI::ViewController* topViewController)
@@ -94,10 +123,12 @@ extern "C" void load() {
     QuestUI::Init();
     getLogger().info("Successfully installed Settings UI!");
 
-    //INSTALL_HOOK(getLogger(), BetterSongSearch_HandleSoloFreePlayFlowCoordinatorDidFinish);
+    INSTALL_HOOK(getLogger(), BetterSongSearch_HandleSelectedSong);
+    INSTALL_HOOK(getLogger(), BetterSongSearch_HandleSelectedSongCategory);
     INSTALL_HOOK(getLogger(), BetterSongSearch_BackButtonWasPressed);
 
     custom_types::Register::AutoRegister();
-
+    modInfo.id = "Better Song Search";
     QuestUI::Register::RegisterMainMenuModSettingsFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>(modInfo);
+    modInfo.id = ID;
 }

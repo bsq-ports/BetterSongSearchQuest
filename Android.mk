@@ -96,7 +96,7 @@ LOCAL_SHARED_LIBRARIES += songdownloader
 LOCAL_STATIC_LIBRARIES += questui_components
 LOCAL_STATIC_LIBRARIES += curl
 LOCAL_LDLIBS += -llog
-LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"Better Song Search"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'
+LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"BetterSongSearch"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'
 LOCAL_CPPFLAGS += -std=c++2a -frtti
 LOCAL_C_INCLUDES += ./include ./src
 include $(BUILD_SHARED_LIBRARY)

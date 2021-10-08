@@ -2,7 +2,7 @@
   "configurations": [
     {
       "defines": [
-        "ID=\"Better Song Search\"",
+        "ID=\"BetterSongSearch\"",
         "VERSION=\"0.1.0\"",
         "__GNUC__",
         "__aarch64__"

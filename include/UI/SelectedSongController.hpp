@@ -10,6 +10,7 @@
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
+#include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI, SelectedSongController, UnityEngine::MonoBehaviour,
     public:
@@ -25,3 +26,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI, SelectedSongController, UnityEngine:
     HMUI::ImageView* coverImage = nullptr;
     UnityEngine::Sprite* defaultImage = nullptr;
 )
+
+inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
+inline bool inBSS;
