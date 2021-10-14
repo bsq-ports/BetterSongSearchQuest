@@ -6,11 +6,13 @@
     "author": "Christoffyw, Millzy, FutureMapper, Mott's Applesauce",
     "version": "0.1.0",
     "packageId": "com.beatgames.beatsaber",
-    "packageVersion": "1.17.0",
+    "packageVersion": "1.17.1",
     "description": "",
     "modFiles": [
         "libBetterSongSearch.so"
     ],
     "libraryFiles": [
+        "libandroid-libsong_data_core_rust.so",
+	"libbeatsaber-hook_2_3_2.so"
     ]
 }

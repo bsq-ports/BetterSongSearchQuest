@@ -50,6 +50,7 @@ using namespace QuestUI;
 
 #include <time.h>
 #include <chrono>
+#include <string>
 #include <algorithm>
 #include <functional>
 
@@ -71,13 +72,11 @@ void CustomComponents::SongListCellTableCell::ctor()
 
 void CustomComponents::SongListCellTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
 {
-    getLogger().info("Selection Changed");
     RefreshVisuals();
 }
 
 void CustomComponents::SongListCellTableCell::HighlightDidChange(HMUI::SelectableCell::TransitionType transitionType)
 {
-    getLogger().info("Highlight Changed");
     RefreshVisuals();
 }
 
@@ -99,13 +98,54 @@ void CustomComponents::SongListCellTableCell::RefreshVisuals()
     UpdateGOList(neitherGroup, !(isSelected || isHighlighted));
 }
 
+std::string ShortMapDiffNames(std::string_view input) {
+    if(input == "Easy")
+        return "E";
+    if(input == "Normal")
+        return "N";
+    if(input == "Hard")
+        return "H";
+    if(input == "Expert")
+        return "Ex";
+    if(input == "ExpertPlus")
+        return "E+";
+    return nullptr;
+}
+
 void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::BeatStarSong* data)
 {
     auto name = std::string(data->GetName());
     auto author = std::string(data->GetSongAuthor());
     auto combined = author + " - " + name;
-    songText->set_text(il2cpp_utils::newcsstr(combined));
+    //if(combined.length() > 40)
+    //{
+    //    combined.resize(std::min(27, (int)combined.length()));
+    //    combined += "...";
+    //}
     auto ranked = data->GetMaxStarValue() > 0;
+
+    std::vector<std::u16string> difficulties;
+    auto difficultyData = data->GetDifficultyVector();
+
+    for(int i = 0; i < difficultyData.size(); i++) {
+        if(ranked) {
+            if(difficultyData[i]->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
+                difficulties.push_back(to_utf16(string_format("<color=white>%s</color>", std::string(ShortMapDiffNames(difficultyData[i]->GetName())).c_str())));
+            }
+            else
+                difficulties.push_back(to_utf16(string_format("<color=white>%s</color> <color=#ffa500>%.1f</color>", std::string(difficultyData[i]->GetName()).c_str(),difficultyData[i]->stars)));
+        }
+        else {
+            if(difficultyData[i]->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
+                difficulties.push_back(to_utf16(string_format("<color=white>%s</color>", std::string(ShortMapDiffNames(difficultyData[i]->GetName())).c_str())));
+            }
+            else
+                difficulties.push_back(to_utf16(string_format("<color=white>%s</color>", std::string(difficultyData[i]->GetName()).c_str())));
+        }
+    }
+
+    songText->set_text(il2cpp_utils::newcsstr(combined));
+
     auto it = std::find(downloadedSongList.begin(), downloadedSongList.end(), data);
     bool downloaded = it != downloadedSongList.end();
     songText->set_color( ranked ? UnityEngine::Color(1,0.647f,0, 1) : (downloaded ? UnityEngine::Color(0.53f, 0.53f, 0.53f, 1.0f) : UnityEngine::Color::get_white()));
@@ -127,6 +167,8 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     }
     std::string displayTime = std::to_string(minutes) + ":" + secondsStr;
     ratingText->set_text(il2cpp_utils::newcsstr("Length: " + displayTime + " Upvotes: " + std::to_string(data->upvotes) + " Downvotes: " + std::to_string(data->downvotes)));
+
+    diffs->set_texts(difficulties);
 }
 //CustomCellListTableData
 HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::TableView* tableView, int idx)
@@ -203,6 +245,31 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->ratingText->set_alignment(TMPro::TextAlignmentOptions::MidlineRight);
         tableCell->ratingText->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
         tableCell->ratingText->set_enableWordWrapping(false);
+
+        tableCell->diffs = QuestUI::BeatSaberUI::CreateTextSegmentedControl(bottomHoriz->get_transform());
+        tableCell->diffs->fontSize = 2;
+        tableCell->diffs->padding = 1.5;
+        tableCell->diffs->overrideCellSize = true;
+        tableCell->diffs->firstCellPrefab = Instantiate(tableCell->diffs->firstCellPrefab);
+        tableCell->diffs->lastCellPrefab = Instantiate(tableCell->diffs->lastCellPrefab);
+        tableCell->diffs->middleCellPrefab = Instantiate(tableCell->diffs->middleCellPrefab);
+        tableCell->diffs->singleCellPrefab = Instantiate(tableCell->diffs->singleCellPrefab);
+
+        Destroy(tableCell->diffs->firstCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+        Destroy(tableCell->diffs->lastCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+        Destroy(tableCell->diffs->middleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+        Destroy(tableCell->diffs->singleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+
+        tableCell->diffs->singleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
+        tableCell->diffs->lastCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
+        tableCell->diffs->firstCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
+        tableCell->diffs->middleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
+        tableCell->diffs->firstCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
+        tableCell->diffs->lastCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
+        tableCell->diffs->middleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
+        tableCell->diffs->singleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
+        tableCell->diffs->hideCellBackground = true;
+        //tableCell->diffs->set_texts(std::vector<std::u16string>{u"Ex", u"Lmao"});
     }
     tableCell->RefreshData(data[idx]);
     return tableCell;

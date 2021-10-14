@@ -47,18 +47,23 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
         getLogger().info("Downloading");
         coverImage->set_sprite(defaultImage);
         //):
+        getLogger().info("No Method: %s", song->hash.string_data);
+        getLogger().info("Method: %s", song->GetHash().data());
         BeatSaver::API::GetBeatmapByHashAsync(std::string(song->GetHash()), 
         [this](std::optional<BeatSaver::Beatmap> beatmap)
         {
-            BeatSaver::API::GetCoverImageAsync(beatmap.value(), 
-            [this](std::vector<uint8_t> result) {
-                auto arr = il2cpp_utils::vectorToArray(result);
-                getLogger().info("Downloaded");
-                QuestUI::MainThreadScheduler::Schedule([this, arr]
-                {
-                    this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(arr));
+            if(beatmap.has_value()) {
+                BeatSaver::API::GetCoverImageAsync(beatmap.value(),
+                    [this](std::vector<uint8_t> result) {
+                    auto arr = il2cpp_utils::vectorToArray(result);
+                    getLogger().info("Downloaded");
+                    QuestUI::MainThreadScheduler::Schedule([this, arr]
+                    {
+                        this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(arr));
+                        this->coverImage->get_rectTransform()->set_sizeDelta(UnityEngine::Vector2(160, 160));
+                    });
                 });
-            });
+            }
         });
     //}
 
