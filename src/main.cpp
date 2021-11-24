@@ -2,13 +2,14 @@
 
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "questui/shared/CustomTypes/Components/Settings/SliderSetting.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/SliderFormatter.hpp"
 
 #include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 #include "custom-types/shared/register.hpp"
-#include "custom-types/shared/coroutine.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
@@ -24,9 +25,7 @@
 #include "GlobalNamespace/SongPackMask.hpp"
 #include "GlobalNamespace/BeatmapDifficultyMask.hpp"
 #include "GlobalNamespace/BeatmapCharacteristicSO.hpp"
-#include "System/Nullable_1.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
-#include "UnityEngine/WaitForEndOfFrame.hpp"
+#include "GlobalNamespace/QuestAppInit.hpp"
 
 using namespace QuestUI;
 
@@ -45,13 +44,6 @@ Logger& getLogger() {
     return *logger;
 }
 
-custom_types::Helpers::Coroutine coroutine(GlobalNamespace::LevelSelectionNavigationController* thing, std::function<void()> callback) {
-    thing->levelFilteringNavigationController->UpdateCustomSongs();
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForEndOfFrame::New_ctor()));
-    callback();
-    co_return;
-}
-
 MAKE_HOOK_MATCH(BetterSongSearch_HandleSelectedSong, &GlobalNamespace::LevelSelectionNavigationController::Setup, void, GlobalNamespace::LevelSelectionNavigationController* self, GlobalNamespace::SongPackMask songPackMask, GlobalNamespace::BeatmapDifficultyMask allowedBeatmapDifficultyMask, ::Array<GlobalNamespace::BeatmapCharacteristicSO*>* notAllowedCharacteristics, bool hidePacksIfOneOrNone, bool hidePracticeButton, bool showPlayerStatsInDetailView, ::Il2CppString* actionButtonText, GlobalNamespace::IBeatmapLevelPack* levelPackToBeSelectedAfterPresent, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory startLevelCategory, GlobalNamespace::IPreviewBeatmapLevel* beatmapLevelToBeSelectedAfterPresent, bool enableCustomLevels)
 {
     getLogger().info("Setup");
@@ -59,7 +51,8 @@ MAKE_HOOK_MATCH(BetterSongSearch_HandleSelectedSong, &GlobalNamespace::LevelSele
     {
         getLogger().info("In BSS");
         self->levelFilteringNavigationController->SetupBeatmapLevelPacks();
-        BetterSongSearch_HandleSelectedSong(self, songPackMask, allowedBeatmapDifficultyMask, notAllowedCharacteristics, hidePacksIfOneOrNone, hidePracticeButton, showPlayerStatsInDetailView, actionButtonText, self->levelFilteringNavigationController->customLevelPacks->values[0], GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::Favorites, currentLevel, enableCustomLevels);
+        getLogger().info("Setup Packs");
+        BetterSongSearch_HandleSelectedSong(self, songPackMask, allowedBeatmapDifficultyMask, notAllowedCharacteristics, hidePacksIfOneOrNone, hidePracticeButton, showPlayerStatsInDetailView, actionButtonText, levelPackToBeSelectedAfterPresent, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::All, currentLevel, enableCustomLevels);
         inBSS = false;
         return;
     }
@@ -70,12 +63,30 @@ MAKE_HOOK_MATCH(BetterSongSearch_HandleSelectedSongCategory, &GlobalNamespace::S
 {
     if(inBSS)
     {
-        BetterSongSearch_HandleSelectedSongCategory(self, 4, enabledLevelCategories);
+        BetterSongSearch_HandleSelectedSongCategory(self, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::All, enabledLevelCategories);
     }
     else
     {
         BetterSongSearch_HandleSelectedSongCategory(self, selectedCategory, enabledLevelCategories);
     }
+}
+
+MAKE_HOOK_MATCH(BetterSongSearch_ScuffPackFix, &GlobalNamespace::LevelFilteringNavigationController::SetupBeatmapLevelPacks, void, GlobalNamespace::LevelFilteringNavigationController* self)
+{
+    if(inBSS)
+    {
+        self->levelPackIdToBeSelectedAfterPresent = il2cpp_utils::newcsstr("");
+    }
+    BetterSongSearch_ScuffPackFix(self);
+}
+
+MAKE_HOOK_MATCH(BetterSongSearch_ScuffPackFix2, &GlobalNamespace::LevelFilteringNavigationController::UpdateSecondChildControllerContent, void, GlobalNamespace::LevelFilteringNavigationController* self, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory levelCategory)
+{
+    if(inBSS)
+    {
+        self->levelPackIdToBeSelectedAfterPresent = nullptr;
+    }
+    BetterSongSearch_ScuffPackFix2(self, levelCategory);
 }
 
 MAKE_HOOK_MATCH(BetterSongSearch_BackButtonWasPressed, &GlobalNamespace::SinglePlayerLevelSelectionFlowCoordinator::BackButtonWasPressed, void, GlobalNamespace::SinglePlayerLevelSelectionFlowCoordinator* self, HMUI::ViewController* topViewController)
@@ -98,6 +109,22 @@ MAKE_HOOK_MATCH(BetterSongSearch_BackButtonWasPressed, &GlobalNamespace::SingleP
     }
     BetterSongSearch_BackButtonWasPressed(self, topViewController);
 }
+
+MAKE_HOOK(QuestUI_TextForValue, nullptr, Il2CppString*, QuestUI::SliderSetting* self, float value)
+{
+    getLogger().info("TextForValue");
+
+    auto formatter = self->GetComponent<BetterSongSearch::UI::SliderFormatter*>();
+    if(formatter != nullptr)
+    {
+        return il2cpp_utils::newcsstr(formatter->formatFunction(value));
+    }
+    else
+    {
+        return QuestUI_TextForValue(self, value);
+    }
+}
+
 // Called at the early stages of game loading
 extern "C" void setup(ModInfo& info) {
     info.id = ID;
@@ -126,6 +153,9 @@ extern "C" void load() {
     INSTALL_HOOK(getLogger(), BetterSongSearch_HandleSelectedSong);
     INSTALL_HOOK(getLogger(), BetterSongSearch_HandleSelectedSongCategory);
     INSTALL_HOOK(getLogger(), BetterSongSearch_BackButtonWasPressed);
+    INSTALL_HOOK(getLogger(), BetterSongSearch_ScuffPackFix);
+    INSTALL_HOOK(getLogger(), BetterSongSearch_ScuffPackFix2);
+    //INSTALL_HOOK_DIRECT(getLogger(), QuestUI_TextForValue, (void*)QuestUI::SliderSetting::TextForValue);
 
     custom_types::Register::AutoRegister();
     modInfo.id = "Better Song Search";

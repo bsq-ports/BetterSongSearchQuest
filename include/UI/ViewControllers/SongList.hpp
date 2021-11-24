@@ -12,7 +12,6 @@
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/List/CustomCellListWrapper.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "../Sprites.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
@@ -47,10 +46,6 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(CustomComponents, CustomCellListTableData, I
 )
 
 DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
-    DECLARE_INSTANCE_FIELD(List<UnityEngine::GameObject*>*, selectedGroup);
-    DECLARE_INSTANCE_FIELD(List<UnityEngine::GameObject*>*, hoveredGroup);
-    DECLARE_INSTANCE_FIELD(List<UnityEngine::GameObject*>*, neitherGroup);
-
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, mapperText);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, uploadDateText);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, ratingText);
@@ -66,7 +61,6 @@ DECLARE_CLASS_CODEGEN(CustomComponents, SongListCellTableCell, HMUI::TableCell,
     public:
     QuestUI::CustomTextSegmentedControlData* diffs;
     void RefreshData(const SDC_wrapper::BeatStarSong* data);
-    
 )
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewController, HMUI::ViewController,

@@ -55,7 +55,7 @@ LOCAL_MODULE := questui_components
 LOCAL_EXPORT_C_INCLUDES := extern/questui_components
 LOCAL_SRC_FILES := extern/libquestui_components.a
 include $(PREBUILT_STATIC_LIBRARY)
-# Creating prebuilt for dependency: songdatacore - version: 0.4.4
+# Creating prebuilt for dependency: songdatacore - version: 0.4.6
 include $(CLEAR_VARS)
 LOCAL_MODULE := android-libsong_data_core_rust
 LOCAL_EXPORT_C_INCLUDES := extern/songdatacore

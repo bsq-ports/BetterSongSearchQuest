@@ -15,13 +15,11 @@
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/IconSegmentedControl.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
 #include "System/Action.hpp"
 #include "System/Collections/IEnumerator.hpp"
-#include "custom-types/shared/coroutine.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/WaitForEndOfFrame.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
@@ -97,9 +95,9 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
     std::string minNJSStr = stream3.str();
 
     std::stringstream stream4;
-    stream2 << std::fixed << std::setprecision(2) << maxNJS;
+    stream4 << std::fixed << std::setprecision(2) << maxNJS;
     std::string maxNJSStr = stream4.str();
-    infoText->set_text(il2cpp_utils::newcsstr(minNPSStr + std::string(" - ") + maxNPSStr + std::string(" NPS / ") + minNJSStr + std::string(" - ") + maxNJSStr + std::string(" NJS")));
+    infoText->set_text(il2cpp_utils::newcsstr(minNPSStr + std::string(" - ") + maxNPSStr + std::string(" NPS \n ") + minNJSStr + std::string(" - ") + maxNJSStr + std::string(" NJS")));
     songNameText->set_text(il2cpp_utils::newcsstr(song->GetName()));
     authorText->set_text(il2cpp_utils::newcsstr(song->GetSongAuthor()));
 }
@@ -123,18 +121,6 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
             }, nullptr);
         }
     });
-}
-
-std::string str_tolower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c){ return std::tolower(c); } // correct
-                  );
-    return s;
-}
-
-custom_types::Helpers::Coroutine coroutine(GlobalNamespace::SoloFreePlayFlowCoordinator* solo) {
-    solo->levelSelectionNavigationController->levelFilteringNavigationController->UpdateCustomSongs();
-    co_return;
 }
 
 void BetterSongSearch::UI::SelectedSongController::PlaySong()

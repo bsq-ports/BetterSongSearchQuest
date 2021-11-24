@@ -39,6 +39,8 @@ using namespace QuestUI;
 #include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/Touchable.hpp"
 #include "HMUI/ScrollView.hpp"
+#include "HMUI/TableView.hpp"
+#include "HMUI/TableView_ScrollPositionType.hpp"
 #include "HMUI/VerticalScrollIndicator.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
 #include "sombrero/shared/Vector2Utils.hpp"
@@ -65,9 +67,6 @@ std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
 //SongListCellTableCell
 void CustomComponents::SongListCellTableCell::ctor()
 {
-    selectedGroup = List<UnityEngine::GameObject*>::New_ctor();
-    hoveredGroup = List<UnityEngine::GameObject*>::New_ctor();
-    neitherGroup = List<UnityEngine::GameObject*>::New_ctor();
 }
 
 void CustomComponents::SongListCellTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
@@ -80,22 +79,12 @@ void CustomComponents::SongListCellTableCell::HighlightDidChange(HMUI::Selectabl
     RefreshVisuals();
 }
 
-#define UpdateGOList(list, condition) \
-    int list## length = list->get_Count(); \
-    for (int i = 0; i < list## length; i++) { \
-        list->items->values[i]->SetActive(condition); \
-     } \
-
 void CustomComponents::SongListCellTableCell::RefreshVisuals()
 {
     bool isSelected = get_selected();
     bool isHighlighted = get_highlighted(); 
 
     bg->background->set_color(UnityEngine::Color(0, 0, 0, isSelected ? 0.9f : isHighlighted ? 0.6f : 0.45f));
-
-    UpdateGOList(selectedGroup, isSelected);
-    UpdateGOList(hoveredGroup, isHighlighted);
-    UpdateGOList(neitherGroup, !(isSelected || isHighlighted));
 }
 
 std::string ShortMapDiffNames(std::string_view input) {
@@ -169,6 +158,7 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     ratingText->set_text(il2cpp_utils::newcsstr("Length: " + displayTime + " Upvotes: " + std::to_string(data->upvotes) + " Downvotes: " + std::to_string(data->downvotes)));
 
     diffs->set_texts(difficulties);
+    diffs->CellForCellNumber(0)->SetSelected(false, HMUI::SelectableCell::TransitionType::Instant, nullptr, false);
 }
 //CustomCellListTableData
 HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::TableView* tableView, int idx)
@@ -310,14 +300,29 @@ bool strContain(std::string_view str, std::string_view str2)
     return strstr(std::string(str).c_str(), std::string(str2).c_str());
 }
 
+std::string removeSpecialCharacter(std::string s)
+{
+    std::string stringy(s);
+    for (int i = 0; i < stringy.size(); i++) {
+         
+        if (stringy[i] < 'A' || stringy[i] > 'Z' &&
+            stringy[i] < 'a' || stringy[i] > 'z')
+        { 
+            stringy.erase(i, 1);
+            i--;
+        }
+    }
+    return stringy;
+}
+
 bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
 {
     int words = 0;
     int matches = 0;
-    auto songName = toLower(song->GetName());
-    auto songSubName = toLower(song->GetSubName());
-    auto songAuthorName = toLower(song->GetSongAuthor());
-    auto levelAuthorName = toLower(song->GetAuthor());
+    auto songName = removeSpecialCharacter(toLower(song->GetName()));
+    auto songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
+    auto songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
+    auto levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
 
     for (int i = 0; i < searchTexts.size(); i++)
     {
@@ -358,6 +363,95 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
         if(filterOptions->downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
             return false;
     }
+
+    bool ranked = song->GetMaxStarValue() > 0;
+    if(ranked)
+    {
+        if(filterOptions->rankedType == FilterOptions::RankedFilterType::HideRanked)
+            return false;
+    }
+    else
+    {
+        if(filterOptions->rankedType == FilterOptions::RankedFilterType::OnlyRanked)
+            return false;
+    }
+
+    float minNPS = 500000, maxNPS = 0;
+    float minNJS = 500000, maxNJS = 0;
+
+    bool foundValidDiff = false;
+    bool foundValidChar = false;
+
+    for(auto diff : song->GetDifficultyVector())
+    {
+        float nps = (float)diff->notes / (float)song->duration_secs;
+        float njs = diff->njs;
+        minNPS = std::min(nps, minNPS);
+        maxNPS = std::max(nps, maxNPS);
+
+        minNJS = std::min(njs, minNJS);
+        maxNJS = std::max(njs, maxNJS);
+        switch(filterOptions->difficultyFilter)
+        {
+            case FilterOptions::DifficultyFilterType::All:
+                foundValidDiff = true;
+                break;
+            case FilterOptions::DifficultyFilterType::Easy:
+                if(diff->GetName() == "Easy") foundValidDiff = true;
+                break;
+            case FilterOptions::DifficultyFilterType::Normal:
+                if(diff->GetName() == "Normal") foundValidDiff = true;
+                break;
+            case FilterOptions::DifficultyFilterType::Hard:
+                if(diff->GetName() == "Hard") foundValidDiff = true;
+                break;
+            case FilterOptions::DifficultyFilterType::Expert:
+                if(diff->GetName() == "Expert") foundValidDiff = true;
+                break;
+            case FilterOptions::DifficultyFilterType::ExpertPlus:
+                if(diff->GetName() == "ExpertPlus") foundValidDiff = true;
+                break;
+        }
+        switch(filterOptions->charFilter)//"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+        {
+            case FilterOptions::CharFilterType::All:
+                foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::Custom:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Unknown) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::Standard:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Standard) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::OneSaber:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::OneSaber) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::NoArrows:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::NoArrows) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::NinetyDegrees:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Degree90) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::ThreeSixtyDegrees:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Degree360) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::LightShow:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Lightshow) foundValidChar = true;
+                break;
+            case FilterOptions::CharFilterType::Lawless:
+                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Lawless) foundValidChar = true;
+                break;
+        }
+    }
+    if(!foundValidDiff) return false;
+    if(!foundValidChar) return false;
+
+    if(minNPS < filterOptions->minNPS) return false;
+    if(maxNPS > filterOptions->maxNPS) return false;
+    if(minNJS < filterOptions->minNJS) return false;
+    if(maxNJS > filterOptions->maxNJS) return false;
+
+
     return true;
 }
 
@@ -380,9 +474,22 @@ void SortAndFilterSongs(int sort, std::string search)
             {
                 return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
             },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Ranked time
+            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
             {
-                return true;
+                int struct1RankedUpdateTime;
+                auto struct1DiffVec = struct1->GetDifficultyVector();
+                for(int i = 0; i < struct1DiffVec.size(); i++)
+                {
+                    struct1RankedUpdateTime = std::max((int)struct1DiffVec[i]->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
+                }
+
+                int struct2RankedUpdateTime;
+                auto struct2DiffVec = struct2->GetDifficultyVector();
+                for(int i = 0; i < struct2DiffVec.size(); i++)
+                {
+                    struct2RankedUpdateTime = std::max((int)struct2DiffVec[i]->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
+                }
+                return (struct1RankedUpdateTime > struct2RankedUpdateTime);
             },
             [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
             {
@@ -394,11 +501,11 @@ void SortAndFilterSongs(int sort, std::string search)
             },
             [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
             {
-                return (struct1->GetRating() > struct2->GetRating());
+                return (struct1->rating > struct2->rating);
             },
             [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
             {
-                return (struct1->GetRating() < struct2->GetRating());
+                return (struct1->rating > struct2->rating);
             },
             [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
             {
@@ -415,7 +522,7 @@ void SortAndFilterSongs(int sort, std::string search)
             {
                 return true;
             },
-            [] (const SDC_wrapper::BeatStarSong* song)//Ranked time
+            [] (const SDC_wrapper::BeatStarSong* song)//Latest Ranked
             {
                 auto ranked = song->GetMaxStarValue() > 0;
                 return ranked;
@@ -443,9 +550,6 @@ void SortAndFilterSongs(int sort, std::string search)
                 return true;
             }
         };
-        std::sort(songList.begin(), songList.end(), 
-            sortFuncs[sort]
-        );
         //filteredSongList = songList;
         filteredSongList.clear();
         for(auto song : songList)
@@ -455,6 +559,9 @@ void SortAndFilterSongs(int sort, std::string search)
                 filteredSongList.push_back(song);
             }
         }
+        std::sort(filteredSongList.begin(), filteredSongList.end(), 
+            sortFuncs[sort]
+        );
     //}).detach();
 }
 
@@ -476,11 +583,12 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         delete view;
         view = nullptr;
     }
-    std::vector<std::string> sortModes = {"Newest", "Oldest", "Ranked time", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
+    std::vector<std::string> sortModes = {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
     SongListHorizontalLayout* shitass;
     auto downloadedSongs = RuntimeSongLoader::API::GetLoadedSongs();
     // async ui because this causes lag spike
-    std::thread([this, sortModes, &shitass, downloadedSongs]{
+    auto songListTemp = songList;
+    std::thread([this, sortModes, &shitass, downloadedSongs, songListTemp]{
         for(GlobalNamespace::CustomPreviewBeatmapLevel* song : downloadedSongs)
         {
             auto levelID = to_utf8(csstrtostr(song->levelID));
@@ -495,8 +603,9 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         view = new ViewComponent(this->get_transform(), {
             new SongListVerticalLayoutGroup({
                 new SongListHorizontalFilterBar({
-                    new Button("RANDOM", [](Button* button, UnityEngine::Transform* parentTransform){
-
+                    new Button("RANDOM", [songListTemp](Button* button, UnityEngine::Transform* parentTransform){
+                        int random = rand() % songListTemp.size();
+                        tableData->tableView->ScrollToCellWithIdx(random, HMUI::TableView::ScrollPositionType::Center, true);
                     }),
                     new Button("MULTI", [](Button* button, UnityEngine::Transform* parentTransform){
 

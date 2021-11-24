@@ -16,10 +16,38 @@ class FilterOptions
         HidePassed,
         OnlyPassed
     };
+    enum class RankedFilterType
+    {
+        All,
+        HideRanked,
+        OnlyRanked
+    };
+    enum class DifficultyFilterType
+    {
+        All,
+        Easy,
+        Normal,
+        Hard,
+        Expert,
+        ExpertPlus
+    };
+    enum class CharFilterType
+    {
+        All,
+        Custom,
+        Standard,
+        OneSaber,
+        NoArrows,
+        NinetyDegrees,
+        ThreeSixtyDegrees,
+        LightShow,
+        Lawless,
+    };
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
 	const float STAR_FILTER_MAX = 14.0f;
 	const float NJS_FILTER_MAX = 25.0f;
 	const float NPS_FILTER_MAX = 12.0f;
+    const int64_t BEATSAVER_EPOCH = 1525136400;
 
     //General
     DownloadFilterType downloadType = DownloadFilterType::All;
@@ -31,10 +59,14 @@ class FilterOptions
     float minNPS = 0, maxNPS = 12;
 
     //ScoreSaber
-    bool showRanked = true;
+    RankedFilterType rankedType = RankedFilterType::All;
     float minStars = 0, maxStars = 14;
 
     //BeatSaver
-    float minimumRating = 0;
-    int minimumVotes = 0;
+    float minRating = 0;
+    int minVotes = 0;
+
+    //Difficulty
+    DifficultyFilterType difficultyFilter = DifficultyFilterType::All;
+    CharFilterType charFilter = CharFilterType::All;
 };

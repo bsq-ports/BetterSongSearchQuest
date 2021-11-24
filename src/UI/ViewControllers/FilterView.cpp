@@ -30,8 +30,10 @@ using namespace QuestUI;
 #include "custom-types/shared/coroutine.hpp"
 #include "UnityEngine/WaitForEndOfFrame.hpp"
 
+#include "DateUtils.hpp"
 #include "FilterOptions.hpp"
 #include "UI/ViewControllers/SongList.hpp"
+#include "UI/SliderFormatter.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
@@ -48,6 +50,11 @@ int getIndex(std::vector<std::string> v, std::string K)
     else {
         return -1;
     }
+}
+
+uint64_t timeSinceEpoch() {
+  using namespace std::chrono;
+  return duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
 }
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
@@ -175,10 +182,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     mappingText->set_fontStyle(TMPro::FontStyles::Underline);
 
     std::function<void(float)> minNJSChange = [=](float value) {
-
+        filterOptions->minNJS = value;
+        Sort();
     };
     std::function<void(float)> maxNJSChange = [=](float value) {
-
+        filterOptions->maxNJS = value;
+        Sort();
     };
 
     auto NJSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(leftOptionsLayout->get_transform());
@@ -197,10 +206,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     reinterpret_cast<UnityEngine::RectTransform*>(maxNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
 
     std::function<void(float)> minNPSChange = [=](float value) {
-
+        filterOptions->minNPS = value;
+        Sort();
     };
     std::function<void(float)> maxNPSChange = [=](float value) {
-
+        filterOptions->maxNPS = value;
+        Sort();
     };
 
     auto NPSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(leftOptionsLayout->get_transform());
@@ -224,17 +235,25 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     scoresaberText->set_alignment(TMPro::TextAlignmentOptions::Center);
     scoresaberText->set_fontStyle(TMPro::FontStyles::Underline);
 
-    std::vector<std::string> rankedFilterOptions = {"Show all", "Only Ranked"};
+    std::vector<std::string> rankedFilterOptions = {"Show all", "Only Ranked", "Hide Ranked"};
     std::function<void(std::string_view)> rankedFilterChange = [=](std::string_view value) {
-
+        if(value == "Show All") 
+            filterOptions->rankedType = FilterOptions::RankedFilterType::All;
+        if(value == "Only Ranked") 
+            filterOptions->rankedType = FilterOptions::RankedFilterType::OnlyRanked;
+        if(value == "Hide Ranked") 
+            filterOptions->rankedType = FilterOptions::RankedFilterType::HideRanked;
+        Sort();
     };
     auto rankedFilterDropdown = BeatSaberUI::CreateDropdown(leftOptionsLayout->get_transform(), "Ranked Status", "Show all", rankedFilterOptions, rankedFilterChange);
 
     std::function<void(float)> minStarChange = [=](float value) {
-
+        filterOptions->minStars = value;
+        Sort();
     };
     std::function<void(float)> maxStarChange = [=](float value) {
-
+        filterOptions->maxStars = value;
+        Sort();
     };
 
     auto rankedStarLayout = BeatSaberUI::CreateHorizontalLayoutGroup(leftOptionsLayout->get_transform());
@@ -271,19 +290,37 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     QuestUI::SliderSetting* minUploadDateSlider;
     std::function<void(float)> minUploadDateChange = [=](float value) {
-
+        //Divided because for some reason it likes too add 4 extra digits at the end.
+        int val = BetterSongSearch::GetDateAfterMonths(1525136400, value).time_since_epoch().count()/10000;
+        char date[100];
+        struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
+        strftime(date, sizeof(date), "%b %G", t);
+        getLogger().info("%s", std::to_string(val).c_str());
+        getLogger().info("%s", date);
     };
     QuestUI::SliderSetting* minRatingSlider;
     std::function<void(float)> minRatingChange = [=](float value) {
-        //minRatingSlider->text->set_text(il2cpp_utils::newcsstr(std::to_string((int)value) + ".0%"));
+        filterOptions->minRating = value;
+        Sort();
     };
     QuestUI::SliderSetting* minVotesSlider;
     std::function<void(float)> minVotesChange = [=](float value) {
-
+        filterOptions->minVotes = value;
+        Sort();
     };
 
-    minUploadDateSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Min upload date", 1, 0, 0, 10, minUploadDateChange);
+    minUploadDateSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Min upload date", 1, GetMonthsSinceDate(1525136400), 0, GetMonthsSinceDate(1525136400), minUploadDateChange);
+    minUploadDateSlider->get_gameObject()->AddComponent<BetterSongSearch::UI::SliderFormatter*>()->formatFunction = 
+    [](float value)
+    {
+        return std::to_string(value);
+    };
     minRatingSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Rating", 5, 0, 0, 90, minRatingChange);
+    minRatingSlider->get_gameObject()->AddComponent<BetterSongSearch::UI::SliderFormatter*>()->formatFunction = 
+    [](float value)->std::string
+    { 
+        return "%";
+    };
     minVotesSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
 
     auto chardifTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(rightOptionsLayout->get_transform());
@@ -294,12 +331,27 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     std::vector<std::string> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
     std::function<void(std::string_view)> charFilterChange = [=](std::string_view value) {
-
+        if(value == "Any") filterOptions->charFilter = FilterOptions::CharFilterType::All;
+        if(value == "Custom") filterOptions->charFilter = FilterOptions::CharFilterType::Custom;
+        if(value == "Standard") filterOptions->charFilter = FilterOptions::CharFilterType::Standard;
+        if(value == "One Saber") filterOptions->charFilter = FilterOptions::CharFilterType::OneSaber;
+        if(value == "No Arrows") filterOptions->charFilter = FilterOptions::CharFilterType::NoArrows;
+        if(value == "90 Degrees") filterOptions->charFilter = FilterOptions::CharFilterType::NinetyDegrees;
+        if(value == "360 Degrees") filterOptions->charFilter = FilterOptions::CharFilterType::ThreeSixtyDegrees;
+        if(value == "LightShow") filterOptions->charFilter = FilterOptions::CharFilterType::LightShow;
+        if(value == "Lawless") filterOptions->charFilter = FilterOptions::CharFilterType::Lawless;
+        Sort();
     };
     auto charDropdown = BeatSaberUI::CreateDropdown(rightOptionsLayout->get_transform(), "Characteristic", "Any", charFilterOptions, charFilterChange);
     std::vector<std::string> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
     std::function<void(std::string_view)> diffFilterChange = [=](std::string_view value) {
-
+        if(value == "Any") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::All;
+        if(value == "Easy") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Easy;
+        if(value == "Normal") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Normal;
+        if(value == "Hard") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Hard;
+        if(value == "Expert") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Expert;
+        if(value == "Expert+") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::ExpertPlus;
+        Sort();
     };
     auto diffDropdown = BeatSaberUI::CreateDropdown(rightOptionsLayout->get_transform(), "Difficulty", "Any", diffFilterOptions, diffFilterChange);
 
