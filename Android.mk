@@ -55,7 +55,7 @@ LOCAL_MODULE := questui_components
 LOCAL_EXPORT_C_INCLUDES := extern/questui_components
 LOCAL_SRC_FILES := extern/libquestui_components.a
 include $(PREBUILT_STATIC_LIBRARY)
-# Creating prebuilt for dependency: songdatacore - version: 0.4.6
+# Creating prebuilt for dependency: songdatacore - version: 0.4.1
 include $(CLEAR_VARS)
 LOCAL_MODULE := android-libsong_data_core_rust
 LOCAL_EXPORT_C_INCLUDES := extern/songdatacore
@@ -79,6 +79,12 @@ LOCAL_MODULE := curl
 LOCAL_EXPORT_C_INCLUDES := extern/libcurl
 LOCAL_SRC_FILES := extern/libcurl.a
 include $(PREBUILT_STATIC_LIBRARY)
+# Creating prebuilt for dependency: libcryptopp - version: 8.5.0
+include $(CLEAR_VARS)
+LOCAL_MODULE := cryptopp
+LOCAL_EXPORT_C_INCLUDES := extern/libcryptopp
+LOCAL_SRC_FILES := extern/libcryptopp.a
+include $(PREBUILT_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := BetterSongSearch
@@ -93,10 +99,11 @@ LOCAL_SHARED_LIBRARIES += codegen
 LOCAL_SHARED_LIBRARIES += android-libsong_data_core_rust
 LOCAL_SHARED_LIBRARIES += songloader
 LOCAL_SHARED_LIBRARIES += songdownloader
-LOCAL_STATIC_LIBRARIES += questui_components
-LOCAL_STATIC_LIBRARIES += curl
+LOCAL_STATIC_LIBRARIES += cryptopp
 LOCAL_LDLIBS += -llog
 LOCAL_CFLAGS += -I'extern/libil2cpp/il2cpp/libil2cpp' -DID='"BetterSongSearch"' -DVERSION='"0.1.0"' -I'./shared' -I'./extern' -isystem'extern/codegen/include'
 LOCAL_CPPFLAGS += -std=c++2a -frtti
 LOCAL_C_INCLUDES += ./include ./src
+LOCAL_STATIC_LIBRARIES += questui_components
+LOCAL_STATIC_LIBRARIES += curl
 include $(BUILD_SHARED_LIBRARY)

@@ -5,6 +5,7 @@
 #include "questui/shared/ArrayUtil.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UnityEngine/Resources.hpp"
@@ -102,23 +103,55 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
     authorText->set_text(il2cpp_utils::newcsstr(song->GetSongAuthor()));
 }
 
+float roundFloat(float value)
+{
+    return round(value*10)/10;
+}
+
 void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
+    downloadButton->set_interactable(false);
+    std::function<void(float)> progressUpdate = [=](float downloadPercentage) {
+        getLogger().info("DownloadProgress: %f", roundFloat(downloadPercentage));
+        std::string value1 = std::to_string(roundFloat(downloadPercentage));
+        std::string value2;
+        if(downloadPercentage < 10)
+            value2 = value1.substr(0, 3);
+        else
+            value2 = value1.substr(0, 4);
+        auto textMeshPro = downloadButton->get_gameObject()->GetComponentInChildren<TMPro::TextMeshProUGUI*>();
+        if(textMeshPro) {
+            if(downloadPercentage >= 100) {
+                textMeshPro->set_text(il2cpp_utils::newcsstr("Download"));
+                playButton->get_gameObject()->set_active(true);
+            }
+            else
+                textMeshPro->set_text(il2cpp_utils::newcsstr(value2 + "%"));
+        }
+    };
+
     BeatSaver::API::GetBeatmapByHashAsync(std::string(currentSong->GetHash()), 
-    [this](std::optional<BeatSaver::Beatmap> beatmap)
+    [=](std::optional<BeatSaver::Beatmap> beatmap)
     {
         if(beatmap.has_value())
         {
             BeatSaver::API::DownloadBeatmapAsync(beatmap.value(),
-            [this](bool error) {
+            [=](bool error) {
                 if (!error) {
                     QuestUI::MainThreadScheduler::Schedule(
-                        [] {
+                        [=] {
                             RuntimeSongLoader::API::RefreshSongs(false);
+                            downloadButton->set_interactable(true);
+                            downloadButton->get_gameObject()->set_active(false);
                         }
                     );
                 }
-            }, nullptr);
+                else {
+                    auto textMeshPro = downloadButton->get_gameObject()->GetComponentInChildren<TMPro::TextMeshProUGUI*>();
+                    textMeshPro->set_text(il2cpp_utils::newcsstr("Download"));
+                    downloadButton->set_interactable(true);
+                }
+            }, progressUpdate);
         }
     });
 }
