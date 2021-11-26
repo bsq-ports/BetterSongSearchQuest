@@ -156,7 +156,11 @@ void CustomComponents::SongListCellTableCell::RefreshData(const SDC_wrapper::Bea
     }
     std::string displayTime = std::to_string(minutes) + ":" + secondsStr;
     ratingText->set_text(il2cpp_utils::newcsstr("Length: " + displayTime + " Upvotes: " + std::to_string(data->upvotes) + " Downvotes: " + std::to_string(data->downvotes)));
-
+    std::string difficultyLog = "";
+    for(int i; i < difficulties.size(); i++) {
+        difficultyLog.append(to_utf8(difficulties.at(i)));
+    }
+    getLogger().info("%s", difficultyLog.c_str());
     diffs->set_texts(difficulties);
     diffs->CellForCellNumber(0)->SetSelected(false, HMUI::SelectableCell::TransitionType::Instant, nullptr, false);
 }
@@ -240,7 +244,7 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->diffs->fontSize = 2;
         tableCell->diffs->padding = 1.5;
         tableCell->diffs->overrideCellSize = true;
-        tableCell->diffs->firstCellPrefab = Instantiate(tableCell->diffs->firstCellPrefab);
+        /*tableCell->diffs->firstCellPrefab = Instantiate(tableCell->diffs->firstCellPrefab);
         tableCell->diffs->lastCellPrefab = Instantiate(tableCell->diffs->lastCellPrefab);
         tableCell->diffs->middleCellPrefab = Instantiate(tableCell->diffs->middleCellPrefab);
         tableCell->diffs->singleCellPrefab = Instantiate(tableCell->diffs->singleCellPrefab);
@@ -248,7 +252,10 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         Destroy(tableCell->diffs->firstCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
         Destroy(tableCell->diffs->lastCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
         Destroy(tableCell->diffs->middleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
-        Destroy(tableCell->diffs->singleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+        Destroy(tableCell->diffs->singleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());*/
+        for(int i; i < tableCell->diffs->NumberOfCells(); i++) {
+            Destroy(tableCell->diffs->CellForCellNumber(i));
+        }
 
         tableCell->diffs->singleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
         tableCell->diffs->lastCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
