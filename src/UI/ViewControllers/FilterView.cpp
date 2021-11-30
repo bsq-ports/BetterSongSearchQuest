@@ -309,18 +309,25 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         Sort();
     };
 
+    std::function<std::string(float)> minUploadDateSliderFormatFunciton = [=](float value) {
+        int val = BetterSongSearch::GetDateAfterMonths(1525136400, value).time_since_epoch().count()/10000;
+        char date[100];
+        struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
+        strftime(date, sizeof(date), "%b %G", t);
+        return std::string(date);
+    };
+
     minUploadDateSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Min upload date", 1, GetMonthsSinceDate(1525136400), 0, GetMonthsSinceDate(1525136400), minUploadDateChange);
-    minUploadDateSlider->get_gameObject()->AddComponent<BetterSongSearch::UI::SliderFormatter*>()->formatFunction = 
-    [](float value)
-    {
-        return std::to_string(value);
+    minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
+
+    std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
+        std::string fixedValue = std::to_string(value).erase(std::to_string(value).length() - 7);
+        return fixedValue + "%";
     };
+
     minRatingSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Rating", 5, 0, 0, 90, minRatingChange);
-    minRatingSlider->get_gameObject()->AddComponent<BetterSongSearch::UI::SliderFormatter*>()->formatFunction = 
-    [](float value)->std::string
-    { 
-        return "%";
-    };
+    minRatingSlider->FormatString = minRatingSliderFormatFunction;
+    
     minVotesSlider = BeatSaberUI::CreateSliderSetting(rightOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
 
     auto chardifTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(rightOptionsLayout->get_transform());
