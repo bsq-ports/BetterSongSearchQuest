@@ -6,9 +6,16 @@
     "id": "BetterSongSearch",
     "version": "0.1.0",
     "url": null,
-    "additionalData": {}
+    "additionalData": {
+      "overrideSoName": "libbettersongsearch.so"
+    }
   },
   "dependencies": [
+    {
+      "id": "modloader",
+      "versionRange": "^1.2.3",
+      "additionalData": {}
+    },
     {
       "id": "beatsaber-hook",
       "versionRange": "=2.3.2",
@@ -51,6 +58,11 @@
     {
       "id": "sdc-wrapper",
       "versionRange": "=0.1.2",
+      "additionalData": {}
+    },
+    {
+      "id": "config-utils",
+      "versionRange": "*",
       "additionalData": {}
     },
     {

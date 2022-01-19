@@ -7,8 +7,6 @@ using namespace BetterSongSearch::UI;
 #include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
 using namespace QuestUI;
 
-#include "config-utils/shared/config-utils.hpp"
-
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"

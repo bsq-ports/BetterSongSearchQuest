@@ -128,6 +128,7 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
         if(textMeshPro) {
             if(downloadPercentage >= 100) {
                 textMeshPro->set_text(il2cpp_utils::newcsstr("Download"));
+                downloadButton->get_gameObject()->set_active(false);
                 playButton->get_gameObject()->set_active(true);
             }
             else

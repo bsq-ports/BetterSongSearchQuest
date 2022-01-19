@@ -65,6 +65,7 @@ class FilterOptions
     //BeatSaver
     float minRating = 0;
     int minVotes = 0;
+    std::string uploaderString;
 
     //Difficulty
     DifficultyFilterType difficultyFilter = DifficultyFilterType::All;

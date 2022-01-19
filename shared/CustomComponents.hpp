@@ -1,4 +1,5 @@
 #pragma once
+#define USE_CODEGEN_FIELDS
 
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/GameObject.hpp"

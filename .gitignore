@@ -41,6 +41,7 @@ out/
 [Ll]ibs/
 [Oo]bj/
 [Oo]bjs/
+[Bb]uild/
 ndkpath.txt
 *.zip
 *.txt

@@ -13,6 +13,6 @@
     ],
     "libraryFiles": [
         "libandroid-libsong_data_core_rust.so",
-	"libbeatsaber-hook_2_3_2.so"
+	    "libbeatsaber-hook_2_3_2.so"
     ]
 }

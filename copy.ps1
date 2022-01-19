@@ -1,10 +1,13 @@
 & $PSScriptRoot/build.ps1
 if ($?) {
-    adb push libs/arm64-v8a/libBetterSongSearch.so /sdcard/Android/data/com.beatgames.beatsaber/files/mods/libBetterSongSearch.so
+    adb push build/libbettersongsearch.so /sdcard/Android/data/com.beatgames.beatsaber/files/mods/libbettersongsearch.so
     if ($?) {
-        & $PSScriptRoot/restart-game.ps1
+        adb shell am force-stop com.beatgames.beatsaber
+        adb shell am start com.beatgames.beatsaber/com.unity3d.player.UnityPlayerActivity
         if ($args[0] -eq "--log") {
-            & $PSScriptRoot/start-logging.ps1
+            $timestamp = Get-Date -Format "MM-dd HH:mm:ss.fff"
+            adb logcat -c
+            adb logcat -T "$timestamp" main-modloader:W QuestHook[BetterSongSearch`|v0.1.0]:* QuestHook[UtilsLogger`|v1.0.12]:* AndroidRuntime:E *:S
         }
     }
 }

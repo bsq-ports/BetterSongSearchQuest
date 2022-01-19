@@ -1,3 +1,4 @@
+#define USE_CODEGEN_FIELDS
 #include "UI/ViewControllers/SongList.hpp"
 #include "main.hpp"
 using namespace BetterSongSearch::UI;
@@ -44,7 +45,7 @@ using namespace QuestUI;
 #include "HMUI/VerticalScrollIndicator.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
 #include "sombrero/shared/Vector2Utils.hpp"
-#include "songloader/shared/API.hpp"
+//#include "songloader/shared/API.hpp"
 #include "System/StringComparison.hpp"
 #include "System/Action_2.hpp"
 #include <iomanip>
@@ -196,7 +197,7 @@ HMUI::TableCell* CustomComponents::CustomCellListTableData::CellForIdx(HMUI::Tab
         tableCell->get_transform()->SetParent(tableView->get_transform()->GetChild(0)->GetChild(0), false);
 
         auto topHoriz = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(verticalLayoutGroup->get_transform());
-        topHoriz->set_childForceExpandWidth(true);
+        topHoriz->set_childControlWidth(true);
 
         auto midHoriz = QuestUI::BeatSaberUI::CreateHorizontalLayoutGroup(verticalLayoutGroup->get_transform());
 
@@ -326,6 +327,7 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
     auto songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
     auto songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
     auto levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
+    auto songKey = toLower(song->key.string_data);
 
     for (int i = 0; i < searchTexts.size(); i++)
     {
@@ -339,7 +341,8 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
         if (strContain(songName, searchTerm) || 
             strContain(songSubName, searchTerm) ||
             strContain(songAuthorName, searchTerm) ||
-            strContain(levelAuthorName, searchTerm))
+            strContain(levelAuthorName, searchTerm) ||
+            strContain(songKey, searchTerm))
         {
             matches++;
         }
@@ -381,6 +384,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
+    float minStars = 500000, maxStars = 0;
 
     bool foundValidDiff = false;
     bool foundValidChar = false;
@@ -389,11 +393,16 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     {
         float nps = (float)diff->notes / (float)song->duration_secs;
         float njs = diff->njs;
+        float stars = diff->stars;
+
         minNPS = std::min(nps, minNPS);
         maxNPS = std::max(nps, maxNPS);
 
         minNJS = std::min(njs, minNJS);
         maxNJS = std::max(njs, maxNJS);
+        
+        minStars = std::min(stars, minStars);
+        maxStars = std::max(stars, maxStars);
         switch(filterOptions->difficultyFilter)
         {
             case FilterOptions::DifficultyFilterType::All:
@@ -453,6 +462,8 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     if(maxNPS > filterOptions->maxNPS) return false;
     if(minNJS < filterOptions->minNJS) return false;
     if(maxNJS > filterOptions->maxNJS) return false;
+    if(minStars < filterOptions->minStars) return false;
+    if(maxStars > filterOptions->maxStars) return false;
 
 
     return true;
@@ -467,7 +478,7 @@ void SortAndFilterSongs(int sort, std::string search)
     }
     prevSort = sort;
     prevSearch = search;
-    //std::thread([&]{
+    // std::thread([&]{
         std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
             [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
             {
@@ -588,11 +599,11 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     }
     std::vector<std::string> sortModes = {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"};
     SongListHorizontalLayout* shitass;
-    auto downloadedSongs = RuntimeSongLoader::API::GetLoadedSongs();
+    //auto downloadedSongs = RuntimeSongLoader::API::GetLoadedSongs();
     // async ui because this causes lag spike
     auto songListTemp = songList;
-    std::thread([this, sortModes, &shitass, downloadedSongs, songListTemp]{
-        for(GlobalNamespace::CustomPreviewBeatmapLevel* song : downloadedSongs)
+    std::thread([this, sortModes, &shitass, songListTemp]{
+        /*for(GlobalNamespace::CustomPreviewBeatmapLevel* song : downloadedSongs)
         {
             auto levelID = to_utf8(csstrtostr(song->levelID));
             auto it = find_if(songList.begin(), songList.end(), [levelID](const SDC_wrapper::BeatStarSong* obj) {return levelID.ends_with(obj->GetHash());});
@@ -602,18 +613,18 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 auto index = std::distance(songList.begin(), it);
                 downloadedSongList.push_back(songList[index]);
             }
-        }
+        }*/
         view = new ViewComponent(this->get_transform(), {
             new SongListVerticalLayoutGroup({
                 new SongListHorizontalFilterBar({
-                    new Button("RANDOM", [songListTemp](Button* button, UnityEngine::Transform* parentTransform){
-                        int random = rand() % songListTemp.size();
+                    new Button("RANDOM", [](Button* button, UnityEngine::Transform* parentTransform){
+                        int random = rand() % filteredSongList.size();
                         tableData->tableView->ScrollToCellWithIdx(random, HMUI::TableView::ScrollPositionType::Center, true);
                     }),
                     new Button("MULTI", [](Button* button, UnityEngine::Transform* parentTransform){
 
                     }),
-                    new StringSetting("Search songs" , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
+                    new StringSetting("Search by Song, Key, Mapper..." , "", [](StringSetting*, const std::string& input, UnityEngine::Transform*){
                         getLogger().debug("Input! %s", input.c_str());
                         SortAndFilterSongs(prevSort, input);
 
@@ -738,13 +749,13 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             //fix scrolling lol
             GlobalNamespace::IVRPlatformHelper* mewhen;
             auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
-            for (size_t i = 0; i < scrolls->Length(); i++)
+            for (int i = 0; i < scrolls->Length(); i++)
             {
                 mewhen = scrolls->get(i)->platformHelper;
                 if(mewhen != nullptr)
                     break;
             }
-            for (size_t i = 0; i < scrolls->Length(); i++)
+            for (int i = 0; i < scrolls->Length(); i++)
             {
                 if(scrolls->get(i)->platformHelper == nullptr) scrolls->get(i)->platformHelper = mewhen;
             }
