@@ -4,6 +4,9 @@
 class FilterOptions
 {
     public:
+    FilterOptions(FilterOptions const&) = delete; // no accidental copying
+    FilterOptions() = default;
+
     enum class DownloadFilterType
     {
         All,

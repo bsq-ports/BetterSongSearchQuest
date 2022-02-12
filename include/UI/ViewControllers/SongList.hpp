@@ -34,7 +34,7 @@ namespace BetterSongSearch::UI {
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
         inline static bool loadedSDC = false;
-        inline static FilterOptions* filterOptions;
+        inline static FilterOptions filterOptions;
     };
 
     constexpr std::string_view ShortMapDiffNames(std::string_view input) {
@@ -52,10 +52,10 @@ namespace BetterSongSearch::UI {
         return "UNKNOWN";
     }
 
-    struct CellData : QUC::CustomTypeList::QUCDescriptor {
+    struct CellData : public QUC::CustomTypeList::QUCDescriptor {
         const SDC_wrapper::BeatStarSong* song;
 
-        CellData(SDC_wrapper::BeatStarSong const *song) : song(song) {}
+        CellData(SDC_wrapper::BeatStarSong const *song) : QUCDescriptor(), song(song) {}
     };
 
     struct CellDiffSegmentedControl {
@@ -101,7 +101,7 @@ namespace BetterSongSearch::UI {
                 int i = 0;
                 for (auto const &diffData: diffsVector) {
                     if (ranked) {
-                        strs[i] = fmt::format("<color=white>{}</color> <color=#ffa500>{:0.1f}</color>", diffData->GetName(), diffData->stars);
+                        strs[i] = fmt::format("<color=white>{}</color> <color=#ffa500>{:.1f}</color>", diffData->GetName(), diffData->stars);
                     } else {
                         if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
                             strs[i] = fmt::format("<color=white>{}</color>", ShortMapDiffNames(diffData->GetName()));

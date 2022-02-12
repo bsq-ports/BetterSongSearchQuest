@@ -51,6 +51,80 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_QUC_CUSTOMLIST_TABLEDATA(BetterSongSearch::UI, QUCObjectTableData);
 DEFINE_QUC_CUSTOMLIST_CELL(BetterSongSearch::UI, QUCObjectTableCell)
 
+
+DROPDOWN_CREATE_ENUM_CLASS(SortMode,
+                           STR_LIST("Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"),
+                           Newest,
+                           Oldest,
+                           Latest_Ranked,
+                           Most_Stars,
+                           Least_Stars,
+                           Best_rated,
+                           Worst_rated,
+                           Most_Downloads)
+
+std::string prevSearch;
+SortMode prevSort = (SortMode) 0;
+BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
+
+using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
+
+static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
+        {SortMode::Newest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
+                           {
+                               return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
+                           }},
+        {SortMode::Oldest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
+                           {
+                               return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
+                           }},
+        {SortMode::Latest_Ranked, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
+                           {
+                               int struct1RankedUpdateTime;
+                               auto struct1DiffVec = struct1->GetDifficultyVector();
+                               for(auto const& i : struct1DiffVec)
+                               {
+                                   struct1RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
+                               }
+
+                               int struct2RankedUpdateTime;
+                               auto struct2DiffVec = struct2->GetDifficultyVector();
+                               for(auto const& i : struct2DiffVec)
+                               {
+                                   struct2RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
+                               }
+                               return (struct1RankedUpdateTime > struct2RankedUpdateTime);
+                           }},
+        {SortMode::Most_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
+                           {
+                               return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
+                           }},
+        {SortMode::Least_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
+                           {
+                               return struct1->GetMaxStarValue() < struct2->GetMaxStarValue();
+                           }},
+        {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
+                           {
+                               return (struct1->rating > struct2->rating);
+                           }},
+        {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
+                           {
+                               return (struct1->rating > struct2->rating);
+                           }},
+        {SortMode::Most_Downloads, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
+                           {
+                               return (struct1->downloads > struct2->downloads);
+                           }}
+};
+
+//This is so unranked songs dont show up in the Least Stars Sort
+static const std::function<bool(const SDC_wrapper::BeatStarSong* song)> rankedFilterFunction = [] (const SDC_wrapper::BeatStarSong* song)//Least Stars
+{
+    auto ranked = song->GetMaxStarValue() > 0;
+    return ranked;
+};
+
+
 void BetterSongSearch::UI::QUCObjectTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
 {
     RefreshVisuals();
@@ -145,34 +219,33 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 
     return matches == words;
 }
-std::string prevSearch = "";
-int prevSort = 0;
-FilterOptions* filterOptions = new FilterOptions();
-BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
+
 
 bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
+    auto const& filterOptions = DataHolder::filterOptions;
+
     bool downloaded = DataHolder::downloadedSongList.contains(song);
     if(downloaded)
     {
-        if(filterOptions->downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
             return false;
     }
     else
     {
-        if(filterOptions->downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
             return false;
     }
 
     bool ranked = song->GetMaxStarValue() > 0;
     if(ranked)
     {
-        if(filterOptions->rankedType == FilterOptions::RankedFilterType::HideRanked)
+        if(filterOptions.rankedType == FilterOptions::RankedFilterType::HideRanked)
             return false;
     }
     else
     {
-        if(filterOptions->rankedType == FilterOptions::RankedFilterType::OnlyRanked)
+        if(filterOptions.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
             return false;
     }
 
@@ -197,7 +270,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
         
         minStars = std::min(stars, minStars);
         maxStars = std::max(stars, maxStars);
-        switch(filterOptions->difficultyFilter)
+        switch(filterOptions.difficultyFilter)
         {
             case FilterOptions::DifficultyFilterType::All:
                 foundValidDiff = true;
@@ -218,7 +291,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
                 if(diff->GetName() == "ExpertPlus") foundValidDiff = true;
                 break;
         }
-        switch(filterOptions->charFilter)//"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+        switch(filterOptions.charFilter)//"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
         {
             case FilterOptions::CharFilterType::All:
                 foundValidChar = true;
@@ -252,18 +325,18 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     if(!foundValidDiff) return false;
     if(!foundValidChar) return false;
 
-    if(minNPS < filterOptions->minNPS) return false;
-    if(maxNPS > filterOptions->maxNPS) return false;
-    if(minNJS < filterOptions->minNJS) return false;
-    if(maxNJS > filterOptions->maxNJS) return false;
-    if(minStars < filterOptions->minStars) return false;
-    if(maxStars > filterOptions->maxStars) return false;
+    if(minNPS < filterOptions.minNPS) return false;
+    if(maxNPS > filterOptions.maxNPS) return false;
+    if(minNJS < filterOptions.minNJS) return false;
+    if(maxNJS > filterOptions.maxNJS) return false;
+    if(minStars < filterOptions.minStars) return false;
+    if(maxStars > filterOptions.maxStars) return false;
 
 
     return true;
 }
 
-void SortAndFilterSongs(int sort, std::string_view const search)
+void SortAndFilterSongs(SortMode sort, std::string_view const search)
 {
     if(songListController != nullptr)
     {
@@ -273,102 +346,20 @@ void SortAndFilterSongs(int sort, std::string_view const search)
     prevSort = sort;
     prevSearch = search;
     // std::thread([&]{
-        std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*, const SDC_wrapper::BeatStarSong*)>> sortFuncs = {
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
-            {
-                return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
-            {
-                return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
-            {
-                int struct1RankedUpdateTime;
-                auto struct1DiffVec = struct1->GetDifficultyVector();
-                for(int i = 0; i < struct1DiffVec.size(); i++)
-                {
-                    struct1RankedUpdateTime = std::max((int)struct1DiffVec[i]->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
-                }
 
-                int struct2RankedUpdateTime;
-                auto struct2DiffVec = struct2->GetDifficultyVector();
-                for(int i = 0; i < struct2DiffVec.size(); i++)
-                {
-                    struct2RankedUpdateTime = std::max((int)struct2DiffVec[i]->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
-                }
-                return (struct1RankedUpdateTime > struct2RankedUpdateTime);
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
-            {
-                return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
-            {
-                return struct1->GetMaxStarValue() < struct2->GetMaxStarValue();
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
-            {
-                return (struct1->rating > struct2->rating);
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
-            {
-                return (struct1->rating > struct2->rating);
-            },
-            [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
-            {
-                return (struct1->downloads > struct2->downloads);
-            }
-        };
-        //This is so unranked songs dont show up in the Least Stars Sort
-        std::vector<std::function<bool(const SDC_wrapper::BeatStarSong*)>> sortFilterFuncs = {
-            [] (const SDC_wrapper::BeatStarSong* song)//Newest
-            {
-                return true;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Oldest
-            {
-                return true;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Latest Ranked
-            {
-                auto ranked = song->GetMaxStarValue() > 0;
-                return ranked;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Most Stars
-            {
-                auto ranked = song->GetMaxStarValue() > 0;
-                return ranked;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Least Stars
-            {
-                auto ranked = song->GetMaxStarValue() > 0;
-                return ranked;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Best rated
-            {
-                return true;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Worst rated
-            {
-                return true;
-            },
-            [] (const SDC_wrapper::BeatStarSong* song)//Most Downloads
-            {
-                return true;
-            }
-        };
+    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+
         //filteredSongList = songList;
         DataHolder::filteredSongList.clear();
         for(auto song : DataHolder::songList)
         {
-            if(deezContainsDat(song, split(search, " ")) && sortFilterFuncs[sort](song) && MeetsFilter(song))
+            if(deezContainsDat(song, split(search, " ")) && (!isRankedSort || rankedFilterFunction(song)) && MeetsFilter(song))
             {
                 DataHolder::filteredSongList.emplace_back(song);
             }
         }
-        std::sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-            sortFuncs[sort]
+        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
+            sortFunctionMap.at(sort)
         );
     //}).detach();
 }
@@ -429,9 +420,8 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
 
 
 
-    SortAndFilterSongs(0, "");
-
-    static auto songListControllerView = SongListVerticalLayoutGroup(
+    SortAndFilterSongs(SortMode::Newest, "");
+    auto songListControllerView = SongListVerticalLayoutGroup(
             SongListHorizontalFilterBar(
                     Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
                         int random = rand() % DataHolder::filteredSongList.size();
@@ -451,8 +441,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                             DropdownSetting<std::tuple_size_v<decltype(sortModes)>> &, std::string const &input,
                             UnityEngine::Transform *, RenderContext &ctx) {
                         getLogger().debug("DropDown! %s", input.c_str());
-                        auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-                        SortAndFilterSongs(std::distance(sortModes.begin(), itr), prevSearch);
+                        SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
 
                         songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
                         songListController->table.update();

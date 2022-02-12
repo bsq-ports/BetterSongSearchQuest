@@ -81,7 +81,7 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
     playButton.child.enabled = downloaded;
     downloadButton.child.enabled = !downloaded;
 
-    infoText.child.text = fmt::format("{0:.2f} - {0:.2f} NPS \n {0:.2f} - {0:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS);
+    infoText.child.text = fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS);
     songNameText.child.text = song->GetName();
     authorText.child.text = song->GetSongAuthor();
 
@@ -104,7 +104,7 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
             downloadButton.update();
         }
         else {
-            downloadButton.child.text.text = fmt::format("{0:.4f}%", downloadPercentage);
+            downloadButton.child.text.text = fmt::format("{:.4f}%", downloadPercentage);
             downloadButton.update();
         }
     };
