@@ -460,7 +460,9 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         //Make Lists
 
         auto click = std::function([=](HMUI::TableView *tableView, int row) {
-            this->selectedSongController.child.SetSong(DataHolder::filteredSongList[row]);
+            // Get song list actually inside the table
+            auto const& songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData*>(tableView->dataSource)->descriptors;
+            this->selectedSongController.child.SetSong(songList[row].song);
         });
         auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(classof(System::Action_2<HMUI::TableView *, int>*), click);
 
