@@ -129,7 +129,7 @@ namespace BetterSongSearch::UI {
         CellDiffSegmentedControl cellDiff;
         std::function<void(Sombrero::FastColor const&)> setBgColor;
 
-        T view;
+        std::remove_reference_t<T> view;
 
         const QUC::Key key;
 
@@ -146,8 +146,8 @@ namespace BetterSongSearch::UI {
             uploadDateText.wordWrapping = false;
 
             ModifyLayout topLayout(QUC::HorizontalLayoutGroup(
-                    songText,
-                    uploadDateText
+                    QUC::RefComp(songText),
+                    QUC::RefComp(uploadDateText)
             ));
             topLayout.childForceExpandWidth = true;
             //
@@ -159,14 +159,14 @@ namespace BetterSongSearch::UI {
 
 
             QUC::detail::HorizontalLayoutGroup midLayout(
-                    mapperText,
-                    ratingText
+                    QUC::detail::refComp(mapperText),
+                    QUC::RefComp(ratingText)
             );
             //
 
             // BOTTOM
             ModifyContentSizeFitter bottomLayout(QUC::HorizontalLayoutGroup(
-                    cellDiff
+                    QUC::RefComp(cellDiff)
             ));
             bottomLayout.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             bottomLayout.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
@@ -180,14 +180,14 @@ namespace BetterSongSearch::UI {
             // full layout
             ModifyLayout layout (
                 OnRenderCallback(
-                    QUC::detail::Backgroundable("round-rect-panel", true,
+                    QUC::Backgroundable("round-rect-panel", true,
                          QUC::VerticalLayoutGroup(
                             topLayout,
                             midLayout,
-                            QUC::detail::Backgroundable<decltype(bottomLayoutElement)>(
+                            QUC::Backgroundable(
                                     "round-rect-panel",
                                     true,
-                                    std::forward<decltype(bottomLayoutElement)>(bottomLayoutElement),
+                                    bottomLayoutElement,
                                     1.0f,
                                     Sombrero::FastColor::black()
                             )

@@ -389,24 +389,24 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
     auto& controller = view->selectedSongController;
     controller.child.defaultImage = defaultImage;
 
-    detail::VerticalLayoutGroup<decltype(controller)&> selectedSongView(controller);
+    detail::VerticalLayoutGroup selectedSongView(QUC::detail::refComp(controller));
 
-    ModifyLayout<decltype(selectedSongView)> layout(selectedSongView);
+    ModifyLayout layout(selectedSongView);
     layout.childForceExpandHeight = false;
     layout.padding = {2,2,2,2};
 
-    ModifyLayoutElement<decltype(layout)> layoutElement(layout);
+    ModifyLayoutElement layoutElement(layout);
     layoutElement.preferredWidth = 40;
 
     std::vector<CellData> filteredSongs(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
 
     view->table.child.initCellDatas = filteredSongs;
 
-    return QUC::detail::Backgroundable("round-rect-panel", true,
+    return QUC::Backgroundable("round-rect-panel", true,
         SongListHorizontalLayout(
                 selectedSongView,
-                OnRenderCallback<ViewControllers::SongListViewController::TableType&>(
-                    view->table,
+                OnRenderCallback(
+                    QUC::detail::refComp(view->table),
                     [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
                         auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
 

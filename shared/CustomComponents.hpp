@@ -37,13 +37,10 @@ namespace BetterSongSearch::UI {
     template<class T>
     requires (QUC::renderable_return<T, UnityEngine::Transform*>)
     struct HMUITouchable {
-        T child;
+        std::remove_reference_t<T> child;
         const QUC::Key key;
 
-        HMUITouchable(T&& child_)
-                : child(child_) {}
-
-        HMUITouchable(T const& child_)
+        HMUITouchable(T child_)
                 : child(child_) {}
 
         UnityEngine::Transform* render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
@@ -64,7 +61,7 @@ namespace BetterSongSearch::UI {
     template<class T>
     requires (QUC::renderable_return<T, UnityEngine::Transform*>)
     struct OnRenderCallback {
-        T child;
+        std::remove_reference_t<T> child;
         const QUC::Key key;
 
         using Callback = std::function<void(T& child, QUC::RenderContext& ctx, QUC::RenderContextChildData& data)>;
@@ -72,8 +69,8 @@ namespace BetterSongSearch::UI {
         Callback renderCallback;
 
         template<typename F>
-        OnRenderCallback(T&& child_, F&& c)
-                : child(child_),renderCallback(c) {}
+        OnRenderCallback(T child_, F&& c)
+                : child(std::move(child_)), renderCallback(c) {}
 
         UnityEngine::Transform* render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
             auto res = QUC::detail::renderSingle(child, ctx);
@@ -96,10 +93,10 @@ namespace BetterSongSearch::UI {
         QUC::HeldData<std::optional<bool>> wordWrapping;
 
         template<typename... TArgs>
-        ModifyText(QUC::Text&& text, std::optional<TMPro::TextAlignmentOptions> alignment = std::nullopt,
+        ModifyText(QUC::Text text, std::optional<TMPro::TextAlignmentOptions> alignment = std::nullopt,
                    std::optional<TMPro::TextOverflowModes> overflowMode = std::nullopt,
                    std::optional<bool> wordWrapping = std::nullopt)
-        : QUC::Text(std::forward<QUC::Text>(text)), alignmentOptions(alignment), overflowMode(overflowMode), wordWrapping(wordWrapping){}
+        : QUC::Text(std::move(text)), alignmentOptions(alignment), overflowMode(overflowMode), wordWrapping(wordWrapping){}
 
 
 
@@ -130,7 +127,7 @@ namespace BetterSongSearch::UI {
     template<typename Layout>
     requires (QUC::renderable<Layout>)
     struct ModifyLayout : public Layout {
-        constexpr ModifyLayout(Layout const& layout) : Layout(layout) {}
+        constexpr ModifyLayout(Layout layout) : Layout(layout) {}
 
         QUC::HeldData<UnityEngine::TextAnchor> childAlignment;
         QUC::RenderHeldData<bool> childControlWidth;
@@ -191,9 +188,9 @@ namespace BetterSongSearch::UI {
     requires (QUC::renderable_return<Layout, UnityEngine::Transform*>)
     struct ModifyLayoutElement {
         const QUC::Key key;
-        Layout layout;
+        std::remove_reference_t<Layout> layout;
 
-        constexpr ModifyLayoutElement(Layout const& layout) : layout(layout) {}
+        constexpr ModifyLayoutElement(Layout layout) : layout(layout) {}
 
         QUC::RenderHeldData<float> preferredWidth;
         QUC::RenderHeldData<float> preferredHeight;
@@ -239,9 +236,9 @@ namespace BetterSongSearch::UI {
     requires (QUC::renderable_return<Layout, UnityEngine::Transform*>)
     struct ModifyContentSizeFitter {
         const QUC::Key key;
-        Layout layout;
+        std::remove_reference_t<Layout> layout;
 
-        constexpr ModifyContentSizeFitter(Layout const& layout) : layout(layout) {}
+        constexpr ModifyContentSizeFitter(Layout layout) : layout(layout) {}
 
         QUC::HeldData<UnityEngine::UI::ContentSizeFitter::FitMode> horizontalFit;
         QUC::HeldData<UnityEngine::UI::ContentSizeFitter::FitMode> verticalFit;
@@ -289,7 +286,7 @@ namespace BetterSongSearch::UI {
         LazyInitAndUpdate& operator =(LazyInitAndUpdate&&) noexcept = default;
 
         QUC::RenderContext* ctx;
-        T child;
+        std::remove_reference_t<T> child;
 
         constexpr LazyInitAndUpdate<T>& emplace(T const& n) {
             child = n;
@@ -400,7 +397,7 @@ namespace BetterSongSearch::UI {
         fitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
 
 
-        QUC::detail::Backgroundable background("round-rect-panel", false, fitter, 1.0f);
+        QUC::Backgroundable background("round-rect-panel", false, fitter, 1.0f);
 
         return background;
     }

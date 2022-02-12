@@ -17,6 +17,7 @@
 #include "questui_components/shared/components/Text.hpp"
 #include "questui_components/shared/components/Button.hpp"
 #include "questui_components/shared/components/Image.hpp"
+#include "questui_components/shared/reference_comp.hpp"
 
 #include "CustomComponents.hpp"
 #include "shared/components/list/CustomCelledList.hpp"
@@ -32,7 +33,7 @@ namespace BetterSongSearch::UI {
 
 
         [[nodiscard]] auto DefaultAuthorText() {
-            ModifyContentSizeFitter<QUC::Text&> authorFitter(authorText);
+            ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
             authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -40,7 +41,7 @@ namespace BetterSongSearch::UI {
         }
 
         [[nodiscard]] auto DefaultNameText() {
-            ModifyContentSizeFitter<QUC::Text&> nameFitter(songNameText.child);
+            ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText.child));
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -58,34 +59,34 @@ namespace BetterSongSearch::UI {
             contentSizeFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             contentSizeFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-            ModifyLayout modifyLayout(
-                    VerticalLayoutGroup<decltype(metaLayout)>( // don't use reference as parameter
-                            static_cast<decltype(metaLayout)>(metaLayout)
+            ModifyLayout modifyLayout = ModifyLayout(
+                    QUC::detail::VerticalLayoutGroup(
+                            metaLayout
                     )
             );
 
             modifyLayout.childForceExpandHeight = true;
             modifyLayout.padding = {2, 2, 2, 2};
 
-            ModifyLayoutElement<decltype(modifyLayout)> layoutElement(modifyLayout);
+            ModifyLayoutElement layoutElement(modifyLayout);
             layoutElement.preferredWidth = 40;
 
             return layoutElement;
         }
 
         [[nodiscard]] auto DefaultCoverImage() {
-            ModifyLayoutElement<QUC::Image&> coverElement(coverImage);
+            ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
             coverElement.preferredHeight = 28;
             coverElement.preferredWidth = 28;
 
 
             QUC::detail::HorizontalLayoutGroup metaLayout(coverElement);
 
-            ModifyContentSizeFitter<decltype(metaLayout)> metaFitter(metaLayout);
+            ModifyContentSizeFitter metaFitter(metaLayout);
             metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             metaFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-            ModifyLayoutElement<decltype(metaFitter)> metaElement(metaFitter);
+            ModifyLayoutElement metaElement(metaFitter);
 
             metaElement.preferredWidth = 28;
             metaElement.preferredHeight = 28;
@@ -95,7 +96,7 @@ namespace BetterSongSearch::UI {
         }
 
         [[nodiscard]] auto DefaultMinMaxDiffInfo() {
-            QUC::detail::HorizontalLayoutGroup<QUC::Text&> layout(infoText);
+            QUC::detail::HorizontalLayoutGroup layout(QUC::detail::refComp(infoText));
 
             ModifyContentSizeFitter nameFitter(layout);
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
@@ -105,10 +106,10 @@ namespace BetterSongSearch::UI {
         }
 
         [[nodiscard]] auto DefaultButtonLayout() {
-            QUC::detail::VerticalLayoutGroup<QUC::Button&, QUC::Button&, QUC::Button&> layout(
-                    downloadButton,
-                    playButton,
-                    infoButton
+            QUC::detail::VerticalLayoutGroup layout(
+                    QUC::detail::refComp(downloadButton),
+                    QUC::detail::refComp(playButton),
+                    QUC::detail::refComp(infoButton)
             );
 
             ModifyContentSizeFitter nameFitter(layout);
