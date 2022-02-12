@@ -70,7 +70,7 @@ namespace BetterSongSearch::UI {
 
         template<typename F>
         OnRenderCallback(T child_, F&& c)
-                : child(std::move(child_)), renderCallback(c) {}
+                : child(child_), renderCallback(c), key(child_.key) {} // use child's key since we just wrap
 
         UnityEngine::Transform* render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
             auto res = QUC::detail::renderSingle(child, ctx);
@@ -86,8 +86,6 @@ namespace BetterSongSearch::UI {
     };
 
     struct ModifyText : public QUC::Text {
-        const QUC::Key key;
-
         QUC::HeldData<std::optional<TMPro::TextAlignmentOptions>> alignmentOptions;
         QUC::HeldData<std::optional<TMPro::TextOverflowModes>> overflowMode;
         QUC::HeldData<std::optional<bool>> wordWrapping;
@@ -96,13 +94,14 @@ namespace BetterSongSearch::UI {
         ModifyText(QUC::Text text, std::optional<TMPro::TextAlignmentOptions> alignment = std::nullopt,
                    std::optional<TMPro::TextOverflowModes> overflowMode = std::nullopt,
                    std::optional<bool> wordWrapping = std::nullopt)
-        : QUC::Text(std::move(text)), alignmentOptions(alignment), overflowMode(overflowMode), wordWrapping(wordWrapping){}
+        : QUC::Text(std::move(text)),
+        alignmentOptions(alignment), overflowMode(overflowMode), wordWrapping(wordWrapping){}
 
 
 
 
         void render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
-            auto& textComp = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI*>();
+            auto& textComp = data.getData<TMPro::TextMeshProUGUI*>();
             auto existed = static_cast<bool>(textComp);
             Text::render(ctx, data);
 

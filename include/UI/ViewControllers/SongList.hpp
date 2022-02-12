@@ -68,6 +68,7 @@ namespace BetterSongSearch::UI {
             auto& segmentedControl = data.getData<QuestUI::CustomTextSegmentedControlData*>();
 
             if (!segmentedControl) {
+                getLogger().debug("Building segmented control");
                 segmentedControl = QuestUI::BeatSaberUI::CreateTextSegmentedControl(&ctx.parentTransform, nullptr);
 
                 segmentedControl->fontSize = 2;
@@ -136,6 +137,8 @@ namespace BetterSongSearch::UI {
         BasicCellComponent(T&& view) : view(view) {}
 
         auto cellElementsLayout() {
+            getLogger().debug("Building cell layout");
+
             // top layout
             songText.alignmentOptions = TMPro::TextAlignmentOptions::MidlineLeft;
             songText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
@@ -178,10 +181,8 @@ namespace BetterSongSearch::UI {
 
 
             // full layout
-            ModifyLayout layout (
-                OnRenderCallback(
-                    QUC::Backgroundable("round-rect-panel", true,
-                         QUC::VerticalLayoutGroup(
+            ModifyLayout layout(
+                    QUC::VerticalLayoutGroup(
                             topLayout,
                             midLayout,
                             QUC::Backgroundable(
@@ -191,18 +192,8 @@ namespace BetterSongSearch::UI {
                                     1.0f,
                                     Sombrero::FastColor::black()
                             )
-                        ),
-                    0.6f
-                    ),
-                    [this](auto& self, QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
-                        setBgColor = [self, &ctx](Sombrero::FastColor const& color) mutable {
-                            self.color = color;
-                            QUC::detail::renderSingle(self.child, ctx);
-                        };
-                    }
-                )
+                    )
             );
-
             layout.padding = {1,1, 1, 2};
 
             ModifyContentSizeFitter fitter(layout);
@@ -212,7 +203,27 @@ namespace BetterSongSearch::UI {
             layoutElement.preferredHeight = 11.75f;
             layoutElement.preferredWidth = 70;
 
-            return layoutElement;
+            OnRenderCallback bgRenderCallback(
+                QUC::Backgroundable("round-rect-panel", true,
+                    layoutElement,
+                    0.6f
+                ),
+                [this](auto& self, QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+                    auto& backgroundable = data.getData<QuestUI::Backgroundable*>();
+                    setBgColor = [&backgroundable](Sombrero::FastColor const& color) {
+                        CRASH_UNLESS(backgroundable);
+                        backgroundable->background->set_color(color);
+                    };
+//                    setBgColor = [self, &ctx](Sombrero::FastColor const& color) mutable {
+//                        getLogger().debug("Coloring bg");
+//                        self.color = color;
+//                        QUC::detail::renderSingle(self.child, ctx);
+//                        getLogger().debug("Colored bg");
+//                    };
+                }
+            );
+
+            return bgRenderCallback;
         }
 
     };
@@ -227,15 +238,25 @@ namespace BetterSongSearch::UI {
 
             auto songData = cellData.song;
 
+            getLogger().debug("Building cell");
             if (!inited) {
                 // Modify the cell itself
+
+                // TODO: Remove, idk why I wrote this. It's not necessary Too lazy to make a component just to create a content size fitter
+//                auto go = cellCtx.parentTransform.get_gameObject();
+//                auto sizeFitter = go->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+
                 WrapParent parent(view);
                 ModifyContentSizeFitter fitter2(parent);
+
+//                cellCtx.getChildDataOrCreate(fitter2.key).getData<UnityEngine::UI::ContentSizeFitter*>() = sizeFitter;
+
                 fitter2.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
                 fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
                 HMUITouchable<decltype(fitter2)> touchable(fitter2);
 
+                getLogger().debug("Building cell first time");
                 QUC::detail::renderSingle(touchable, cellCtx);
             }
 
@@ -261,9 +282,10 @@ namespace BetterSongSearch::UI {
             ratingText.text = fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(songData->duration_secs), songData->upvotes, songData->downvotes);
             cellDiff.diffs = songData->GetDifficultyVector();
 
-
+            getLogger().debug("Updating cell data");
             QUC::detail::renderSingle(view, cellCtx);
             inited = true;
+            getLogger().debug("Finished the cell");
         }
     };
 

@@ -2,37 +2,19 @@
 #include "UI/SelectedSongController.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
-#include "questui/shared/ArrayUtil.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "System/Collections/IEnumerator.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
-#include "UI/ViewControllers/SongList.hpp"
-#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-#include "UnityEngine/Resources.hpp"
 #include "UnityEngine/UI/Button.hpp"
-#include "GlobalNamespace/LevelFilteringNavigationController.hpp"
-#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
-#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
-#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
-#include "GlobalNamespace/MainFlowCoordinator.hpp"
-#include "HMUI/ViewController.hpp"
 #include "HMUI/IconSegmentedControl.hpp"
 #include "HMUI/IconSegmentedControlCell.hpp"
-#include "HMUI/ViewController_AnimationDirection.hpp"
 #include "HMUI/SelectableCell.hpp"
 #include "System/Action.hpp"
-#include "System/Collections/IEnumerator.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
-#include "UnityEngine/WaitForEndOfFrame.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
-#include "GlobalNamespace/IBeatmapLevelPack.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include "System/Nullable_1.hpp"
-#include "GlobalNamespace/LevelSelectionFlowCoordinator_State.hpp"
-#include <iomanip>
 #include <fmt/core.h>
 
 
@@ -99,13 +81,17 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
             downloadButton.child.enabled = false;
             playButton.child.enabled = true;
 
-
-            playButton.update();
-            downloadButton.update();
+            // TODO: Do we need to lock? probably not?
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                playButton.update();
+                downloadButton.update();
+            });
         }
         else {
             downloadButton.child.text.text = fmt::format("{:.4f}%", downloadPercentage);
-            downloadButton.update();
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                downloadButton.update();
+            });
         }
     };
 

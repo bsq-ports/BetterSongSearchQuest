@@ -139,10 +139,11 @@ void QUCObjectTableCell::render(CellData const &cellData, RenderContext &ctx, Ce
 }
 
 void QUCObjectTableCell::RefreshVisuals() {
-    if (cellComp) {
+    if (cellComp && cellComp->setBgColor) {
         bool isSelected = get_selected();
         bool isHighlighted = get_highlighted();
 
+        CRASH_UNLESS(cellComp->setBgColor);
         cellComp->setBgColor(UnityEngine::Color(0, 0, 0, isSelected ? 0.9f : isHighlighted ? 0.6f : 0.45f));
     }
 }
@@ -338,7 +339,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
 void SortAndFilterSongs(SortMode sort, std::string_view const search)
 {
-    if(songListController != nullptr)
+    if(songListController != nullptr && songListController->tablePtr)
     {
         songListController->tablePtr->tableView->ClearSelection();
         songListController->tablePtr->tableView->ClearHighlights();
@@ -399,9 +400,14 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
                 OnRenderCallback(
                     QUC::detail::refComp(view->table),
                     [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
-                        auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
+                        auto& tableState = ctx.getChildDataOrCreate(self.child.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
+//                        auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
 
                         view->tablePtr = tableState.dataSource;
+                        getLogger().info("Rendering table! %p", view->tablePtr);
+
+
+                        CRASH_UNLESS(tableState.dataSource);
                     }
                 )
        )
@@ -412,6 +418,9 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     songListController = this;
     if (!firstActivation) return;
+
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     std::array<std::string, 8> sortModes(
             {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
@@ -455,24 +464,38 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     if (firstActivation) {
         this->ctx = RenderContext(get_transform());
 
+        getLogger().debug("Rendering layout");
         detail::renderSingle(songListControllerView, ctx);
+        getLogger().debug("Rendered layout");
 
         //Make Lists
 
-        auto click = std::function([=](HMUI::TableView *tableView, int row) {
+        auto click = std::function([this](HMUI::TableView *tableView, int row) {
             // Get song list actually inside the table
             auto const& songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData*>(tableView->dataSource)->descriptors;
             this->selectedSongController.child.SetSong(songList[row].song);
         });
         auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(classof(System::Action_2<HMUI::TableView *, int>*), click);
 
+        CRASH_UNLESS(tablePtr);
+        CRASH_UNLESS(tablePtr->tableView);
+
+        getLogger().debug("Adding table event");
+
         tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
+
+        getLogger().debug("Set sibling");
         tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
     } else {
         detail::renderSingle(songListControllerView, ctx);
     }
 
 
+
+    auto end = std::chrono::high_resolution_clock::now();
+    auto difference = end - start;
+    auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
+    getLogger().debug("UI building for SongList took %lldms", millisElapsed);
 
 
     //fix scrolling lol
@@ -486,4 +509,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     for (int i = 0; i < scrolls.Length(); i++) {
         if (scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
     }
+
+    getLogger().debug("Finished song list view controller");
 }

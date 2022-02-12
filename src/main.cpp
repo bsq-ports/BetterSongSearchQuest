@@ -21,7 +21,7 @@ Configuration& getConfig() {
 
 // Returns a logger, useful for printing debug messages
 Logger& getLogger() {
-    static auto* logger = new Logger(modInfo);
+    static auto* logger = new Logger(modInfo, LoggerOptions(false, true));
     return *logger;
 }
 
