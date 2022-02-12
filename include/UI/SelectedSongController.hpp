@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "UnityEngine/MonoBehaviour.hpp"
 
 #include "custom-types/shared/macros.hpp"
@@ -12,20 +14,175 @@
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 #include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI, SelectedSongController, UnityEngine::MonoBehaviour,
-    public:
-    void SetSong(const SDC_wrapper::BeatStarSong*);
-    void DownloadSong();
-    void PlaySong();
-    const SDC_wrapper::BeatStarSong* currentSong;
-    UnityEngine::UI::Button* playButton = nullptr;
-    UnityEngine::UI::Button* downloadButton = nullptr;
-    TMPro::TextMeshProUGUI* authorText = nullptr;
-    TMPro::TextMeshProUGUI* songNameText = nullptr;
-    TMPro::TextMeshProUGUI* infoText = nullptr;
-    HMUI::ImageView* coverImage = nullptr;
-    UnityEngine::Sprite* defaultImage = nullptr;
-)
+#include "questui_components/shared/components/Text.hpp"
+#include "questui_components/shared/components/Button.hpp"
+#include "questui_components/shared/components/Image.hpp"
+
+#include "CustomComponents.hpp"
+#include "shared/components/list/CustomCelledList.hpp"
+
+namespace BetterSongSearch::UI {
+
+    struct SelectedSongController : public QUC::detail::VerticalLayoutGroup<> {
+        void SetSong(const SDC_wrapper::BeatStarSong *);
+
+        void DownloadSong();
+
+        void PlaySong();
+
+
+        [[nodiscard]] auto DefaultAuthorText() {
+            ModifyContentSizeFitter<QUC::Text&> authorFitter(authorText);
+            authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            return authorFitter;
+        }
+
+        [[nodiscard]] auto DefaultNameText() {
+            ModifyContentSizeFitter<QUC::Text&> nameFitter(songNameText.child);
+            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            return nameFitter;
+        }
+
+        [[nodiscard]] auto MetaText() {
+            // Meta
+            QUC::detail::VerticalLayoutGroup metaLayout(
+                    DefaultAuthorText(),
+                    DefaultNameText()
+            );
+
+            ModifyContentSizeFitter contentSizeFitter(metaLayout);
+            contentSizeFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            contentSizeFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            ModifyLayout modifyLayout(
+                    VerticalLayoutGroup<decltype(metaLayout)>( // don't use reference as parameter
+                            static_cast<decltype(metaLayout)>(metaLayout)
+                    )
+            );
+
+            modifyLayout.childForceExpandHeight = true;
+            modifyLayout.padding = {2, 2, 2, 2};
+
+            ModifyLayoutElement<decltype(modifyLayout)> layoutElement(modifyLayout);
+            layoutElement.preferredWidth = 40;
+
+            return layoutElement;
+        }
+
+        [[nodiscard]] auto DefaultCoverImage() {
+            ModifyLayoutElement<QUC::Image&> coverElement(coverImage);
+            coverElement.preferredHeight = 28;
+            coverElement.preferredWidth = 28;
+
+
+            QUC::detail::HorizontalLayoutGroup metaLayout(coverElement);
+
+            ModifyContentSizeFitter<decltype(metaLayout)> metaFitter(metaLayout);
+            metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            metaFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            ModifyLayoutElement<decltype(metaFitter)> metaElement(metaFitter);
+
+            metaElement.preferredWidth = 28;
+            metaElement.preferredHeight = 28;
+
+
+            return metaElement;
+        }
+
+        [[nodiscard]] auto DefaultMinMaxDiffInfo() {
+            QUC::detail::HorizontalLayoutGroup<QUC::Text&> layout(infoText);
+
+            ModifyContentSizeFitter nameFitter(layout);
+            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            return nameFitter;
+        }
+
+        [[nodiscard]] auto DefaultButtonLayout() {
+            QUC::detail::VerticalLayoutGroup<QUC::Button&, QUC::Button&, QUC::Button&> layout(
+                    downloadButton,
+                    playButton,
+                    infoButton
+            );
+
+            ModifyContentSizeFitter nameFitter(layout);
+            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+            return nameFitter;
+        }
+
+        const SDC_wrapper::BeatStarSong *currentSong;
+
+        LazyInitAndUpdate<QUC::Button> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+            PlaySong();
+        },"PlayButton"};
+
+        LazyInitAndUpdate<QUC::Button> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+            DownloadSong();
+        },"PlayButton"};
+
+        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton"};
+
+        LazyInitAndUpdate<QUC::Text> authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
+        LazyInitAndUpdate<QUC::Text> songNameText{"Name", true, std::nullopt, 2.7f};
+        LazyInitAndUpdate<QUC::Text> infoText{"details"};
+        LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
+        UnityEngine::Sprite *defaultImage = nullptr;
+
+        QUC::RenderContext *ctx = nullptr; // this is ugly but whatever
+
+        SelectedSongController() = default;
+        SelectedSongController(SDC_wrapper::BeatStarSong const *currentSong, UnityEngine::Sprite *defaultImage)
+                : currentSong(currentSong), coverImage(defaultImage, UnityEngine::Vector2(28, 28)),
+                  defaultImage(defaultImage) {
+            coverImage.child.preserveAspectRatio = true;
+        }
+
+        auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+            this->ctx = &ctx;
+
+            auto &viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup *>();
+
+            if (!viewLayout) {
+                QUC::detail::VerticalLayoutGroup<>::render(ctx, data);
+                QUC::RenderContext &childrenCtx = data.getChildContext([viewLayout] {
+                    return viewLayout->get_transform();
+                });
+
+                QUC::detail::Container renderlayout(
+                        MetaText(),
+                        DefaultCoverImage(),
+                        DefaultMinMaxDiffInfo(),
+                        DefaultButtonLayout()
+                );
+
+
+                QUC::detail::renderSingle(renderlayout, childrenCtx);
+
+            } else {
+                // Just update the existing components
+                QUC::RenderContext &childrenCtx = data.getChildContext([viewLayout] {
+                    return viewLayout->get_transform();
+                });
+
+                playButton.update();
+                downloadButton.update();
+                authorText.update();
+                songNameText.update();
+                infoText.update();
+                coverImage.update();
+            }
+        }
+
+    };
+}
 
 inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
 inline bool inBSS;

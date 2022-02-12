@@ -1,4 +1,3 @@
-#define USE_CODEGEN_FIELDS
 #include "UI/ViewControllers/FilterView.hpp"
 #include "main.hpp"
 using namespace BetterSongSearch::UI;
@@ -34,26 +33,35 @@ using namespace QuestUI;
 #include "FilterOptions.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 
+#include "questui_components/shared/concepts.hpp"
+
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 UnityEngine::UI::VerticalLayoutGroup* filterViewLayout;
 
-int getIndex(std::vector<std::string> v, std::string K)
+template<typename T = std::string, typename V = std::string_view>
+requires(QUC::IsQUCConvertible<T, V>)
+constexpr size_t getIndex(std::span<T const> const v, V const& k)
 {
-    auto it = std::find(v.begin(), v.end(), K);
+    auto it = std::find(v.begin(), v.end(), k);
     if (it != v.end())
     {
-        int index = it - v.begin();
-        return index;
+        return std::distance(v.begin(), it);
     }
     else {
         return -1;
     }
 }
+template<typename T = std::string>
+constexpr size_t getIndex(std::span<T const> const v, T const& k)
+{
+    return getIndex<T, T>(v, k);
+}
 
-uint64_t timeSinceEpoch() {
-  using namespace std::chrono;
-  return duration_cast<seconds>(system_clock::now().time_since_epoch()).count();
+
+constexpr size_t getIndex(std::span<StringW const> const v, StringW const k)
+{
+    return getIndex<StringW, StringW>(v, k);
 }
 
 UnityEngine::Sprite* GetBGSprite(std::string str)
@@ -66,6 +74,7 @@ UnityEngine::Sprite* GetBGSprite(std::string str)
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
     auto filterBorderSprite = GetBGSprite("RoundRect10BorderFade");
+    auto& filterOptions = DataHolder::filterOptions;
 
     get_rectTransform()->set_offsetMax(UnityEngine::Vector2(20, 22));
     get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>()->set_preferredWidth(130);
@@ -165,15 +174,15 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         generalText->set_alignment(TMPro::TextAlignmentOptions::Center);
         generalText->set_fontStyle(TMPro::FontStyles::Underline);
 
-        std::vector<std::string> downloadFilterOptions = {"Show all", "Only downloaded", "Hide downloaded"};
-        std::function<void(std::string_view)> downloadFilterChange = [=](std::string_view value) {
+        std::vector<StringW> downloadFilterOptions({"Show all", "Only downloaded", "Hide downloaded"});
+        std::function<void(StringW)> downloadFilterChange = [=](StringW value) {
             FilterOptions::DownloadFilterType type = FilterOptions::DownloadFilterType::All;
-            filterOptions->downloadType = (FilterOptions::DownloadFilterType)getIndex(downloadFilterOptions, std::string(value));
+            filterOptions->downloadType = (FilterOptions::DownloadFilterType) getIndex(downloadFilterOptions, value);
             Sort();
         };
         auto downloadFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Downloaded", "Show all", downloadFilterOptions, downloadFilterChange);
-        std::vector<std::string> scoreFilterOptions = {"Show all", "Hide passed", "Only passed"};
-        std::function<void(std::string_view)> scoreFilterChange = [=](std::string_view value) {
+        std::vector<StringW> scoreFilterOptions = {"Show all", "Hide passed", "Only passed"};
+        std::function<void(StringW)> scoreFilterChange = [=](StringW value) {
 
         };
         auto scoreFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Local score", "Show all", scoreFilterOptions, scoreFilterChange);
@@ -291,8 +300,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         scoresaberText->set_alignment(TMPro::TextAlignmentOptions::Center);
         scoresaberText->set_fontStyle(TMPro::FontStyles::Underline);
 
-        std::vector<std::string> rankedFilterOptions = {"Show all", "Only Ranked", "Hide Ranked"};
-        std::function<void(std::string_view)> rankedFilterChange = [=](std::string_view value) {
+        std::vector<StringW> rankedFilterOptions = {"Show all", "Only Ranked", "Hide Ranked"};
+        std::function<void(StringW)> rankedFilterChange = [=](StringW value) {
             if(value == "Show All") 
                 filterOptions->rankedType = FilterOptions::RankedFilterType::All;
             if(value == "Only Ranked") 
@@ -420,8 +429,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         chardifText->set_alignment(TMPro::TextAlignmentOptions::Center);
         chardifText->set_fontStyle(TMPro::FontStyles::Underline);
 
-        std::vector<std::string> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
-        std::function<void(std::string_view)> charFilterChange = [=](std::string_view value) {
+        std::vector<StringW> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+        std::function<void(StringW)> charFilterChange = [=](StringW value) {
             if(value == "Any") filterOptions->charFilter = FilterOptions::CharFilterType::All;
             if(value == "Custom") filterOptions->charFilter = FilterOptions::CharFilterType::Custom;
             if(value == "Standard") filterOptions->charFilter = FilterOptions::CharFilterType::Standard;
@@ -434,8 +443,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             Sort();
         };
         auto charDropdown = BeatSaberUI::CreateDropdown(charDiffOptionsLayout->get_transform(), "Characteristic", "Any", charFilterOptions, charFilterChange);
-        std::vector<std::string> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
-        std::function<void(std::string_view)> diffFilterChange = [=](std::string_view value) {
+        std::vector<StringW> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
+        std::function<void(StringW)> diffFilterChange = [=](StringW value) {
             if(value == "Any") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::All;
             if(value == "Easy") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Easy;
             if(value == "Normal") filterOptions->difficultyFilter = FilterOptions::DifficultyFilterType::Normal;
@@ -468,8 +477,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         modsText->set_alignment(TMPro::TextAlignmentOptions::Center);
         modsText->set_fontStyle(TMPro::FontStyles::Underline);
 
-        std::vector<std::string> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
-        std::function<void(std::string_view)> modsChange = [=](std::string_view value) {
+        std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+        std::function<void(StringW)> modsChange = [=](StringW value) {
 
         };
         auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", "Any", modsOptions, modsChange);

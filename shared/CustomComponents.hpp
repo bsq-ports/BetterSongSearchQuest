@@ -1,5 +1,4 @@
 #pragma once
-#define USE_CODEGEN_FIELDS
 
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/GameObject.hpp"
@@ -15,197 +14,439 @@
 #include "questui_components/shared/components/settings/StringSetting.hpp"
 #include "questui_components/shared/components/settings/DropdownSetting.hpp"
 #include "questui_components/shared/components/Text.hpp"
+#include "questui_components/shared/components/Backgroundable.hpp"
+#include "HMUI/Touchable.hpp"
 
+#include "main.hpp"
 
 namespace BetterSongSearch::UI {
-    class SongListVerticalLayoutGroup : public QuestUI_Components::VerticalLayoutGroup {
-    public:
-        explicit SongListVerticalLayoutGroup(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : VerticalLayoutGroup(children) {}
-        CONSTRUCT_AFTER_COMPONENT(SongListVerticalLayoutGroup)
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            VerticalLayoutGroup::render(parentTransform);
+    // Component to return the transform of the parent
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    struct WrapParent : public QUC::detail::Container<TArgs...> {
+        constexpr WrapParent(TArgs... args) : QUC::detail::Container<TArgs...>(args...) {}
+        constexpr WrapParent(std::tuple<TArgs...> args) : QUC::detail::Container<TArgs...>(args) {}
 
-            auto verticalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::VerticalLayoutGroup*>();
-            verticalLayoutGroup->set_childAlignment(UnityEngine::TextAnchor::UpperLeft);
-            verticalLayoutGroup->set_childControlWidth(true);
-            verticalLayoutGroup->set_childControlHeight(false);
-            verticalLayoutGroup->set_childForceExpandHeight(false);
-            verticalLayoutGroup->set_childForceExpandWidth(false);
-
-            auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-            element->set_preferredWidth(120);
-            //auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            //background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
-            return this;
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            QUC::detail::Container<TArgs...>::render(ctx, data);
+            return &ctx.parentTransform;
         }
     };
 
-    class SongListDropDown : public QuestUI_Components::DropdownSetting {
-    public:
-        explicit SongListDropDown(std::string_view text, std::string_view currentValue,
-                                 std::vector<std::string> const& values,
-                                 OnCallback callback = nullptr) : DropdownSetting(text, currentValue, values, callback) {}
-        CONSTRUCT_AFTER_COMPONENT(SongListDropDown)
+    template<class T>
+    requires (QUC::renderable_return<T, UnityEngine::Transform*>)
+    struct HMUITouchable {
+        T child;
+        const QUC::Key key;
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            DropdownSetting::render(parentTransform);
-            uiDropdown->numberOfVisibleCells = 9;
-            uiDropdown->ReloadData();
-            return this;
+        HMUITouchable(T&& child_)
+                : child(child_) {}
+
+        HMUITouchable(T const& child_)
+                : child(child_) {}
+
+        UnityEngine::Transform* render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto res = QUC::detail::renderSingle(child, ctx);
+            auto touchable = data.getData<HMUI::Touchable*>();
+
+            if (!touchable) {
+                auto go = res->get_gameObject();
+                touchable = go->template AddComponent<HMUI::Touchable*>();
+            }
+
+            return res;
+        }
+
+
+    };
+
+    template<class T>
+    requires (QUC::renderable_return<T, UnityEngine::Transform*>)
+    struct OnRenderCallback {
+        T child;
+        const QUC::Key key;
+
+        using Callback = std::function<void(T& child, QUC::RenderContext& ctx, QUC::RenderContextChildData& data)>;
+
+        Callback renderCallback;
+
+        template<typename F>
+        OnRenderCallback(T&& child_, F&& c)
+                : child(child_),renderCallback(c) {}
+
+        UnityEngine::Transform* render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto res = QUC::detail::renderSingle(child, ctx);
+
+            if (renderCallback) {
+                renderCallback(child, ctx, data);
+            }
+
+            return res;
+        }
+
+
+    };
+
+    struct ModifyText : public QUC::Text {
+        const QUC::Key key;
+
+        QUC::HeldData<std::optional<TMPro::TextAlignmentOptions>> alignmentOptions;
+        QUC::HeldData<std::optional<TMPro::TextOverflowModes>> overflowMode;
+        QUC::HeldData<std::optional<bool>> wordWrapping;
+
+        template<typename... TArgs>
+        ModifyText(QUC::Text&& text, std::optional<TMPro::TextAlignmentOptions> alignment = std::nullopt,
+                   std::optional<TMPro::TextOverflowModes> overflowMode = std::nullopt,
+                   std::optional<bool> wordWrapping = std::nullopt)
+        : QUC::Text(std::forward<QUC::Text>(text)), alignmentOptions(alignment), overflowMode(overflowMode), wordWrapping(wordWrapping){}
+
+
+
+
+        void render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto& textComp = ctx.getChildData(text.key).getData<TMPro::TextMeshProUGUI*>();
+            auto existed = static_cast<bool>(textComp);
+            Text::render(ctx, data);
+
+            if ((!existed || alignmentOptions.isModified()) && *alignmentOptions) {
+                textComp->set_alignment(*alignmentOptions.getData());
+                alignmentOptions.clear();
+            }
+
+            if ((!existed || overflowMode.isModified()) && *overflowMode) {
+                textComp->set_overflowMode(*overflowMode.getData());
+                overflowMode.clear();
+            }
+
+            if ((!existed || wordWrapping.isModified()) && *wordWrapping) {
+                textComp->set_enableWordWrapping(*wordWrapping.getData());
+                wordWrapping.clear();
+            }
         }
     };
 
-    class SongListStringSetting : public QuestUI_Components::StringSetting {
-    public:
-        explicit SongListStringSetting(std::string_view text, std::string_view currentValue,
-                               OnCallback callback = nullptr, std::optional<InitStringSettingsData> stringData = std::nullopt) : StringSetting(text, currentValue, callback, stringData) {}
-        CONSTRUCT_AFTER_COMPONENT(SongListStringSetting)
+    // TODO: Move this to QUC proper?
+    template<typename Layout>
+    requires (QUC::renderable<Layout>)
+    struct ModifyLayout : public Layout {
+        constexpr ModifyLayout(Layout const& layout) : Layout(layout) {}
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            StringSetting::render(parentTransform);
-            return this;
+        QUC::HeldData<UnityEngine::TextAnchor> childAlignment;
+        QUC::RenderHeldData<bool> childControlWidth;
+        QUC::RenderHeldData<bool> childControlHeight;
+        QUC::RenderHeldData<bool> childForceExpandHeight;
+        QUC::RenderHeldData<bool> childForceExpandWidth;
+        QUC::RenderHeldData<bool> childScaleWidth;
+        QUC::RenderHeldData<float> spacing;
+
+        QUC::HeldData<std::array<float, 4>> padding; // TODO: How to make this not stupid
+
+
+        auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto ret = Layout::render(ctx, data);
+            auto &viewLayout = data.getData<UnityEngine::UI::HorizontalOrVerticalLayoutGroup *>();
+
+            if (childAlignment.isModified()) {
+                viewLayout->set_childAlignment(childAlignment.getData());
+                childAlignment.clear();
+            }
+
+            if (childControlHeight.readAndClear<false>(ctx)) {
+                viewLayout->set_childControlHeight(childControlHeight.getData());
+            }
+
+            if (childControlWidth.readAndClear<false>(ctx)) {
+                viewLayout->set_childControlWidth(childControlWidth.getData());
+            }
+
+            if (childForceExpandHeight.readAndClear<false>(ctx)) {
+                viewLayout->set_childForceExpandHeight(childForceExpandHeight.getData());
+            }
+
+            if (childForceExpandWidth.readAndClear<false>(ctx)) {
+                viewLayout->set_childForceExpandWidth(childForceExpandWidth.getData());
+            }
+
+            if (childScaleWidth.readAndClear<false>(ctx)) {
+                viewLayout->set_childScaleWidth(childScaleWidth.getData());
+            }
+
+            if (spacing.readAndClear<false>(ctx)) {
+                viewLayout->set_spacing(spacing.getData());
+            }
+
+            if (padding.isModified()) {
+                auto const& arr = *padding;
+                viewLayout->set_padding(UnityEngine::RectOffset::New_ctor(arr[0], arr[1], arr[2], arr[3]));
+                padding.clear();
+            }
+
+            return ret;
         }
     };
 
-    class SongListHorizontalFilterBar : public QuestUI_Components::HorizontalLayoutGroup {
-    public:
-        explicit SongListHorizontalFilterBar(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
+    // TODO: Move this to QUC proper?
+    template<typename Layout>
+    requires (QUC::renderable_return<Layout, UnityEngine::Transform*>)
+    struct ModifyLayoutElement {
+        const QUC::Key key;
+        Layout layout;
 
-        CONSTRUCT_AFTER_COMPONENT(SongListHorizontalFilterBar)
+        constexpr ModifyLayoutElement(Layout const& layout) : layout(layout) {}
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            HorizontalLayoutGroup::render(parentTransform);
+        QUC::RenderHeldData<float> preferredWidth;
+        QUC::RenderHeldData<float> preferredHeight;
 
-            auto horizontalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::HorizontalLayoutGroup*>();
-            horizontalLayoutGroup->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
-            horizontalLayoutGroup->set_childForceExpandWidth(false);
-            horizontalLayoutGroup->set_childControlWidth(true);
-            horizontalLayoutGroup->set_childControlHeight(true);
-            horizontalLayoutGroup->set_childForceExpandHeight(false);
-            horizontalLayoutGroup->set_childScaleWidth(false);
+        QUC::RenderHeldData<float> minWidth;
+        QUC::RenderHeldData<float> minHeight;
 
-            auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-            element->set_preferredHeight(10);
-            //auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            //background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
-            return this;
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            UnityEngine::Transform* ret = QUC::detail::renderSingle(layout, ctx);
+            auto& layoutElement = data.getData<UnityEngine::UI::LayoutElement*>();
+
+            if (!layoutElement) {
+                auto go = ret->get_gameObject();
+                layoutElement = go->GetComponent<UnityEngine::UI::LayoutElement*>();
+                if (!layoutElement) {
+                    layoutElement = go->AddComponent<UnityEngine::UI::LayoutElement*>();
+                }
+            }
+
+            if (preferredWidth.readAndClear<false>(ctx)) {
+                layoutElement->set_preferredWidth(preferredWidth.getData());
+            }
+
+            if (preferredHeight.readAndClear<false>(ctx)) {
+                layoutElement->set_preferredHeight(preferredHeight.getData());
+            }
+
+            if (minHeight.readAndClear<false>(ctx)) {
+                layoutElement->set_minHeight(minHeight.getData());
+            }
+
+            if (minWidth.readAndClear<false>(ctx)) {
+                layoutElement->set_minWidth(minWidth.getData());
+            }
+
+            return ret;
+        }
+
+    };
+
+    // TODO: Move this to QUC proper?
+    template<typename Layout>
+    requires (QUC::renderable_return<Layout, UnityEngine::Transform*>)
+    struct ModifyContentSizeFitter {
+        const QUC::Key key;
+        Layout layout;
+
+        constexpr ModifyContentSizeFitter(Layout const& layout) : layout(layout) {}
+
+        QUC::HeldData<UnityEngine::UI::ContentSizeFitter::FitMode> horizontalFit;
+        QUC::HeldData<UnityEngine::UI::ContentSizeFitter::FitMode> verticalFit;
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            UnityEngine::Transform* ret = QUC::detail::renderSingle(layout, ctx);
+            auto& layoutSizeFitter = data.getData<UnityEngine::UI::ContentSizeFitter*>();
+
+            if (!layoutSizeFitter) {
+                auto go = ret->get_gameObject();
+                layoutSizeFitter = go->GetComponent<UnityEngine::UI::ContentSizeFitter*>();
+                if (!layoutSizeFitter) {
+                    layoutSizeFitter = go->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+                }
+            }
+
+            if (horizontalFit.isModified()) {
+                layoutSizeFitter->set_horizontalFit(*horizontalFit);
+                horizontalFit.clear();
+            }
+
+            if (verticalFit.isModified()) {
+                layoutSizeFitter->set_verticalFit(*verticalFit);
+                verticalFit.clear();
+            }
+
+            return ret;
+        }
+
+    };
+
+    template<typename T>
+    struct LazyInitAndUpdate {
+        const QUC::Key key;
+
+        LazyInitAndUpdate() = default;
+
+        LazyInitAndUpdate(LazyInitAndUpdate const&) = delete;
+        LazyInitAndUpdate(T child) : child(std::move(child)) {}
+
+        template<typename... TArgs>
+        LazyInitAndUpdate(TArgs&&... args) : child(std::forward<TArgs>(args)...) {}
+
+        LazyInitAndUpdate& operator =(LazyInitAndUpdate const&) = default;
+        LazyInitAndUpdate& operator =(LazyInitAndUpdate&&) noexcept = default;
+
+        QUC::RenderContext* ctx;
+        T child;
+
+        constexpr LazyInitAndUpdate<T>& emplace(T const& n) {
+            child = n;
+            return *this;
+        }
+
+        template<typename... TArgs>
+        constexpr LazyInitAndUpdate<T>& emplace(TArgs&&... args) {
+            child = T(std::forward<TArgs>(args)...);
+            return *this;
+        }
+
+        constexpr operator T const&() const {
+            return child;
+        }
+
+        constexpr operator T&() {
+            return child;
+        }
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            if (this->ctx && &ctx != this->ctx) {
+                fmtLog(Logging::Level::ERROR, "Rendered this comp again with a different render ctx. Why? Make a new instance");
+                this->ctx = &ctx;
+            }
+            return QUC::detail::renderSingle(child, ctx);
+        }
+
+        constexpr auto update() {
+            CRASH_UNLESS(ctx);
+            return QUC::detail::renderSingle<T>(child, *ctx);
         }
     };
 
-    class SongListHorizontalLayout : public QuestUI_Components::HorizontalLayoutGroup {
-    public:
-        explicit SongListHorizontalLayout(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongListVerticalLayoutGroup(TArgs&&... layoutArgs) {
+        QUC::detail::VerticalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayout modify(layout);
+        modify.childControlWidth = true;
+        modify.childControlHeight = false;
+        modify.childForceExpandHeight = false;
+        modify.childForceExpandWidth = false;
 
-        CONSTRUCT_AFTER_COMPONENT(SongListHorizontalLayout)
+        ModifyLayoutElement layoutElement(modify);
+        layoutElement.preferredWidth = 120;
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            HorizontalLayoutGroup::render(parentTransform);
+        return layoutElement;
+    }
 
-            auto horizontalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::HorizontalLayoutGroup*>();
+    template<size_t sz, typename Container = std::array<std::string, sz>, bool copySelfOnCallback = true>
+    struct SongListDropDown : public QUC::DropdownSetting<sz, Container, copySelfOnCallback> {
+            using Parent = QUC::DropdownSetting<sz, Container, copySelfOnCallback>;
 
-            auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-            element->set_preferredHeight(70);
-            element->set_preferredWidth(80);
-            auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            //background->ApplyBackground(il2cpp_utils::newcsstr("round-rect-panel"));
-            return this;
+        template<class F>
+        constexpr SongListDropDown(std::string_view txt,
+                                   std::string_view current, F &&callable,
+                                   Container v = Container(), bool enabled_ = true, bool interact = true) : Parent(txt, current, callable, v, enabled_, interact) {}
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto ret = Parent::render(ctx, data);
+            auto& settingData = data.getData<typename Parent::RenderDropdownData>();
+            auto& dropdown = settingData.dropdown;
+
+            dropdown->numberOfVisibleCells = 9;
+            dropdown->ReloadData();
+
+            return ret;
         }
     };
 
-    class SongVerticalGroup : public QuestUI_Components::VerticalLayoutGroup {
-    public:
-        explicit SongVerticalGroup(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : VerticalLayoutGroup(children) {}
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongListHorizontalFilterBar(TArgs&&... layoutArgs) {
+        QUC::detail::HorizontalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayout modify(layout);
+        modify.childControlWidth = true;
+        modify.childControlHeight = true;
+        modify.childForceExpandHeight = false;
+        modify.childForceExpandWidth = false;
+        modify.childScaleWidth = false;
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            VerticalLayoutGroup::render(parentTransform);
+        ModifyLayoutElement layoutElement(modify);
+        layoutElement.preferredHeight = 10;
 
-            auto verticalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::VerticalLayoutGroup*>();
+        return layoutElement;
+    }
 
-            verticalLayoutGroup->set_padding(UnityEngine::RectOffset::New_ctor(1,1,1,2));
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongListHorizontalLayout(TArgs&&... layoutArgs) {
+        QUC::detail::HorizontalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayoutElement layoutElement(layout);
+        layoutElement.preferredHeight = 70;
+        layoutElement.preferredWidth = 80;
 
-            auto element = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-            //element->set_preferredWidth(40);
+        return layoutElement;
+    }
 
-            auto fitter = getTransform()->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
-            fitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained);
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongVerticalGroup(TArgs&&... layoutArgs) {
+        QUC::detail::VerticalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayout modify(layout);
+        modify.padding = {1,1,1,2};
 
-            auto background = getTransform()->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-            background->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("round-rect-panel"), 1);
-            return this;
+        ModifyContentSizeFitter fitter(layout);
+        fitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
+
+
+        QUC::detail::Backgroundable background("round-rect-panel", false, fitter, 1.0f);
+
+        return background;
+    }
+
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongHorizontalTitleTimeText(TArgs&&... layoutArgs) {
+        QUC::detail::HorizontalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayoutElement layoutElement(layout);
+        layoutElement.spacing = 3;
+
+        return layoutElement;
+    }
+
+    template<class... TArgs>
+    requires ((QUC::renderable<TArgs> && ...))
+    constexpr auto SongHorizontalAuthorRatingText(TArgs&&... layoutArgs) {
+        QUC::detail::HorizontalLayoutGroup<TArgs...> layout(std::forward<TArgs>(layoutArgs)...);
+        ModifyLayoutElement layoutElement(layout);
+        layoutElement.spacing = 2;
+        layoutElement.padding = {0,0,1,2};
+
+        return layoutElement;
+    }
+
+
+    struct CommonSmallText : public QUC::Text {
+        CommonSmallText(std::string_view t, float fontSize) : Text(t, true, std::nullopt, fontSize) {}
+
+        constexpr auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+            auto ret = QUC::Text::render(ctx, data);
+            auto& textComp = data.getData<TMPro::TextMeshProUGUI*>();
+
+            textComp->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
+            textComp->set_enableWordWrapping(false);
+            textComp->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
+
+            return ret;
         }
     };
 
-    class SongHorizontalTitleTimeText : public QuestUI_Components::HorizontalLayoutGroup {
-    public:
-        explicit SongHorizontalTitleTimeText(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
+    inline auto TitleTimeText(std::string_view t) {
+        return CommonSmallText(t, 2.7f);
+    }
 
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            HorizontalLayoutGroup::render(parentTransform);
-
-            auto horizontalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::HorizontalLayoutGroup*>();
-            horizontalLayoutGroup->set_spacing(3);
-
-            return this;
-        }
-    };
-
-    class SongHorizontalAuthorRatingText : public QuestUI_Components::HorizontalLayoutGroup {
-    public:
-        explicit SongHorizontalAuthorRatingText(std::initializer_list<QuestUI_Components::ComponentWrapper> children) : HorizontalLayoutGroup(children) {}
-
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            HorizontalLayoutGroup::render(parentTransform);
-
-            auto horizontalLayoutGroup = getTransform()->get_gameObject()->GetComponent<UnityEngine::UI::HorizontalLayoutGroup*>();
-            horizontalLayoutGroup->set_spacing(2);
-            horizontalLayoutGroup->set_padding(UnityEngine::RectOffset::New_ctor(0,0,1,2));
-
-            return this;
-        }
-    };
-
-    class TitleTimeText : public QuestUI_Components::Text {
-    public:
-        explicit TitleTimeText(std::string_view text, std::optional<InitialTextData> textData = std::nullopt) : QuestUI_Components::Text(text, textData) {}
-
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            QuestUI_Components::Text::render(parentTransform);
-
-            auto textMeshProUGUI = getTransform()->get_gameObject()->GetComponent<TMPro::TextMeshProUGUI*>();
-            textMeshProUGUI->set_fontSize(2.7);
-            textMeshProUGUI->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
-            textMeshProUGUI->set_enableWordWrapping(false);
-            textMeshProUGUI->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
-
-            return this;
-        }
-    };
-
-    class AuthorRatingText : public QuestUI_Components::Text {
-    public:
-        explicit AuthorRatingText(std::string_view text, std::optional<InitialTextData> textData = std::nullopt) : QuestUI_Components::Text(text, textData) {}
-
-    protected:
-        virtual Component *render(UnityEngine::Transform *parentTransform) override {
-            QuestUI_Components::Text::render(parentTransform);
-
-            auto textMeshProUGUI = getTransform()->get_gameObject()->GetComponent<TMPro::TextMeshProUGUI*>();
-            textMeshProUGUI->set_fontSize(2.4);
-            textMeshProUGUI->set_overflowMode(TMPro::TextOverflowModes::Ellipsis);
-            textMeshProUGUI->set_enableWordWrapping(false);
-            textMeshProUGUI->set_alignment(TMPro::TextAlignmentOptions::MidlineLeft);
-
-            return this;
-        }
-    };
+    inline auto AuthorRatingText(std::string_view t) {
+        return CommonSmallText(t, 2.4f);
+    }
 }
