@@ -24,15 +24,41 @@
 
 namespace BetterSongSearch::UI {
 
-    struct SelectedSongController : public QUC::detail::VerticalLayoutGroup<> {
+    struct SelectedSongController {
+        LazyInitAndUpdate<QUC::Button> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+            PlaySong();
+        },"PlayButton"};
+
+        LazyInitAndUpdate<QUC::Button> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+            DownloadSong();
+        },"PlayButton"};
+
+        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton"};
+
+        LazyInitAndUpdate<QUC::Text> authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
+        LazyInitAndUpdate<QUC::Text> songNameText{"Name", true, std::nullopt, 2.7f};
+        LazyInitAndUpdate<QUC::Text> infoText{"details"};
+        LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
+        UnityEngine::Sprite *defaultImage = nullptr;
+        const SDC_wrapper::BeatStarSong *currentSong = nullptr;
+
+        QUC::RenderContext *ctx = nullptr; // this is ugly but whatever
+        const QUC::Key key;
+
+        SelectedSongController() = default;
+        SelectedSongController(SDC_wrapper::BeatStarSong const *currentSong, UnityEngine::Sprite *defaultImage)
+                : currentSong(currentSong), coverImage(defaultImage, UnityEngine::Vector2(28, 28)),
+                  defaultImage(defaultImage) {
+            coverImage.child.preserveAspectRatio = true;
+        }
+
         void SetSong(const SDC_wrapper::BeatStarSong *);
 
         void DownloadSong();
 
         void PlaySong();
 
-
-        [[nodiscard]] auto DefaultAuthorText() {
+        [[nodiscard]] constexpr auto DefaultAuthorText() {
             ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
             authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
@@ -40,7 +66,7 @@ namespace BetterSongSearch::UI {
             return authorFitter;
         }
 
-        [[nodiscard]] auto DefaultNameText() {
+        [[nodiscard]] constexpr auto DefaultNameText() {
             ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText.child));
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
@@ -61,7 +87,7 @@ namespace BetterSongSearch::UI {
 
             ModifyLayout modifyLayout = ModifyLayout(
                     QUC::detail::VerticalLayoutGroup(
-                            metaLayout
+                            contentSizeFitter
                     )
             );
 
@@ -74,11 +100,10 @@ namespace BetterSongSearch::UI {
             return layoutElement;
         }
 
-        [[nodiscard]] auto DefaultCoverImage() {
+        [[nodiscard]] constexpr auto DefaultCoverImage() {
             ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
             coverElement.preferredHeight = 28;
             coverElement.preferredWidth = 28;
-
 
             QUC::detail::HorizontalLayoutGroup metaLayout(coverElement);
 
@@ -91,11 +116,10 @@ namespace BetterSongSearch::UI {
             metaElement.preferredWidth = 28;
             metaElement.preferredHeight = 28;
 
-
             return metaElement;
         }
 
-        [[nodiscard]] auto DefaultMinMaxDiffInfo() {
+        [[nodiscard]] constexpr auto DefaultMinMaxDiffInfo() {
             QUC::detail::HorizontalLayoutGroup layout(QUC::detail::refComp(infoText));
 
             ModifyContentSizeFitter nameFitter(layout);
@@ -119,60 +143,35 @@ namespace BetterSongSearch::UI {
             return nameFitter;
         }
 
-        const SDC_wrapper::BeatStarSong *currentSong;
-
-        LazyInitAndUpdate<QUC::Button> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
-            PlaySong();
-        },"PlayButton"};
-
-        LazyInitAndUpdate<QUC::Button> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
-            DownloadSong();
-        },"PlayButton"};
-
-        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton"};
-
-        LazyInitAndUpdate<QUC::Text> authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
-        LazyInitAndUpdate<QUC::Text> songNameText{"Name", true, std::nullopt, 2.7f};
-        LazyInitAndUpdate<QUC::Text> infoText{"details"};
-        LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
-        UnityEngine::Sprite *defaultImage = nullptr;
-
-        QUC::RenderContext *ctx = nullptr; // this is ugly but whatever
-
-        SelectedSongController() = default;
-        SelectedSongController(SDC_wrapper::BeatStarSong const *currentSong, UnityEngine::Sprite *defaultImage)
-                : currentSong(currentSong), coverImage(defaultImage, UnityEngine::Vector2(28, 28)),
-                  defaultImage(defaultImage) {
-            coverImage.child.preserveAspectRatio = true;
-        }
-
         auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
             this->ctx = &ctx;
 
-            auto &viewLayout = data.getData<UnityEngine::UI::VerticalLayoutGroup *>();
+            auto& rendered = data.getData<bool>();
 
-            if (!viewLayout) {
-                QUC::detail::VerticalLayoutGroup<>::render(ctx, data);
-                QUC::RenderContext &childrenCtx = data.getChildContext([viewLayout] {
-                    return viewLayout->get_transform();
-                });
-
-                QUC::detail::Container renderlayout(
+            if (!rendered) {
+                // render layout for buttons
+                QUC::detail::VerticalLayoutGroup buttons(
                         MetaText(),
                         DefaultCoverImage(),
                         DefaultMinMaxDiffInfo(),
                         DefaultButtonLayout()
                 );
 
+                ModifyLayout modifyLayout(buttons);
+                modifyLayout.childForceExpandHeight = false;
+                modifyLayout.padding = {2,2,2,2};
 
-                QUC::detail::renderSingle(renderlayout, childrenCtx);
+                ModifyLayoutElement modifyLayoutElement(modifyLayout);
+                modifyLayoutElement.preferredWidth = 40;
+
+                QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
+
+                auto transform = QUC::detail::renderSingle(bgButtons, ctx);
+
+                return &data.getChildContext([transform]{return transform; }).parentTransform;
 
             } else {
                 // Just update the existing components
-                QUC::RenderContext &childrenCtx = data.getChildContext([viewLayout] {
-                    return viewLayout->get_transform();
-                });
-
                 playButton.update();
                 downloadButton.update();
                 authorText.update();
@@ -180,8 +179,14 @@ namespace BetterSongSearch::UI {
                 infoText.update();
                 coverImage.update();
             }
-        }
 
+            rendered = true;
+
+            return &data.getChildContext([]{
+                SAFE_ABORT(); // not possible
+                return nullptr;
+            }).parentTransform;
+        }
     };
 }
 

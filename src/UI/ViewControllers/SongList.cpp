@@ -390,14 +390,7 @@ inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController
     auto& controller = view->selectedSongController;
     controller.child.defaultImage = defaultImage;
 
-    detail::VerticalLayoutGroup selectedSongView(QUC::detail::refComp(controller));
-
-    ModifyLayout selectedSongViewLayout(selectedSongView);
-    selectedSongViewLayout.childForceExpandHeight = false;
-    selectedSongViewLayout.padding = {2, 2, 2, 2};
-
-    ModifyLayoutElement selectedSongViewLayoutElement(selectedSongViewLayout);
-    selectedSongViewLayoutElement.preferredWidth = 40;
+    QUC::RefComp selectedSongControllerRefComp(controller);
 
 #pragma region table
     if (view->table.renderedAllowed.getData()) {
@@ -449,11 +442,9 @@ inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController
     view->loadingIndicatorContainer.emplace(detail::VerticalLayoutGroup(detail::HorizontalLayoutGroup(QUC::detail::refComp(view->loadingIndicator))));
 
     return SongListHorizontalLayout(
-                QUC::Backgroundable("round-rect-panel", true,
-                    selectedSongView
-                ),
-                QUC::detail::refComp(*view->loadingIndicatorContainer),
-                tableContainer
+            selectedSongControllerRefComp,
+            QUC::detail::refComp(*view->loadingIndicatorContainer),
+            tableContainer
        );
 }
 
