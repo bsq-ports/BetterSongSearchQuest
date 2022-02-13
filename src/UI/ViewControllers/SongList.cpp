@@ -357,9 +357,34 @@ void Sort()
     songListController->table.update();
 }
 
+inline auto SortDropdownContainer() {
+    std::array<std::string, 8> sortModes(
+            {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
+             "Most Downloads"});
+
+    SongListDropDown<std::tuple_size_v<decltype(sortModes)>> sortDropdown("", "Newest", [sortModes](
+            auto &, std::string const &input,
+            UnityEngine::Transform *, RenderContext &ctx) {
+        getLogger().debug("DropDown! %s", input.c_str());
+        SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
+
+        songListController->table.child.getStatefulVector(
+                songListController->ctx) = std::vector<CellData>(
+                DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
+        songListController->table.update();
+    }, sortModes);
+
+    ModifyLayout layout(VerticalLayoutGroup(sortDropdown));
+    layout.padding = {1, 0, 0 ,0};
+
+    ModifyLayoutElement layoutElement(layout);
+    layoutElement.preferredWidth = 44;
+
+    return layoutElement;
+}
 
 
-auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view) {
+inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view) {
     auto defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
 
     auto& controller = view->selectedSongController;
@@ -367,17 +392,17 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
 
     detail::VerticalLayoutGroup selectedSongView(QUC::detail::refComp(controller));
 
-    ModifyLayout layout(selectedSongView);
-    layout.childForceExpandHeight = false;
-    layout.padding = {2,2,2,2};
+    ModifyLayout selectedSongViewLayout(selectedSongView);
+    selectedSongViewLayout.childForceExpandHeight = false;
+    selectedSongViewLayout.padding = {2, 2, 2, 2};
 
-    ModifyLayoutElement layoutElement(layout);
-    layoutElement.preferredWidth = 40;
+    ModifyLayoutElement selectedSongViewLayoutElement(selectedSongViewLayout);
+    selectedSongViewLayoutElement.preferredWidth = 40;
 
+#pragma region table
     if (view->table.renderedAllowed.getData()) {
         std::vector<CellData> filteredSongs(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
 
-        // table
         view->table.child.initCellDatas = filteredSongs;
     }
 
@@ -415,15 +440,21 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
             }
     );
 
+    ModifyLayoutElement<detail::VerticalLayoutGroup<decltype(tableRender)>> tableContainer((QUC::detail::VerticalLayoutGroup<decltype(tableRender)>(tableRender)));
+    tableContainer.preferredWidth = 70.0f;
+
+
+#pragma endregion
+
     view->loadingIndicatorContainer.emplace(detail::VerticalLayoutGroup(detail::HorizontalLayoutGroup(QUC::detail::refComp(view->loadingIndicator))));
 
-    return QUC::Backgroundable("round-rect-panel", true,
-        SongListHorizontalLayout(
-                selectedSongView,
+    return SongListHorizontalLayout(
+                QUC::Backgroundable("round-rect-panel", true,
+                    selectedSongView
+                ),
                 QUC::detail::refComp(*view->loadingIndicatorContainer),
-                tableRender
-       )
-    );
+                tableContainer
+       );
 }
 
 custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewController* view) {
@@ -471,9 +502,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     auto start = std::chrono::high_resolution_clock::now();
 
     if (firstActivation) {
-        std::array<std::string, 8> sortModes(
-                {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
-                 "Most Downloads"});
+
 
         auto songListControllerView = SongListVerticalLayoutGroup(
                 SongListHorizontalFilterBar(
@@ -496,17 +525,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                                   DataHolder::filteredSongList.end());;
                                           songListController->table.update();
                                       }),
-                        SongListDropDown<std::tuple_size_v<decltype(sortModes)>>("", "Newest", [sortModes](
-                                auto &, std::string const &input,
-                                UnityEngine::Transform *, RenderContext &ctx) {
-                            getLogger().debug("DropDown! %s", input.c_str());
-                            SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
-
-                            songListController->table.child.getStatefulVector(
-                                    songListController->ctx) = std::vector<CellData>(
-                                    DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
-                            songListController->table.update();
-                        }, sortModes)
+                        SortDropdownContainer()
                 ),
                 SelectedSongControllerLayout(this)
         );

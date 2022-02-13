@@ -67,6 +67,8 @@ namespace BetterSongSearch::UI {
         auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
             auto& segmentedControl = data.getData<QuestUI::CustomTextSegmentedControlData*>();
 
+            bool inited = static_cast<bool>(segmentedControl);
+
             if (!segmentedControl) {
                 getLogger().debug("Building segmented control");
                 segmentedControl = QuestUI::BeatSaberUI::CreateTextSegmentedControl(&ctx.parentTransform, nullptr);
@@ -74,31 +76,28 @@ namespace BetterSongSearch::UI {
                 segmentedControl->fontSize = 2;
                 segmentedControl->padding = 1.5;
                 segmentedControl->overrideCellSize = true;
-                segmentedControl->firstCellPrefab = UnityEngine::Object::Instantiate(segmentedControl->firstCellPrefab);
-                segmentedControl->lastCellPrefab = UnityEngine::Object::Instantiate(segmentedControl->lastCellPrefab);
-                segmentedControl->middleCellPrefab = UnityEngine::Object::Instantiate(segmentedControl->middleCellPrefab);
-                segmentedControl->singleCellPrefab = UnityEngine::Object::Instantiate(segmentedControl->singleCellPrefab);
+                constexpr auto handleCellPrefab = [](HMUI::SegmentedControlCell*& cell) {
+                    cell = UnityEngine::Object::Instantiate(cell);
+                    UnityEngine::Object::Destroy(cell->GetComponentInChildren<HMUI::Touchable*>());
+                    auto text = cell->GetComponentInChildren<TMPro::TextMeshProUGUI*>();
 
-                UnityEngine::Object::Destroy(segmentedControl->firstCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
-                UnityEngine::Object::Destroy(segmentedControl->lastCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
-                UnityEngine::Object::Destroy(segmentedControl->middleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
-                UnityEngine::Object::Destroy(segmentedControl->singleCellPrefab->GetComponentInChildren<HMUI::Touchable*>());
+                    text->set_fontStyle(TMPro::FontStyles::Normal);
+                    text->set_richText(true);
 
-                // TODO: Can we QUC-ify this? I cannot be bothered to figure this out today
-                segmentedControl->singleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
-                segmentedControl->lastCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
-                segmentedControl->firstCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
-                segmentedControl->middleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_fontStyle(TMPro::FontStyles::Normal);
-                segmentedControl->firstCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
-                segmentedControl->lastCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
-                segmentedControl->middleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
-                segmentedControl->singleCellPrefab->GetComponentInChildren<TMPro::TextMeshProUGUI*>()->set_richText(true);
+                };
+
+                handleCellPrefab(segmentedControl->firstCellPrefab);
+                handleCellPrefab(segmentedControl->lastCellPrefab);
+                handleCellPrefab(segmentedControl->middleCellPrefab);
+                handleCellPrefab(segmentedControl->singleCellPrefab);
+
                 segmentedControl->hideCellBackground = true;
             }
 
-            if (diffs.isModified()) {
+            if (diffs.isModified() || !inited) {
                 std::vector<SDC_wrapper::BeatStarSongDifficultyStats const*> const& diffsVector = diffs.getData();
-                ArrayW<StringW> strs(diffsVector.size());
+                // avoid unnecessary allocation
+                ArrayW<StringW> strs = segmentedControl->texts.size() == diffsVector.size() ? segmentedControl->texts : ArrayW<StringW>(diffsVector.size());
                 int i = 0;
                 for (auto const &diffData: diffsVector) {
                     if (ranked) {
@@ -175,8 +174,8 @@ namespace BetterSongSearch::UI {
             bottomLayout.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
             ModifyLayoutElement bottomLayoutElement(bottomLayout);
-            bottomLayout.horizontalFit = 3.9f;
-            bottomLayout.verticalFit = 68.0f;
+            bottomLayoutElement.preferredHeight = 3.9f;
+            bottomLayoutElement.preferredWidth = 68.0f;
             //
 
 
@@ -245,8 +244,8 @@ namespace BetterSongSearch::UI {
 //                auto go = cellCtx.parentTransform.get_gameObject();
 //                auto sizeFitter = go->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
 
-                WrapParent parent(view);
-                ModifyContentSizeFitter fitter2(parent);
+//                WrapParent parent(view);
+                ModifyContentSizeFitter fitter2(view);
 
 //                cellCtx.getChildDataOrCreate(fitter2.key).getData<UnityEngine::UI::ContentSizeFitter*>() = sizeFitter;
 
@@ -263,7 +262,6 @@ namespace BetterSongSearch::UI {
             auto ranked = cellData.song->GetMaxStarValue() > 0;
             bool downloaded = DataHolder::downloadedSongList.contains(songData);
 
-            songText.text = fmt::format("{} - {}", songData->GetName(), songData->GetSongAuthor());
             Sombrero::FastColor songColor = Sombrero::FastColor::white();
 
             // these double assignments wil be optimized out, don't worry about it!
@@ -275,6 +273,7 @@ namespace BetterSongSearch::UI {
                 songColor = UnityEngine::Color(1, 0.647f, 0, 1);
             }
 
+            songText.text = fmt::format("{} - {}", songData->GetName(), songData->GetSongAuthor());
             songText.color = songColor;
             mapperText.text = cellData.song->GetAuthor();
             uploadDateText.text = fmt::format("{:%d-%m-%Y}", fmt::localtime(songData->uploaded_unix_time));

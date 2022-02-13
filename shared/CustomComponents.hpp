@@ -388,7 +388,7 @@ namespace BetterSongSearch::UI {
             return loadingIndicator;
         }
 
-        auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
             auto& loadingIndicator = data.getData<UnityEngine::GameObject*>();
 
             if (!loadingIndicator) {
