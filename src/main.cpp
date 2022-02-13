@@ -37,6 +37,7 @@ extern "C" void setup(ModInfo& info) {
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
         DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
         getLogger().info("yes");
+        SortAndFilterSongs(SortMode::Newest, "");
         DataHolder::loadedSDC = true;
     }).detach();
 }

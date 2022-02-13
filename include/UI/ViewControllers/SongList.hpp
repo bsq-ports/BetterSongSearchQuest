@@ -238,7 +238,6 @@ namespace BetterSongSearch::UI {
 
             auto songData = cellData.song;
 
-            getLogger().debug("Building cell");
             if (!inited) {
                 // Modify the cell itself
 
@@ -282,10 +281,9 @@ namespace BetterSongSearch::UI {
             ratingText.text = fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(songData->duration_secs), songData->upvotes, songData->downvotes);
             cellDiff.diffs = songData->GetDifficultyVector();
 
-            getLogger().debug("Updating cell data");
+
             QUC::detail::renderSingle(view, cellCtx);
             inited = true;
-            getLogger().debug("Finished the cell");
         }
     };
 
@@ -328,7 +326,10 @@ public:
     TMPro::TextMeshProUGUI* songDetailsText;
     LazyInitAndUpdate<BetterSongSearch::UI::SelectedSongController> selectedSongController;
 
-    using TableType = LazyInitAndUpdate<QUC::RecycledTable<BetterSongSearch::UI::QUCObjectTableData, CellComponent>>;
+    LoadingIndicator loadingIndicator{LoadingIndicator()};
+    std::optional<LazyInitAndUpdate<QUC::detail::VerticalLayoutGroup<QUC::detail::HorizontalLayoutGroup<QUC::RefComp<decltype(loadingIndicator)>>>>> loadingIndicatorContainer;
+
+    using TableType = ConditionalRender<QUC::RecycledTable<BetterSongSearch::UI::QUCObjectTableData, CellComponent>>;
 
     TableType table {std::initializer_list<BetterSongSearch::UI::CellData>() ,QUC::CustomTypeList::QUCTableInitData("BSS_ReusableUI", 11.7f, UnityEngine::Vector2(70, 6 * 11.7f))};
 

@@ -1,5 +1,9 @@
-#include "main.hpp"
 #pragma once
+
+#include "main.hpp"
+
+
+#include "questui_components/shared/components/settings/DropdownSetting.hpp"
 
 class FilterOptions
 {
@@ -74,3 +78,17 @@ class FilterOptions
     DifficultyFilterType difficultyFilter = DifficultyFilterType::All;
     CharFilterType charFilter = CharFilterType::All;
 };
+
+DROPDOWN_CREATE_ENUM_CLASS(SortMode,
+                           STR_LIST("Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"),
+                           Newest,
+                           Oldest,
+                           Latest_Ranked,
+                           Most_Stars,
+                           Least_Stars,
+                           Best_rated,
+                           Worst_rated,
+                           Most_Downloads)
+
+
+void SortAndFilterSongs(SortMode sort, std::string_view search);

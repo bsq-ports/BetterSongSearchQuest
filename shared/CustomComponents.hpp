@@ -8,6 +8,7 @@
 #include "UnityEngine/RectOffset.hpp"
 
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+#include "questui/shared/CustomTypes/Components/WeakPtrGO.hpp"
 
 #include "questui_components/shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "questui_components/shared/components/layouts/HorizontalLayoutGroup.hpp"
@@ -309,14 +310,97 @@ namespace BetterSongSearch::UI {
         constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
             if (this->ctx && &ctx != this->ctx) {
                 fmtLog(Logging::Level::ERROR, "Rendered this comp again with a different render ctx. Why? Make a new instance");
-                this->ctx = &ctx;
             }
+            this->ctx = &ctx;
             return QUC::detail::renderSingle(child, ctx);
         }
 
         constexpr auto update() {
             CRASH_UNLESS(ctx);
             return QUC::detail::renderSingle<T>(child, *ctx);
+        }
+    };
+
+    template<typename T>
+    struct ConditionalRender : public LazyInitAndUpdate<T> {
+        using Parent = LazyInitAndUpdate<T>;
+
+        ConditionalRender() = default;
+
+        ConditionalRender(ConditionalRender const&) = delete;
+        ConditionalRender(T child) : Parent(std::move(child)) {}
+
+        template<typename... TArgs>
+        ConditionalRender(TArgs&&... args) : Parent(std::forward<TArgs>(args)...) {}
+
+        ConditionalRender& operator =(ConditionalRender const&) = default;
+        ConditionalRender& operator =(ConditionalRender&&) noexcept = default;
+
+        QUC::RenderHeldData<bool> renderedAllowed = true;
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            if (this->ctx && &ctx != this->ctx) {
+                fmtLog(Logging::Level::ERROR,
+                       "Rendered this comp again with a different render ctx. Why? Make a new instance");
+            }
+            this->ctx = &ctx;
+
+            // if modified
+            if (renderedAllowed.readAndClear<true>(ctx) && !renderedAllowed.getData()) {
+                // hide object
+
+                getLogger().debug("Attempting to destroy");
+                auto& context = ctx.getChildDataOrCreate(Parent::child.key);
+                if (context.childContext) {
+                    UnityEngine::Object::Destroy(&context.childContext->parentTransform);
+                    getLogger().debug("Destroying object");
+                }
+
+                ctx.destroyChild(Parent::child.key);
+            }
+
+            if (!renderedAllowed.getData()) {
+                return std::invoke_result_t<decltype(&Parent::update), Parent *>();
+            } else {
+                return Parent::render(ctx, data);
+            }
+        }
+    };
+
+    // TODO: Move this to QUC proper?
+    struct LoadingIndicator {
+        const QUC::Key key;
+
+        QUC::RenderHeldData<bool> enabled;
+
+        LoadingIndicator(bool enabled = true) : enabled(enabled) {}
+
+        auto buildLoadingIndicator(UnityEngine::Transform* parent) {
+            static QuestUI::WeakPtrGO<UnityEngine::GameObject> loadingTemplate;
+
+            if (!loadingTemplate)
+                loadingTemplate = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::GameObject*>().First([](auto& x) { return x->get_name() == "LoadingIndicator"; });
+            UnityEngine::GameObject* loadingIndicator = UnityEngine::Object::Instantiate(loadingTemplate.getInner(), parent, false);
+            loadingIndicator->set_name("BSMLLoadingIndicator");
+
+            loadingIndicator->AddComponent<UnityEngine::UI::LayoutElement*>();
+
+            return loadingIndicator;
+        }
+
+        auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto& loadingIndicator = data.getData<UnityEngine::GameObject*>();
+
+            if (!loadingIndicator) {
+                loadingIndicator = buildLoadingIndicator(&ctx.parentTransform);
+            }
+
+            if (enabled.readAndClear(ctx)) {
+                loadingIndicator->set_active(enabled.getData());
+            }
+
+            // create context so it can be yeeted
+            return &data.getChildContext([loadingIndicator]{ return loadingIndicator->get_transform();}).parentTransform;
         }
     };
 

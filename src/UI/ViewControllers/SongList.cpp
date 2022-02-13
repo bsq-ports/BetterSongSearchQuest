@@ -5,17 +5,11 @@
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 #include "CustomComponents.hpp"
-#include "questui_components/shared/components/Text.hpp"
-#include "questui_components/shared/components/ScrollableContainer.hpp"
-#include "questui_components/shared/components/HoverHint.hpp"
 #include "questui_components/shared/components/Button.hpp"
-#include "questui_components/shared/components/Modal.hpp"
 #include "questui_components/shared/components/list/CustomCelledList.hpp"
 #include "questui_components/shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "questui_components/shared/components/layouts/HorizontalLayoutGroup.hpp"
-#include "questui_components/shared/components/settings/ToggleSetting.hpp"
 #include "questui_components/shared/components/settings/StringSetting.hpp"
-#include "questui_components/shared/components/settings/IncrementSetting.hpp"
 #include "questui_components/shared/components/settings/DropdownSetting.hpp"
 
 
@@ -52,16 +46,6 @@ DEFINE_QUC_CUSTOMLIST_TABLEDATA(BetterSongSearch::UI, QUCObjectTableData);
 DEFINE_QUC_CUSTOMLIST_CELL(BetterSongSearch::UI, QUCObjectTableCell)
 
 
-DROPDOWN_CREATE_ENUM_CLASS(SortMode,
-                           STR_LIST("Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated", "Most Downloads"),
-                           Newest,
-                           Oldest,
-                           Latest_Ranked,
-                           Most_Stars,
-                           Least_Stars,
-                           Best_rated,
-                           Worst_rated,
-                           Most_Downloads)
 
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
@@ -369,7 +353,7 @@ void Sort()
 {
     SortAndFilterSongs(prevSort, prevSearch);
     std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
-    songListController->table.child.getStatefulVector(songListController->ctx) = std::move(filteredCells);
+    songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
     songListController->table.update();
 }
 
@@ -390,125 +374,159 @@ auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view)
     ModifyLayoutElement layoutElement(layout);
     layoutElement.preferredWidth = 40;
 
-    std::vector<CellData> filteredSongs(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
+    if (view->table.renderedAllowed.getData()) {
+        std::vector<CellData> filteredSongs(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
 
-    view->table.child.initCellDatas = filteredSongs;
+        // table
+        view->table.child.initCellDatas = filteredSongs;
+    }
+
+    OnRenderCallback tableRender(
+            QUC::detail::refComp(view->table),
+            [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
+                auto& tableState = ctx.getChildDataOrCreate(self.child.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
+//                        auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
+
+                view->tablePtr = tableState.dataSource;
+                getLogger().info("Rendering table! %p", view->tablePtr);
+
+                if (view->table.renderedAllowed.getData()) {
+                    CRASH_UNLESS(tableState.dataSource);
+
+                    //Make Lists
+                    auto click = std::function([view](HMUI::TableView *tableView, int row) {
+                        // Get song list actually inside the table
+                        auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
+                        view->selectedSongController.child.SetSong(songList[row].song);
+                    });
+                    auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
+                            classof(System::Action_2<HMUI::TableView *, int>*), click);
+
+                    CRASH_UNLESS(view->tablePtr);
+                    CRASH_UNLESS(view->tablePtr->tableView);
+
+                    getLogger().debug("Adding table event");
+
+                    view->tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
+
+                    getLogger().debug("Set sibling");
+                    view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
+                }
+            }
+    );
+
+    view->loadingIndicatorContainer.emplace(detail::VerticalLayoutGroup(detail::HorizontalLayoutGroup(QUC::detail::refComp(view->loadingIndicator))));
 
     return QUC::Backgroundable("round-rect-panel", true,
         SongListHorizontalLayout(
                 selectedSongView,
-                OnRenderCallback(
-                    QUC::detail::refComp(view->table),
-                    [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
-                        auto& tableState = ctx.getChildDataOrCreate(self.child.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-//                        auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-
-                        view->tablePtr = tableState.dataSource;
-                        getLogger().info("Rendering table! %p", view->tablePtr);
-
-
-                        CRASH_UNLESS(tableState.dataSource);
-                    }
-                )
+                QUC::detail::refComp(*view->loadingIndicatorContainer),
+                tableRender
        )
     );
+}
+
+custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewController* view) {
+    if (view->table.renderedAllowed.getData())
+        co_return;
+
+    while (true) {
+        view->table.renderedAllowed = DataHolder::loadedSDC;
+        view->loadingIndicator.enabled = !DataHolder::loadedSDC;
+
+        co_yield nullptr;
+
+        if (view->table.renderedAllowed.getData()) {
+            getLogger().debug("Showing table now");
+
+            std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
+            view->table.child.initCellDatas = std::move(filteredCells);
+
+            view->table.update();
+            view->loadingIndicatorContainer->update();
+            co_return;
+        }
+    }
+
 }
 
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     songListController = this;
-    if (!firstActivation) return;
-
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::array<std::string, 8> sortModes(
-            {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
-             "Most Downloads"});
-
-
-
-
-    SortAndFilterSongs(SortMode::Newest, "");
-    auto songListControllerView = SongListVerticalLayoutGroup(
-            SongListHorizontalFilterBar(
-                    Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
-                        int random = rand() % DataHolder::filteredSongList.size();
-                        songListController->tablePtr->tableView->ScrollToCellWithIdx(random, HMUI::TableView::ScrollPositionType::Center, true);
-                    }),
-                    Button("MULTI", nullptr),
-                    StringSetting("Search by Song, Key, Mapper...",
-                                  [](StringSetting &, std::string const &input, UnityEngine::Transform *,
-                                     RenderContext &ctx) {
-                                      getLogger().debug("Input! %s", input.c_str());
-                                      SortAndFilterSongs(prevSort, input);
-
-                                      songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
-                                      songListController->table.update();
-                                  }),
-                    SongListDropDown<std::tuple_size_v<decltype(sortModes)>>("", "Newest", [sortModes](
-                            DropdownSetting<std::tuple_size_v<decltype(sortModes)>> &, std::string const &input,
-                            UnityEngine::Transform *, RenderContext &ctx) {
-                        getLogger().debug("DropDown! %s", input.c_str());
-                        SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
-
-                        songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
-                        songListController->table.update();
-                    }, sortModes)
-            ),
-            SelectedSongControllerLayout(this)
-    );
-
-
 
     if (firstActivation) {
         this->ctx = RenderContext(get_transform());
+    }
+
+    table.renderedAllowed = DataHolder::loadedSDC;
+    loadingIndicator.enabled = !DataHolder::loadedSDC;
+
+    getLogger().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
+
+    // Periodically check if SDC loaded and update the view
+    if (firstActivation && loadingIndicator.enabled.getData()) {
+        this->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(checkIfLoaded(this)));
+    }
+
+    auto start = std::chrono::high_resolution_clock::now();
+
+    if (firstActivation) {
+        std::array<std::string, 8> sortModes(
+                {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
+                 "Most Downloads"});
+
+        auto songListControllerView = SongListVerticalLayoutGroup(
+                SongListHorizontalFilterBar(
+                        Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
+                            int random = rand() % DataHolder::filteredSongList.size();
+                            songListController->tablePtr->tableView->ScrollToCellWithIdx(random,
+                                                                                         HMUI::TableView::ScrollPositionType::Center,
+                                                                                         true);
+                        }),
+                        Button("MULTI", nullptr),
+                        StringSetting("Search by Song, Key, Mapper...",
+                                      [](StringSetting &, std::string const &input, UnityEngine::Transform *,
+                                         RenderContext &ctx) {
+                                          getLogger().debug("Input! %s", input.c_str());
+                                          SortAndFilterSongs(prevSort, input);
+
+                                          songListController->table.child.getStatefulVector(
+                                                  songListController->ctx) = std::vector<CellData>(
+                                                  DataHolder::filteredSongList.begin(),
+                                                  DataHolder::filteredSongList.end());;
+                                          songListController->table.update();
+                                      }),
+                        SongListDropDown<std::tuple_size_v<decltype(sortModes)>>("", "Newest", [sortModes](
+                                auto &, std::string const &input,
+                                UnityEngine::Transform *, RenderContext &ctx) {
+                            getLogger().debug("DropDown! %s", input.c_str());
+                            SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
+
+                            songListController->table.child.getStatefulVector(
+                                    songListController->ctx) = std::vector<CellData>(
+                                    DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
+                            songListController->table.update();
+                        }, sortModes)
+                ),
+                SelectedSongControllerLayout(this)
+        );
 
         getLogger().debug("Rendering layout");
         detail::renderSingle(songListControllerView, ctx);
         getLogger().debug("Rendered layout");
-
-        //Make Lists
-
-        auto click = std::function([this](HMUI::TableView *tableView, int row) {
-            // Get song list actually inside the table
-            auto const& songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData*>(tableView->dataSource)->descriptors;
-            this->selectedSongController.child.SetSong(songList[row].song);
-        });
-        auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(classof(System::Action_2<HMUI::TableView *, int>*), click);
-
-        CRASH_UNLESS(tablePtr);
-        CRASH_UNLESS(tablePtr->tableView);
-
-        getLogger().debug("Adding table event");
-
-        tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
-
-        getLogger().debug("Set sibling");
-        tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
-    } else {
-        detail::renderSingle(songListControllerView, ctx);
     }
 
-
+    if (!firstActivation &&
+        DataHolder::loadedSDC && table.renderedAllowed.isRenderDiffModified(*table.ctx) // returns true if it's the state isn't updated
+        ) {
+        table.update();
+        loadingIndicatorContainer->update();
+    }
 
     auto end = std::chrono::high_resolution_clock::now();
     auto difference = end - start;
     auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
     getLogger().debug("UI building for SongList took %lldms", millisElapsed);
-
-
-    //fix scrolling lol
-    GlobalNamespace::IVRPlatformHelper *mewhen;
-    auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView *>();
-    for (int i = 0; i < scrolls.Length(); i++) {
-        mewhen = scrolls.get(i)->platformHelper;
-        if (mewhen != nullptr)
-            break;
-    }
-    for (int i = 0; i < scrolls.Length(); i++) {
-        if (scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
-    }
 
     getLogger().debug("Finished song list view controller");
 }
