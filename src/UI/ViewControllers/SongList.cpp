@@ -429,22 +429,39 @@ inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController
 
                     getLogger().debug("Set sibling");
                     view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
+
+                    // queue for next frame
+                    QuestUI::MainThreadScheduler::Schedule([]{
+                        //fix scrolling lol
+                        // doesn't work - Fern :(
+                        GlobalNamespace::IVRPlatformHelper* mewhen;
+                        auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
+                        for (int i = 0; i < scrolls.Length(); i++)
+                        {
+                            mewhen = scrolls.get(i)->platformHelper;
+                            if(mewhen != nullptr)
+                                break;
+                        }
+                        for (int i = 0; i < scrolls.Length(); i++)
+                        {
+                            if(scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
+                        }
+                    });
                 }
             }
     );
 
-    ModifyLayoutElement<detail::VerticalLayoutGroup<decltype(tableRender)>> tableContainer((QUC::detail::VerticalLayoutGroup<decltype(tableRender)>(tableRender)));
+    ModifyLayoutElement tableContainer(VerticalLayoutGroup(tableRender));
     tableContainer.preferredWidth = 70.0f;
-
 
 #pragma endregion
 
-    view->loadingIndicatorContainer.emplace(detail::VerticalLayoutGroup(detail::HorizontalLayoutGroup(QUC::detail::refComp(view->loadingIndicator))));
+    view->loadingIndicatorContainer.emplace(QUC::detail::refComp(view->loadingIndicator));
 
     return SongListHorizontalLayout(
-            selectedSongControllerRefComp,
+            tableContainer,
             QUC::detail::refComp(*view->loadingIndicatorContainer),
-            tableContainer
+            selectedSongControllerRefComp
        );
 }
 
