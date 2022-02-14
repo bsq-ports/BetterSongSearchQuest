@@ -74,6 +74,11 @@
       "id": "fmt",
       "versionRange": "^8.0.5",
       "additionalData": {}
+    },
+    {
+      "id": "songdownloader",
+      "versionRange": "^0.4.0",
+      "additionalData": {}
     }
   ],
   "additionalData": {}
