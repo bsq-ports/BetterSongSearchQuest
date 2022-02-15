@@ -520,7 +520,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                                                                          HMUI::TableView::ScrollPositionType::Center,
                                                                                          true);
                         }),
-                        Button("MULTI", nullptr),
                         StringSetting("Search by Song, Key, Mapper...",
                                       [](StringSetting &, std::string const &input, UnityEngine::Transform *,
                                          RenderContext &ctx) {

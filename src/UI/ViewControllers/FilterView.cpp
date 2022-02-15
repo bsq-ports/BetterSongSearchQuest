@@ -209,6 +209,24 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto minLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, 0, 0, 15, minLengthChange);
         auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, 0, 0, 15, maxLengthChange);
 
+        std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
+            float totalSeconds = value * 60;
+            int minutes = ((int)totalSeconds % 3600) / 60;
+            int seconds = (int)totalSeconds % 60;
+
+            return fmt::format("{:02}:{:02}", minutes, seconds);
+        };
+        std::function<std::string(float)> maxLengthSliderFormatFunction = [](float value) {
+            float totalSeconds = value * 60;
+            int minutes = ((int)totalSeconds % 3600) / 60;
+            int seconds = (int)totalSeconds % 60;
+
+            return fmt::format("{:02}:{:02}", minutes, seconds);
+        };
+
+        minLengthSlider->FormatString = minLengthSliderFormatFunction;
+        maxLengthSlider->FormatString = maxLengthSliderFormatFunction;
+
         reinterpret_cast<UnityEngine::RectTransform*>(minLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
         reinterpret_cast<UnityEngine::RectTransform*>(maxLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
     }
@@ -242,6 +260,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             filterOptions.maxNJS = value;
             Sort();
         };
+        std::function<std::string(float)> minNJSFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+        };
+        std::function<std::string(float)> maxNJSFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+        };
+
 
         auto NJSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
         NJSSliderLayout->set_spacing(2);
@@ -254,6 +279,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto minNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, minNJSChange);
         auto maxNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, maxNJSChange);
+        minNJSSlider->FormatString = minNJSFormat;
+        maxNJSSlider->FormatString = maxNJSFormat;
 
         reinterpret_cast<UnityEngine::RectTransform*>(minNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
         reinterpret_cast<UnityEngine::RectTransform*>(maxNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
@@ -265,6 +292,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         std::function<void(float)> maxNPSChange = [](float value) {
             filterOptions.maxNPS = value;
             Sort();
+        };
+        std::function<std::string(float)> minNPSFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+        };
+        std::function<std::string(float)> maxNPSFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
         };
 
         auto NPSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
@@ -278,6 +311,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto minNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, minNPSChange);
         auto maxNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, maxNPSChange);
+
+        minNPSSlider->FormatString = minNPSFormat;
+        maxNPSSlider->FormatString = maxNPSFormat;
 
         reinterpret_cast<UnityEngine::RectTransform*>(minNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
         reinterpret_cast<UnityEngine::RectTransform*>(maxNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
@@ -324,6 +360,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             filterOptions.maxStars = value;
             Sort();
         };
+        std::function<std::string(float)> minStarFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+        };
+        std::function<std::string(float)> maxStarFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+        };
+
 
         auto rankedStarLayout = BeatSaberUI::CreateHorizontalLayoutGroup(scoreSaberOptionsLayout->get_transform());
         rankedStarLayout->set_spacing(2);
@@ -336,6 +379,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto minStarSlider = BeatSaberUI::CreateSliderSetting(rankedStarLayout->get_transform(), "", 0.2, 0, 0, 13, minStarChange);
         auto maxStarSlider = BeatSaberUI::CreateSliderSetting(rankedStarLayout->get_transform(), "", 0.2, 0, 0, 14, maxStarChange);
+        minStarSlider->FormatString = minStarFormat;
+        maxStarSlider->FormatString = maxStarFormat;
 
         reinterpret_cast<UnityEngine::RectTransform*>(minStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
         reinterpret_cast<UnityEngine::RectTransform*>(maxStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
@@ -373,12 +418,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         QuestUI::SliderSetting* minUploadDateSlider;
         std::function<void(float)> minUploadDateChange = [=](float value) {
             //Divided because for some reason it likes too add 4 extra digits at the end.
-            int val = BetterSongSearch::GetDateAfterMonths(1525136400, value).time_since_epoch().count()/10000;
+            auto val = BetterSongSearch::GetDateAfterMonths(1525136400, value);
             char date[100];
             struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
             strftime(date, sizeof(date), "%b %G", t);
-            getLogger().info("%s", std::to_string(val).c_str());
-            getLogger().info("%s", date);
             // TODO: FMT
         };
         QuestUI::SliderSetting* minRatingSlider;
@@ -393,7 +436,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         };
 
         std::function<std::string(float)> minUploadDateSliderFormatFunciton = [](float value) {
-            int val = BetterSongSearch::GetDateAfterMonths(1525136400, value).time_since_epoch().count()/10000;
+            auto val = BetterSongSearch::GetDateAfterMonths(1525136400, value);
             char date[100];
             struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
             strftime(date, sizeof(date), "%b %G", t);
@@ -401,14 +444,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         };
 
         minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, GetMonthsSinceDate(1525136400), 0, GetMonthsSinceDate(1525136400), minUploadDateChange);
-        //minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
+        minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
 
         std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
-            return fmt::format("{:.2f}", value);
+            return fmt::format("{:.1f}%", value);
         };
 
         minRatingSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Rating", 5, 0, 0, 90, minRatingChange);
-        //minRatingSlider->FormatString = minRatingSliderFormatFunction;
+        minRatingSlider->FormatString = minRatingSliderFormatFunction;
         minVotesSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
     }
 

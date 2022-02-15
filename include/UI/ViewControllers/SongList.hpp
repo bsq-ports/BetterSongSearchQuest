@@ -54,7 +54,6 @@ namespace BetterSongSearch::UI {
 
     struct CellData : public QUC::CustomTypeList::QUCDescriptor {
         const SDC_wrapper::BeatStarSong* song;
-
         CellData(SDC_wrapper::BeatStarSong const *song) : QUCDescriptor(), song(song) {}
     };
 
@@ -100,7 +99,7 @@ namespace BetterSongSearch::UI {
                 ArrayW<StringW> strs = segmentedControl->texts.size() == diffsVector.size() ? segmentedControl->texts : ArrayW<StringW>(diffsVector.size());
                 int i = 0;
                 for (auto const &diffData: diffsVector) {
-                    if (ranked) {
+                    if (diffData->ranked) {
                         strs[i] = fmt::format("<color=white>{}</color> <color=#ffa500>{:.1f}</color>", diffData->GetName(), diffData->stars);
                     } else {
                         if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
