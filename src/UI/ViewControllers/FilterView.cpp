@@ -35,7 +35,11 @@ using namespace QuestUI;
 
 #include "questui_components/shared/concepts.hpp"
 
+#include <fmt/chrono.h>
+
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
+
+static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 
 UnityEngine::UI::VerticalLayoutGroup* filterViewLayout;
 
@@ -416,14 +420,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         beatsaverText->set_fontStyle(TMPro::FontStyles::Underline);
 
         QuestUI::SliderSetting* minUploadDateSlider;
-        std::function<void(float)> minUploadDateChange = [=](float value) {
-            //Divided because for some reason it likes too add 4 extra digits at the end.
-            auto val = BetterSongSearch::GetDateAfterMonths(1525136400, value);
-            char date[100];
-            struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
-            strftime(date, sizeof(date), "%b %G", t);
-            // TODO: FMT
-        };
         QuestUI::SliderSetting* minRatingSlider;
         std::function<void(float)> minRatingChange = [](float value) {
             filterOptions.minRating = value;
@@ -435,15 +431,16 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             Sort();
         };
 
-        std::function<std::string(float)> minUploadDateSliderFormatFunciton = [](float value) {
-            auto val = BetterSongSearch::GetDateAfterMonths(1525136400, value);
-            char date[100];
-            struct tm *t = gmtime(reinterpret_cast<const time_t*>(&val));
-            strftime(date, sizeof(date), "%b %G", t);
-            return std::string(date);
+        // TODO: Minimum upload date filter
+        std::function<std::string(float)> minUploadDateSliderFormatFunciton = [](float monthsSinceFirstUpload) {
+            auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
+            return fmt::format("{:%M:%Y}", fmt::localtime(val));
         };
 
-        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, GetMonthsSinceDate(1525136400), 0, GetMonthsSinceDate(1525136400), minUploadDateChange);
+        auto minUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
+        auto maxUploadDate = GetMonthsSinceDate(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+
+        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, minUploadDate, maxUploadDate, nullptr);
         minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
 
         std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
