@@ -25,6 +25,9 @@
 
 #include "questui_components/shared/context.hpp"
 #include "questui_components/shared/components/list/CustomCelledList.hpp"
+#include "questui_components/shared/components/misc/Utility.hpp"
+#include "questui_components/shared/components/misc/HMUITouchable.hpp"
+#include "questui_components/shared/components/LoadingIndicator.hpp"
 
 #include <fmt/chrono.h>
 
@@ -121,10 +124,10 @@ namespace BetterSongSearch::UI {
     // Funny template magic so we can have a field deduced by a method return type
     template<typename T>
     struct BasicCellComponent {
-        ModifyText mapperText{QUC::Text("Deez Nuts loolollolool", true, Sombrero::FastColor(0.8f, 0.8f, 0.8f, 1), 2.3f)};
-        ModifyText songText{QUC::Text("Deez Nuts loolollolool", true, std::nullopt, 2.7f)};
-        ModifyText uploadDateText{QUC::Text("Failed To Parse", true, Sombrero::FastColor(0.66f, 0.66f, 0.66f, 1), 2.7f)}; // make a comp to format date?
-        ModifyText ratingText{QUC::Text("Deez Nuts loolollolool", true, Sombrero::FastColor(0.8f, 0.8f, 0.8f, 1), 2.7f)};
+        QUC::Text mapperText{"Deez Nuts loolollolool", true, Sombrero::FastColor(0.8f, 0.8f, 0.8f, 1), 2.3f};
+        QUC::Text songText{"Deez Nuts loolollolool", true, std::nullopt, 2.7f};
+        QUC::Text uploadDateText{"Failed To Parse", true, Sombrero::FastColor(0.66f, 0.66f, 0.66f, 1), 2.7f}; // make a comp to format date?
+        QUC::Text ratingText{"Deez Nuts loolollolool", true, Sombrero::FastColor(0.8f, 0.8f, 0.8f, 1), 2.7f};
         CellDiffSegmentedControl cellDiff;
         std::function<void(Sombrero::FastColor const&)> setBgColor;
 
@@ -146,10 +149,10 @@ namespace BetterSongSearch::UI {
             uploadDateText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
             uploadDateText.wordWrapping = false;
 
-            ModifyLayout topLayout(QUC::HorizontalLayoutGroup(
-                    QUC::RefComp(songText),
-                    QUC::RefComp(uploadDateText)
-            ));
+            QUC::detail::HorizontalLayoutGroup topLayout(
+                    QUC::detail::refComp(songText),
+                    QUC::detail::refComp(uploadDateText)
+            );
             topLayout.childForceExpandWidth = true;
             //
 
@@ -166,42 +169,41 @@ namespace BetterSongSearch::UI {
             //
 
             // BOTTOM
-            ModifyContentSizeFitter bottomLayout(QUC::HorizontalLayoutGroup(
+            QUC::ModifyContentSizeFitter bottomLayout(QUC::HorizontalLayoutGroup(
                     QUC::RefComp(cellDiff)
             ));
             bottomLayout.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             bottomLayout.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-            ModifyLayoutElement bottomLayoutElement(bottomLayout);
+            QUC::ModifyLayoutElement bottomLayoutElement(bottomLayout);
             bottomLayoutElement.preferredHeight = 3.9f;
             bottomLayoutElement.preferredWidth = 68.0f;
             //
 
 
             // full layout
-            ModifyLayout layout(
-                    QUC::VerticalLayoutGroup(
-                            topLayout,
-                            midLayout,
-                            QUC::Backgroundable(
-                                    "round-rect-panel",
-                                    true,
-                                    bottomLayoutElement,
-                                    1.0f,
-                                    Sombrero::FastColor::black()
-                            )
+
+            QUC::detail::VerticalLayoutGroup layout(
+                    topLayout,
+                    midLayout,
+                    QUC::Backgroundable(
+                            "round-rect-panel",
+                            true,
+                            bottomLayoutElement,
+                            1.0f,
+                            Sombrero::FastColor::black()
                     )
             );
             layout.padding = {1,1, 1, 2};
 
-            ModifyContentSizeFitter fitter(layout);
+            QUC::ModifyContentSizeFitter fitter(layout);
             fitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
 
-            ModifyLayoutElement layoutElement(fitter);
+            QUC::ModifyLayoutElement layoutElement(fitter);
             layoutElement.preferredHeight = 11.75f;
             layoutElement.preferredWidth = 70;
 
-            OnRenderCallback bgRenderCallback(
+            QUC::OnRenderCallback bgRenderCallback(
                 QUC::Backgroundable("round-rect-panel", true,
                     layoutElement,
                     0.6f
@@ -244,14 +246,14 @@ namespace BetterSongSearch::UI {
 //                auto sizeFitter = go->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
 
 //                WrapParent parent(view);
-                ModifyContentSizeFitter fitter2(view);
+                QUC::ModifyContentSizeFitter fitter2(view);
 
 //                cellCtx.getChildDataOrCreate(fitter2.key).getData<UnityEngine::UI::ContentSizeFitter*>() = sizeFitter;
 
                 fitter2.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
                 fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-                HMUITouchable<decltype(fitter2)> touchable(fitter2);
+                QUC::HMUITouchable touchable(fitter2);
 
                 getLogger().debug("Building cell first time");
                 QUC::detail::renderSingle(touchable, cellCtx);
@@ -324,7 +326,7 @@ public:
     TMPro::TextMeshProUGUI* songDetailsText;
     LazyInitAndUpdate<BetterSongSearch::UI::SelectedSongController> selectedSongController;
 
-    LoadingIndicator loadingIndicator{LoadingIndicator()};
+    QUC::LoadingIndicator loadingIndicator{QUC::LoadingIndicator()};
     std::optional<LazyInitAndUpdate<QUC::detail::VerticalLayoutGroup<QUC::detail::HorizontalLayoutGroup<QUC::RefComp<decltype(loadingIndicator)>>>>> loadingIndicatorContainer;
 
     using TableType = ConditionalRender<QUC::RecycledTable<BetterSongSearch::UI::QUCObjectTableData, CellComponent>>;

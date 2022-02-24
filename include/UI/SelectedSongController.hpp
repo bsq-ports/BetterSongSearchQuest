@@ -40,9 +40,9 @@ namespace BetterSongSearch::UI {
         LazyInitAndUpdate<QUC::Text> infoText{"details"};
         LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
         UnityEngine::Sprite *defaultImage = nullptr;
-        const SDC_wrapper::BeatStarSong *currentSong = nullptr;
+        QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
+        QUC::RenderContext* ctx; // this is ugly, oh well
 
-        QUC::RenderContext *ctx = nullptr; // this is ugly but whatever
         const QUC::Key key;
 
         SelectedSongController() = default;
@@ -59,7 +59,7 @@ namespace BetterSongSearch::UI {
         void PlaySong();
 
         [[nodiscard]] constexpr auto DefaultAuthorText() {
-            ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
+            QUC::ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
             authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -67,7 +67,7 @@ namespace BetterSongSearch::UI {
         }
 
         [[nodiscard]] constexpr auto DefaultNameText() {
-            ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText.child));
+            QUC::ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText.child));
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -81,37 +81,36 @@ namespace BetterSongSearch::UI {
                     DefaultNameText()
             );
 
-            ModifyContentSizeFitter contentSizeFitter(metaLayout);
+            QUC::ModifyContentSizeFitter contentSizeFitter(metaLayout);
             contentSizeFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             contentSizeFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-            ModifyLayout modifyLayout = ModifyLayout(
-                    QUC::detail::VerticalLayoutGroup(
-                            contentSizeFitter
-                    )
+
+            QUC::detail::VerticalLayoutGroup modifyLayout(
+                    contentSizeFitter
             );
 
             modifyLayout.childForceExpandHeight = true;
             modifyLayout.padding = {2, 2, 2, 2};
 
-            ModifyLayoutElement layoutElement(modifyLayout);
+            QUC::ModifyLayoutElement layoutElement(modifyLayout);
             layoutElement.preferredWidth = 40;
 
             return layoutElement;
         }
 
         [[nodiscard]] constexpr auto DefaultCoverImage() {
-            ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
+            QUC::ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
             coverElement.preferredHeight = 28;
             coverElement.preferredWidth = 28;
 
             QUC::detail::HorizontalLayoutGroup metaLayout(coverElement);
 
-            ModifyContentSizeFitter metaFitter(metaLayout);
+            QUC::ModifyContentSizeFitter metaFitter(metaLayout);
             metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             metaFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-            ModifyLayoutElement metaElement(metaFitter);
+            QUC::ModifyLayoutElement metaElement(metaFitter);
 
             metaElement.preferredWidth = 28;
             metaElement.preferredHeight = 28;
@@ -122,7 +121,7 @@ namespace BetterSongSearch::UI {
         [[nodiscard]] constexpr auto DefaultMinMaxDiffInfo() {
             QUC::detail::HorizontalLayoutGroup layout(QUC::detail::refComp(infoText));
 
-            ModifyContentSizeFitter nameFitter(layout);
+            QUC::ModifyContentSizeFitter nameFitter(layout);
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -136,16 +135,17 @@ namespace BetterSongSearch::UI {
                     QUC::detail::refComp(infoButton)
             );
 
-            ModifyContentSizeFitter nameFitter(layout);
+            QUC::ModifyContentSizeFitter nameFitter(layout);
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
             return nameFitter;
         }
 
+        void update();
+
         auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
             this->ctx = &ctx;
-
             auto& rendered = data.getData<bool>();
 
             if (!rendered) {
@@ -157,11 +157,11 @@ namespace BetterSongSearch::UI {
                         DefaultButtonLayout()
                 );
 
-                ModifyLayout modifyLayout(buttons);
-                modifyLayout.childForceExpandHeight = false;
-                modifyLayout.padding = {2,2,2,2};
 
-                ModifyLayoutElement modifyLayoutElement(modifyLayout);
+                buttons.childForceExpandHeight = false;
+                buttons.padding = {2,2,2,2};
+
+                QUC::ModifyLayoutElement modifyLayoutElement(buttons);
                 modifyLayoutElement.preferredWidth = 40;
 
                 QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
@@ -172,12 +172,7 @@ namespace BetterSongSearch::UI {
 
             } else {
                 // Just update the existing components
-                playButton.update();
-                downloadButton.update();
-                authorText.update();
-                songNameText.update();
-                infoText.update();
-                coverImage.update();
+                update();
             }
 
             rendered = true;

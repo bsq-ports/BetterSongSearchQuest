@@ -374,7 +374,7 @@ inline auto SortDropdownContainer() {
         songListController->table.update();
     }, sortModes);
 
-    ModifyLayout layout(VerticalLayoutGroup(sortDropdown));
+    detail::VerticalLayoutGroup layout(sortDropdown);
     layout.padding = {1, 0, 0 ,0};
 
     ModifyLayoutElement layoutElement(layout);
