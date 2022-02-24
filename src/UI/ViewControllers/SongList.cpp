@@ -383,6 +383,53 @@ inline auto SortDropdownContainer() {
     return layoutElement;
 }
 
+inline void onRenderTable(ViewControllers::SongListViewController* view, decltype(ViewControllers::SongListViewController::TableType::child)::RenderState& tableState) {
+    view->tablePtr = tableState.dataSource;
+    getLogger().info("Rendering table! %p", view->tablePtr);
+
+    if (view->table.renderedAllowed.getData()) {
+        CRASH_UNLESS(tableState.dataSource);
+        CRASH_UNLESS(view->tablePtr);
+        CRASH_UNLESS(view->tablePtr->tableView);
+
+        //Make Lists
+        auto click = std::function([view](HMUI::TableView *tableView, int row) {
+            getLogger().info("selected %i", row);
+            // Get song list actually inside the table
+            auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
+            view->selectedSongController.child.SetSong(songList[row].song);
+        });
+        auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
+                classof(System::Action_2<HMUI::TableView *, int>*), click);
+
+
+
+        getLogger().debug("Adding table event");
+
+        view->tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
+
+        getLogger().debug("Set sibling");
+        view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
+
+        // queue for next frame
+        QuestUI::MainThreadScheduler::Schedule([]{
+            //fix scrolling lol
+            // doesn't work - Fern :(
+            GlobalNamespace::IVRPlatformHelper* mewhen;
+            auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
+            for (int i = 0; i < scrolls.Length(); i++)
+            {
+                mewhen = scrolls.get(i)->platformHelper;
+                if(mewhen != nullptr)
+                    break;
+            }
+            for (int i = 0; i < scrolls.Length(); i++)
+            {
+                if(scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
+            }
+        });
+    }
+}
 
 inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view) {
     auto defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
@@ -403,51 +450,7 @@ inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController
             QUC::detail::refComp(view->table),
             [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
                 auto& tableState = ctx.getChildDataOrCreate(self.child.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-//                        auto& tableState = data.getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-
-                view->tablePtr = tableState.dataSource;
-                getLogger().info("Rendering table! %p", view->tablePtr);
-
-                if (view->table.renderedAllowed.getData()) {
-                    CRASH_UNLESS(tableState.dataSource);
-
-                    //Make Lists
-                    auto click = std::function([view](HMUI::TableView *tableView, int row) {
-                        // Get song list actually inside the table
-                        auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
-                        view->selectedSongController.child.SetSong(songList[row].song);
-                    });
-                    auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
-                            classof(System::Action_2<HMUI::TableView *, int>*), click);
-
-                    CRASH_UNLESS(view->tablePtr);
-                    CRASH_UNLESS(view->tablePtr->tableView);
-
-                    getLogger().debug("Adding table event");
-
-                    view->tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
-
-                    getLogger().debug("Set sibling");
-                    view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
-
-                    // queue for next frame
-                    QuestUI::MainThreadScheduler::Schedule([]{
-                        //fix scrolling lol
-                        // doesn't work - Fern :(
-                        GlobalNamespace::IVRPlatformHelper* mewhen;
-                        auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
-                        for (int i = 0; i < scrolls.Length(); i++)
-                        {
-                            mewhen = scrolls.get(i)->platformHelper;
-                            if(mewhen != nullptr)
-                                break;
-                        }
-                        for (int i = 0; i < scrolls.Length(); i++)
-                        {
-                            if(scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
-                        }
-                    });
-                }
+                onRenderTable(view, tableState);
             }
     );
 
@@ -483,6 +486,11 @@ custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewCont
 
             view->table.update();
             view->loadingIndicatorContainer->update();
+
+            auto& tableState = view->table.ctx->getChildDataOrCreate(view->table.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
+
+            onRenderTable(view, tableState);
+
             co_return;
         }
     }

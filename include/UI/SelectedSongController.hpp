@@ -27,13 +27,13 @@ namespace BetterSongSearch::UI {
     struct SelectedSongController {
         LazyInitAndUpdate<QUC::Button> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             PlaySong();
-        },"PlayButton"};
+        },"PlayButton", true, false};
 
         LazyInitAndUpdate<QUC::Button> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             DownloadSong();
-        },"PlayButton"};
+        },"PlayButton", true, false};
 
-        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton"};
+        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton", true, false};
 
         LazyInitAndUpdate<QUC::Text> authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
         LazyInitAndUpdate<QUC::Text> songNameText{"Name", true, std::nullopt, 2.7f};
