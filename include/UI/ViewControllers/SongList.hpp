@@ -74,7 +74,9 @@ namespace BetterSongSearch::UI {
 
     struct CellData : public QUC::CustomTypeList::QUCDescriptor {
         const SDC_wrapper::BeatStarSong* song;
-        CellData(SDC_wrapper::BeatStarSong const *song) : QUCDescriptor(), song(song) {}
+        constexpr CellData(SDC_wrapper::BeatStarSong const *song) : QUCDescriptor(), song(song) {
+            interactable = true;
+        }
     };
 
     struct CellDiffSegmentedControl {

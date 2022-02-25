@@ -52,6 +52,14 @@ namespace BetterSongSearch::UI {
             return *this;
         }
 
+        constexpr T const* operator ->() const {
+            return &child;
+        }
+
+        constexpr T* operator ->() {
+            return &child;
+        }
+
         constexpr operator T const&() const {
             return child;
         }
@@ -120,6 +128,26 @@ namespace BetterSongSearch::UI {
         }
     };
 
+    template<typename T>
+    struct HideObject : public T {
+        QUC::RenderHeldData<bool> active = true;
+
+        HideObject() = default;
+        HideObject(HideObject const&) = default;
+
+        HideObject(T child, bool active = true) : T(std::move(child)), active(active) {}
+
+        template<typename... TArgs>
+        HideObject(TArgs&&... args) : T(std::forward<TArgs>(args)...) {}
+
+        constexpr auto render(QUC::RenderContext& ctx, QUC::RenderContextChildData& data) {
+            auto ret = T::render(ctx, data);
+
+            if (active.readAndClear<QUC::DiffModifyCheck::TRUE_WHEN_FOUND_OR_ASSIGNED>(ctx)) {
+                ret->get_gameObject()->SetActive(*active);
+            }
+        }
+    };
 
     template<class... TArgs>
     requires ((QUC::renderable<TArgs> && ...))

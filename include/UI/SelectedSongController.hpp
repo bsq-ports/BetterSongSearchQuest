@@ -25,19 +25,19 @@
 namespace BetterSongSearch::UI {
 
     struct SelectedSongController {
-        LazyInitAndUpdate<QUC::Button> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+        LazyInitAndUpdate<HideObject<QUC::Button>> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             PlaySong();
         },"PlayButton", true, false};
 
-        LazyInitAndUpdate<QUC::Button> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+        LazyInitAndUpdate<HideObject<QUC::Button>> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             DownloadSong();
         },"PlayButton", true, false};
 
-        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", nullptr, "PlayButton", true, false};
+        QUC::Button infoButton{"Song Details", nullptr, "PlayButton", true, false};
 
-        LazyInitAndUpdate<QUC::Text> authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
-        LazyInitAndUpdate<QUC::Text> songNameText{"Name", true, std::nullopt, 2.7f};
-        LazyInitAndUpdate<QUC::Text> infoText{"details"};
+        QUC::Text authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
+        QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};
+        QUC::Text infoText{"details"};
         LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
         UnityEngine::Sprite *defaultImage = nullptr;
         QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
@@ -67,7 +67,7 @@ namespace BetterSongSearch::UI {
         }
 
         [[nodiscard]] constexpr auto DefaultNameText() {
-            QUC::ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText.child));
+            QUC::ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText));
             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
@@ -144,38 +144,59 @@ namespace BetterSongSearch::UI {
 
         void update();
 
-        auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+        auto buildView(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+            // render layout for buttons
+            QUC::detail::VerticalLayoutGroup buttons(
+                    MetaText(),
+                    DefaultCoverImage(),
+                    DefaultMinMaxDiffInfo(),
+                    DefaultButtonLayout()
+            );
+
+
+            buttons.childForceExpandHeight = false;
+            buttons.padding = {2,2,2,2};
+
+            QUC::ModifyLayoutElement modifyLayoutElement(buttons);
+            modifyLayoutElement.preferredWidth = 40;
+
+            QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
+
+            return bgButtons;
+        }
+
+        [[nodiscard]] constexpr auto& getView() const {
+            auto& data = ctx->getChildData(key);
+            auto& renderedView = data.getData<std::optional<std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)>>>();
+
+            return renderedView;
+        }
+
+        [[nodiscard]] constexpr auto updateView() const {
+            auto& data = ctx->getChildData(key);
+            auto& renderedView = getView();
+            auto transform = QUC::detail::renderSingle(*renderedView, *ctx);
+
+            return &data.childContext->parentTransform;
+        }
+
+        constexpr auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
             this->ctx = &ctx;
-            auto& rendered = data.getData<bool>();
 
-            if (!rendered) {
-                // render layout for buttons
-                QUC::detail::VerticalLayoutGroup buttons(
-                        MetaText(),
-                        DefaultCoverImage(),
-                        DefaultMinMaxDiffInfo(),
-                        DefaultButtonLayout()
-                );
+//            std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)> view;
+//            std::invoke_result_t<decltype(&SelectedSongController::buildView), SelectedSongController*, QUC::RenderContext &, QUC::RenderContextChildData &> view;
 
-
-                buttons.childForceExpandHeight = false;
-                buttons.padding = {2,2,2,2};
-
-                QUC::ModifyLayoutElement modifyLayoutElement(buttons);
-                modifyLayoutElement.preferredWidth = 40;
-
-                QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
-
-                auto transform = QUC::detail::renderSingle(bgButtons, ctx);
+            // this is rather wasteful but whatever
+            auto& renderedView = getView();
+            if (!renderedView) {
+                renderedView.emplace(buildView(ctx, data));
+                auto transform = updateView();
 
                 return &data.getChildContext([transform]{return transform; }).parentTransform;
-
             } else {
                 // Just update the existing components
-                update();
+                updateView();
             }
-
-            rendered = true;
 
             return &data.getChildContext([]{
                 SAFE_ABORT(); // not possible

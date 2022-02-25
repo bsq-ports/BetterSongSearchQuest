@@ -27,48 +27,42 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
 
 void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
-    downloadButton.child.interactable = false;
-    std::function<void(float)> progressUpdate = [=](float downloadPercentage) {
+    downloadButton->interactable = false;
+    downloadButton.update();
+    std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
         fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.4f}", downloadPercentage);
 
-        if(downloadPercentage >= 100) {
-            downloadButton.child.text.text = "Download";
-            downloadButton.child.enabled = false;
-            playButton.child.enabled = true;
-
-            // TODO: Do we need to lock? probably not?
-            QuestUI::MainThreadScheduler::Schedule([this]{
-                playButton.update();
-                downloadButton.update();
-            });
-        }
-        else {
-            downloadButton.child.text.text = fmt::format("{:.4f}%", downloadPercentage);
-            QuestUI::MainThreadScheduler::Schedule([this]{
+        if (downloadPercentage < 100) {
+            downloadButton->text.text = fmt::format("{:.4f}%", downloadPercentage);
+            QuestUI::MainThreadScheduler::Schedule([this] {
                 downloadButton.update();
             });
         }
     };
 
     BeatSaver::API::GetBeatmapByHashAsync(std::string(currentSong->GetHash()),
-    [=](std::optional<BeatSaver::Beatmap> beatmap)
+    [this, progressUpdate](std::optional<BeatSaver::Beatmap> beatmap)
     {
         if(beatmap.has_value())
         {
             BeatSaver::API::DownloadBeatmapAsync(beatmap.value(),
-            [=](bool error) {
+            [this](bool error) {
                 QuestUI::MainThreadScheduler::Schedule(
-                        [=] {
-                            if (!error) {
-                                RuntimeSongLoader::API::RefreshSongs(false);
-                                downloadButton.child.interactable = true;
-                                downloadButton.child.enabled = false;
-                                downloadButton.update();
+                        [error, this] {
+                            downloadButton->interactable = error;
+                            downloadButton->active = error;
+
+                            playButton->active = !error;
+                            playButton->interactable = !error;
+
+                            if (error) {
+                                downloadButton->text.text = "Download";
                             } else {
-                                downloadButton.child.text.text = "Download";
-                                downloadButton.child.interactable = true;
-                                downloadButton.update();
+                                RuntimeSongLoader::API::RefreshSongs(false);
                             }
+
+                            downloadButton.update();
+                            playButton.update();
                         }
                 );
             }, progressUpdate);
@@ -104,11 +98,16 @@ void BetterSongSearch::UI::SelectedSongController::PlaySong()
 }
 
 void BetterSongSearch::UI::SelectedSongController::update() {
-    if (!currentSong.getData())
+    if (!currentSong.getData()) {
+        updateView();
         return;
+    }
 
     // if same song, don't modify
-    if (!currentSong.readAndClear(*ctx)) return;
+    if (!currentSong.readAndClear(*ctx)) {
+        updateView();
+        return;
+    }
 
     auto song = *currentSong;
 
@@ -151,19 +150,14 @@ void BetterSongSearch::UI::SelectedSongController::update() {
         maxNJS = std::max(njs, maxNJS);
     }
 
-    playButton.child.enabled = downloaded;
-    playButton.child.interactable = downloaded;
-    downloadButton.child.enabled = !downloaded;
-    downloadButton.child.interactable = !downloaded;
+    playButton->active = downloaded;
+    playButton->interactable = downloaded;
+    downloadButton->active = !downloaded;
+    downloadButton->interactable = !downloaded;
 
-    infoText.child.text = fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS);
-    songNameText.child.text = song->GetName();
-    authorText.child.text = song->GetSongAuthor();
+    infoText.text = fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS);
+    songNameText.text = song->GetName();
+    authorText.text = song->GetSongAuthor();
 
-    playButton.update();
-    downloadButton.update();
-    authorText.update();
-    songNameText.update();
-    infoText.update();
-    coverImage.update();
+    updateView();
 }
