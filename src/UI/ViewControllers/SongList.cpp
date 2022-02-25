@@ -545,6 +545,11 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 SelectedSongControllerLayout(this)
         );
 
+        auto end = std::chrono::high_resolution_clock::now();
+        auto difference = end - start;
+        auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
+        getLogger().debug("QUC UI construction for SongList took %lldms", millisElapsed);
+
         getLogger().debug("Rendering layout");
         detail::renderSingle(songListControllerView, ctx);
         getLogger().debug("Rendered layout");
@@ -560,7 +565,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     auto end = std::chrono::high_resolution_clock::now();
     auto difference = end - start;
     auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
-    getLogger().debug("UI building for SongList took %lldms", millisElapsed);
+    getLogger().debug("UI rendering for SongList took %lldms", millisElapsed);
 
     getLogger().debug("Finished song list view controller");
 }

@@ -40,20 +40,37 @@ namespace BetterSongSearch::UI {
         inline static FilterOptions filterOptions;
     };
 
-    constexpr std::string_view ShortMapDiffNames(std::string_view input) {
-        if(input == "Easy")
-            return "E";
-        if(input == "Normal")
-            return "N";
-        if(input == "Hard")
-            return "H";
-        if(input == "Expert")
-            return "Ex";
-        if(input == "ExpertPlus")
-            return "E+";
+#define PROP_GET(jsonName, varName)                                \
+    static auto jsonNameHash_##varName = stringViewHash(jsonName); \
+    if (nameHash == (jsonNameHash_##varName))                      \
+        return &varName;
 
-        return "UNKNOWN";
+
+    constexpr std::string_view ShortMapDiffNames(std::string_view input) {
+        // order variables from most likely to least likely to at least improve branch checks
+        // optimization switch idea stolen from Red's SDC wrapper. Good job red 👏
+        switch (input.front()) {
+            case 'E':
+                // ExpertPlus
+                if (input.back() == 's') {
+                    return "Ex+";
+                }
+                // Easy
+                if (input.size() == 4) {
+                    return "E";
+                }
+                // Expert
+                return "Ex";
+            case 'N':
+                return "N";
+            case 'H':
+                return "H";
+            default:
+                return "UNKNOWN";
+        }
     }
+
+#undef PROP_GET
 
     struct CellData : public QUC::CustomTypeList::QUCDescriptor {
         const SDC_wrapper::BeatStarSong* song;
@@ -63,7 +80,6 @@ namespace BetterSongSearch::UI {
     struct CellDiffSegmentedControl {
         const QUC::Key key;
         QUC::HeldData<std::vector<SDC_wrapper::BeatStarSongDifficultyStats const*>> diffs;
-        bool ranked = false;
 
 
         auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
@@ -103,12 +119,12 @@ namespace BetterSongSearch::UI {
                 int i = 0;
                 for (auto const &diffData: diffsVector) {
                     if (diffData->ranked) {
-                        strs[i] = fmt::format("<color=white>{}</color> <color=#ffa500>{:.1f}</color>", diffData->GetName(), diffData->stars);
+                        strs[i] = fmt::format(FMT_STRING("<color=white>{}</color> <color=#ffa500>{:.1f}</color>"), diffData->GetName(), diffData->stars);
                     } else {
                         if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
-                            strs[i] = fmt::format("<color=white>{}</color>", ShortMapDiffNames(diffData->GetName()));
+                            strs[i] = fmt::format(FMT_STRING("<color=white>{}</color>"), ShortMapDiffNames(diffData->GetName()));
                         } else {
-                            strs[i] = fmt::format("<color=white>{}</color>", diffData->GetName());
+                            strs[i] = fmt::format(FMT_STRING("<color=white>{}</color>"), diffData->GetName());
                         }
                     }
                     i++;

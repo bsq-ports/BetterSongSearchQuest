@@ -22,6 +22,7 @@
 
 namespace BetterSongSearch::UI {
 
+    // Allows for updating without providing RenderCtx
     template<typename T>
     struct LazyInitAndUpdate {
         const QUC::Key key;
