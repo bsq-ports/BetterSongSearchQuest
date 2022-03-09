@@ -10,7 +10,6 @@
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-#include "questui/shared/CustomTypes/Components/List/CustomCellListWrapper.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 
