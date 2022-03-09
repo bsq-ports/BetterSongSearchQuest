@@ -210,6 +210,14 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
     auto const& filterOptions = DataHolder::filterOptions;
 
+    /*if(filterOptions->uploaders.size() != 0) {
+		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
+
+		} else {
+			return false;
+		}
+	}*/
+
     bool downloaded = DataHolder::downloadedSongList.contains(song);
     if(downloaded)
     {
@@ -316,7 +324,6 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     if(maxNJS > filterOptions.maxNJS) return false;
     if(minStars < filterOptions.minStars) return false;
     if(maxStars > filterOptions.maxStars) return false;
-
 
     return true;
 }

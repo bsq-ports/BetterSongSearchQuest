@@ -32,6 +32,7 @@ using namespace QuestUI;
 #include "DateUtils.hpp"
 #include "FilterOptions.hpp"
 #include "UI/ViewControllers/SongList.hpp"
+#include<sstream>
 
 #include "questui_components/shared/concepts.hpp"
 
@@ -177,10 +178,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
 
         auto generalTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(generalOptionsLayout->get_transform());
-        auto generalText = BeatSaberUI::CreateText(generalTextLayout->get_transform(), "[ General ]");
+        auto generalText = BeatSaberUI::CreateText(generalTextLayout->get_transform(), "<color=#DDD>[ General ]");
         generalText->set_fontSize(3.5);
         generalText->set_alignment(TMPro::TextAlignmentOptions::Center);
         generalText->set_fontStyle(TMPro::FontStyles::Underline);
+        generalText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::vector<StringW> downloadFilterOptions({"Show all", "Only downloaded", "Hide downloaded"});
         std::function<void(StringW)> downloadFilterChange = [downloadFilterOptions](StringW value) {
@@ -248,13 +250,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->dyn__skew() = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
 
         auto mappingTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
-        auto mappingText = BeatSaberUI::CreateText(mappingTextLayout->get_transform(), "[ Mapping ]");
+        auto mappingText = BeatSaberUI::CreateText(mappingTextLayout->get_transform(), "<color=#DDD>[ Mapping ]");
         mappingText->set_fontSize(3.5);
         mappingText->set_alignment(TMPro::TextAlignmentOptions::Center);
         mappingText->set_fontStyle(TMPro::FontStyles::Underline);
+        mappingText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::function<void(float)> minNJSChange = [](float value) {
             filterOptions.minNJS = value;
@@ -336,13 +339,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->dyn__skew() = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
 
         auto scoresaberTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(scoreSaberOptionsLayout->get_transform());
-        auto scoresaberText = BeatSaberUI::CreateText(scoresaberTextLayout->get_transform(), "[ ScoreSaber ]");
+        auto scoresaberText = BeatSaberUI::CreateText(scoresaberTextLayout->get_transform(), "<color=#DDD>[ ScoreSaber ]");
         scoresaberText->set_fontSize(3.5);
         scoresaberText->set_alignment(TMPro::TextAlignmentOptions::Center);
         scoresaberText->set_fontStyle(TMPro::FontStyles::Underline);
+        scoresaberText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::vector<StringW> rankedFilterOptions = {"Show all", "Only Ranked", "Hide Ranked"};
         std::function<void(StringW)> rankedFilterChange = [](StringW value) {
@@ -411,13 +415,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->dyn__skew() = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
 
         auto beatsaverTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(beatSaverOptionsLayout->get_transform());
-        auto beatsaverText = BeatSaberUI::CreateText(beatsaverTextLayout->get_transform(), "[ BeatSaver ]");
+        auto beatsaverText = BeatSaberUI::CreateText(beatsaverTextLayout->get_transform(), "<color=#DDD>[ BeatSaver ]");
         beatsaverText->set_fontSize(3.5);
         beatsaverText->set_alignment(TMPro::TextAlignmentOptions::Center);
         beatsaverText->set_fontStyle(TMPro::FontStyles::Underline);
+        beatsaverText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         QuestUI::SliderSetting* minUploadDateSlider;
         QuestUI::SliderSetting* minRatingSlider;
@@ -434,7 +439,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         // TODO: Minimum upload date filter
         std::function<std::string(float)> minUploadDateSliderFormatFunciton = [](float monthsSinceFirstUpload) {
             auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
-            return fmt::format("{:%M:%Y}", fmt::localtime(val));
+            return fmt::format("{:%b:%Y}", fmt::localtime(val));
         };
 
         auto minUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
@@ -450,6 +455,21 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         minRatingSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Rating", 5, 0, 0, 90, minRatingChange);
         minRatingSlider->FormatString = minRatingSliderFormatFunction;
         minVotesSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Votes", 1, 0, 0, 100, minVotesChange);
+
+        /*std::function<void(std::string_view)> UploadersChange = [=](std::string_view value) {
+            filterOptions->uploaderString = value;
+            std::vector<std::string> result;
+            std::stringstream s_stream(filterOptions->uploaderString); //create string stream from the string
+            while(s_stream.good()) {
+                std::string substr;
+                getline(s_stream, substr, ','); //get first string delimited by comma
+                result.push_back(substr);
+            }
+            filterOptions->uploaders = result;
+            Sort();
+        };*/
+
+        //auto uploaderInput = BeatSaberUI::CreateStringSetting(beatSaverOptionsLayout->get_transform(), "Uploader(s)", "", UploadersChange);
     }
 
     {
@@ -466,13 +486,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->dyn__skew() = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
 
-        auto chardifTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(charDiffOptionsLayout->get_transform());
-        auto chardifText = BeatSaberUI::CreateText(chardifTextLayout->get_transform(), "[ Characteristic / Difficulty ]");
-        chardifText->set_fontSize(3.5);
-        chardifText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        chardifText->set_fontStyle(TMPro::FontStyles::Underline);
+        auto charDiffTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(charDiffOptionsLayout->get_transform());
+        auto charDiffText = BeatSaberUI::CreateText(charDiffTextLayout->get_transform(), "<color=#DDD>[ Characteristic / Difficulty ]");
+        charDiffText->set_fontSize(3.5);
+        charDiffText->set_alignment(TMPro::TextAlignmentOptions::Center);
+        charDiffText->set_fontStyle(TMPro::FontStyles::Underline);
+        charDiffText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::vector<StringW> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
         std::function<void(StringW)> charFilterChange = [](StringW value) {
@@ -516,13 +537,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         bgImg->dyn__skew() = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
 
         auto modsTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(modsOptionsLayout->get_transform());
-        auto modsText = BeatSaberUI::CreateText(modsTextLayout->get_transform(), "[ Mods ]");
+        auto modsText = BeatSaberUI::CreateText(modsTextLayout->get_transform(), "<color=#DDD>[ Mods ]");
         modsText->set_fontSize(3.5);
         modsText->set_alignment(TMPro::TextAlignmentOptions::Center);
         modsText->set_fontStyle(TMPro::FontStyles::Underline);
+        modsText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
         std::function<void(StringW)> modsChange = [](StringW value) {

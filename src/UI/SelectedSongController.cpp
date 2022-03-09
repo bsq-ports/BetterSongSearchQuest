@@ -7,16 +7,17 @@
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "System/Collections/IEnumerator.hpp"
 #include "UnityEngine/UI/Button.hpp"
-#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "HMUI/IconSegmentedControl.hpp"
 #include "HMUI/IconSegmentedControlCell.hpp"
 #include "HMUI/SelectableCell.hpp"
-#include "System/Action.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
-#include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include <fmt/core.h>
 
+#include <iomanip>
+#include <sstream>
+//For when doing stuff on versions where song downloader doesnt exist. Saves a bit of time
+#define SONGDOWNLOADER
 
 void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::BeatStarSong* song)
 {
@@ -27,6 +28,7 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
 
 void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
+    #ifdef SONGDOWNLOADER
     downloadButton->interactable = false;
     downloadButton.update();
     std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
@@ -68,6 +70,7 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
             }, progressUpdate);
         }
     });
+    #endif
 }
 
 UnityEngine::GameObject* backButton = nullptr;
@@ -113,7 +116,7 @@ void BetterSongSearch::UI::SelectedSongController::update() {
 
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
-
+    #ifdef SONGDOWNLOADER
     getLogger().info("Downloading");
     coverImage.child.sprite = defaultImage;
 
@@ -136,6 +139,7 @@ void BetterSongSearch::UI::SelectedSongController::update() {
                       });
                   }
               });
+    #endif
 
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;

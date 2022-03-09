@@ -172,7 +172,7 @@ namespace BetterSongSearch::UI {
             return renderedView;
         }
 
-        [[nodiscard]] constexpr auto updateView() const {
+        constexpr auto updateView() const {
             auto& data = ctx->getChildData(key);
             auto& renderedView = getView();
             auto transform = QUC::detail::renderSingle(*renderedView, *ctx);

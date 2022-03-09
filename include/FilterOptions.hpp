@@ -1,3 +1,5 @@
+#include "main.hpp"
+#include<vector>
 #pragma once
 
 #include "main.hpp"
@@ -72,7 +74,7 @@ class FilterOptions
     //BeatSaver
     float minRating = 0;
     int minVotes = 0;
-    std::string uploaderString;
+    std::vector<std::string> uploaders;
 
     //Difficulty
     DifficultyFilterType difficultyFilter = DifficultyFilterType::All;
