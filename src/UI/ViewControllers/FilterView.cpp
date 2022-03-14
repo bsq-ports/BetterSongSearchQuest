@@ -22,6 +22,9 @@ using namespace QuestUI;
 #include "HMUI/CurvedCanvasSettingsHelper.hpp"
 #include "HMUI/TimeSlider.hpp"
 #include "HMUI/Touchable.hpp"
+#include "HMUI/SimpleTextDropdown.hpp"
+#include "HMUI/DropdownWithTableView.hpp"
+#include "HMUI/ModalView.hpp"
 
 #include "TMPro/TextMeshProUGUI.hpp"
 
@@ -120,7 +123,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     imageView->curvedCanvasSettingsHelper->Reset();
 
     std::function<void()> clearButtonClick = []() {
-
     };
     std::function<void()> presetsButtonClick = []() {
 
@@ -213,7 +215,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         lengthLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
         auto minLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, 0, 0, 15, minLengthChange);
-        auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, 0, 0, 15, maxLengthChange);
+        auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, 15, 0, 15, maxLengthChange);
 
         std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
             float totalSeconds = value * 60;
@@ -285,7 +287,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         NJSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
         auto minNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, minNJSChange);
-        auto maxNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, maxNJSChange);
+        auto maxNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, 25, 0, 25, maxNJSChange);
         minNJSSlider->FormatString = minNJSFormat;
         maxNJSSlider->FormatString = maxNJSFormat;
 
@@ -317,7 +319,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         NPSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
         auto minNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, minNPSChange);
-        auto maxNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, 0, 0, 25, maxNPSChange);
+        auto maxNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, 25, 0, 25, maxNPSChange);
 
         minNPSSlider->FormatString = minNPSFormat;
         maxNPSSlider->FormatString = maxNPSFormat;
@@ -425,6 +427,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         beatsaverText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         QuestUI::SliderSetting* minUploadDateSlider;
+        std::function<void(float)> minUploadDateChange = [](float value) {
+            filterOptions.minUploadDate = value;
+            Sort();
+        };
         QuestUI::SliderSetting* minRatingSlider;
         std::function<void(float)> minRatingChange = [](float value) {
             filterOptions.minRating = value;
@@ -442,7 +448,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             return fmt::format("{:%b:%Y}", fmt::localtime(val));
         };
 
-        auto minUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
+        auto minUploadDate = FilterOptions::BEATSAVER_EPOCH;
         auto maxUploadDate = GetMonthsSinceDate(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 
         minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, minUploadDate, maxUploadDate, nullptr);
@@ -546,10 +552,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         modsText->set_fontStyle(TMPro::FontStyles::Underline);
         modsText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
-        std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+        std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma"};
         std::function<void(StringW)> modsChange = [](StringW value) {
-
+            mods = value;
+            Sort();
         };
         auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", "Any", modsOptions, modsChange);
+        #define CODEGEN_FIELD_ACCESSIBILITY
+        reinterpret_cast<UnityEngine::RectTransform*>(reinterpret_cast<HMUI::DropdownWithTableView*>(modsDropdown)->modalView->get_transform())->set_pivot(Sombrero::FastVector2(0.5f, 0.3f));
     }
 }

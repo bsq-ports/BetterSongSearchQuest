@@ -163,7 +163,7 @@ namespace BetterSongSearch::UI {
             songText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
             songText.wordWrapping = false;
 
-            uploadDateText.alignmentOptions = TMPro::TextAlignmentOptions::MidlineLeft;
+            uploadDateText.alignmentOptions = TMPro::TextAlignmentOptions::MidlineRight;
             uploadDateText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
             uploadDateText.wordWrapping = false;
 
@@ -171,7 +171,17 @@ namespace BetterSongSearch::UI {
                     QUC::detail::refComp(songText),
                     QUC::detail::refComp(uploadDateText)
             );
-            topLayout.childForceExpandWidth = true;
+
+            topLayout.childControlWidth = true;
+            topLayout.spacing = 3;
+
+            QUC::ModifyLayoutElement topLayoutElement(topLayout);
+            topLayoutElement.preferredWidth = 68.0f;
+
+            QUC::ModifyContentSizeFitter topLayoutFitter(topLayout);
+            topLayoutFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+            topLayoutFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
             //
 
             // MID
@@ -179,10 +189,13 @@ namespace BetterSongSearch::UI {
             mapperText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
             mapperText.wordWrapping = false;
 
+            ratingText.alignmentOptions = TMPro::TextAlignmentOptions::MidlineRight;
+            ratingText.wordWrapping = false;
+
 
             QUC::detail::HorizontalLayoutGroup midLayout(
                     QUC::detail::refComp(mapperText),
-                    QUC::RefComp(ratingText)
+                    QUC::detail::refComp(ratingText)
             );
             //
 

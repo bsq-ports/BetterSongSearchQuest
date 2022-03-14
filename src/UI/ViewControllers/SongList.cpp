@@ -353,6 +353,7 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search)
         std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
             sortFunctionMap.at(sort)
         );
+    
     //}).detach();
 }
 

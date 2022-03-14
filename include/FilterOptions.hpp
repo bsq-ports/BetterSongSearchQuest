@@ -72,6 +72,7 @@ class FilterOptions
     float minStars = 0, maxStars = 14;
 
     //BeatSaver
+    int minUploadDate = BEATSAVER_EPOCH;
     float minRating = 0;
     int minVotes = 0;
     std::vector<std::string> uploaders;
@@ -79,6 +80,9 @@ class FilterOptions
     //Difficulty
     DifficultyFilterType difficultyFilter = DifficultyFilterType::All;
     CharFilterType charFilter = CharFilterType::All;
+
+    //Mods
+    std::string mods;
 };
 
 DROPDOWN_CREATE_ENUM_CLASS(SortMode,

@@ -78,7 +78,7 @@ UnityEngine::GameObject* soloButton = nullptr;
 
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
     backButton->GetComponent<UnityEngine::UI::Button*>()->Press();
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.2)));
     soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
     soloButton->GetComponent<UnityEngine::UI::Button*>()->Press();
     HMUI::IconSegmentedControl* tabSelector = UnityEngine::GameObject::Find("HorizontalIconSegmentedControl")->GetComponent<HMUI::IconSegmentedControl*>();

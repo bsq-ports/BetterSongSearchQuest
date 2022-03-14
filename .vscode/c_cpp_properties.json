@@ -13,7 +13,7 @@
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/extern/**",
                 "${workspaceFolder}/extern/libil2cpp/il2cpp/libil2cpp",
-                "C:/Users/USER/AppData/Roaming/Android/NDK/**"
+                "D:/DevTools/android-ndk-r23b/**"
             ],
             "name": "Quest",
             "cStandard": "c11",
