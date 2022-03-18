@@ -449,10 +449,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             return fmt::format("{:%b:%Y}", fmt::localtime(val));
         };
 
-        auto minUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
-        auto maxUploadDate = GetMonthsSinceDate(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+        auto minUploadDate = 0;
+        auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
-        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, 0, maxUploadDate, nullptr);
+        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, minUploadDate, maxUploadDate, minUploadDateChange);
         minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
 
         std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {

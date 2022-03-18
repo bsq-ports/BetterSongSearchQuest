@@ -173,14 +173,6 @@ namespace BetterSongSearch::UI {
             );
 
             topLayout.childControlWidth = true;
-            topLayout.spacing = 3;
-
-            QUC::ModifyLayoutElement topLayoutElement(topLayout);
-            topLayoutElement.preferredWidth = 68.0f;
-
-            QUC::ModifyContentSizeFitter topLayoutFitter(topLayout);
-            topLayoutFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            topLayoutFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
             //
 
@@ -272,17 +264,14 @@ namespace BetterSongSearch::UI {
             if (!inited) {
                 // Modify the cell itself
 
-                // TODO: Remove, idk why I wrote this. It's not necessary Too lazy to make a component just to create a content size fitter
-//                auto go = cellCtx.parentTransform.get_gameObject();
-//                auto sizeFitter = go->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
+                QUC::ModifyLayoutElement layoutElement(view);
+                layoutElement.preferredHeight = 11.75f;
+                layoutElement.preferredWidth = 70;
 
-//                WrapParent parent(view);
-                QUC::ModifyContentSizeFitter fitter2(view);
-
-//                cellCtx.getChildDataOrCreate(fitter2.key).getData<UnityEngine::UI::ContentSizeFitter*>() = sizeFitter;
-
+                QUC::ModifyContentSizeFitter fitter2(layoutElement);
+                
                 fitter2.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-                fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
+                fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
                 //QUC::HMUITouchable touchable(fitter2);
 

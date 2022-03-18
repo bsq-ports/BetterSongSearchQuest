@@ -93,7 +93,7 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }},
         {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
                            {
-                               return (struct1->rating > struct2->rating);
+                               return (struct1->rating < struct2->rating);
                            }},
         {SortMode::Most_Downloads, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
                            {
@@ -218,6 +218,9 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 		}
 	}*/
 
+    if(song->GetRating() < filterOptions.minRating) return false;
+    if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
+
     bool downloaded = DataHolder::downloadedSongList.contains(song);
     if(downloaded)
     {
@@ -231,15 +234,18 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     }
 
     bool ranked = song->GetMaxStarValue() > 0;
-    if(ranked)
+    if(filterOptions.rankedType != FilterOptions::RankedFilterType::All)
     {
-        if(filterOptions.rankedType == FilterOptions::RankedFilterType::HideRanked)
-            return false;
-    }
-    else
-    {
-        if(filterOptions.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
-            return false;
+        if(ranked)
+        {
+            if(filterOptions.rankedType == FilterOptions::RankedFilterType::HideRanked)
+                return false;
+        }
+        else
+        {
+            if(filterOptions.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
+                return false;
+        }
     }
 
     float minNPS = 500000, maxNPS = 0;
@@ -365,7 +371,7 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search)
                 DataHolder::filteredSongList.emplace_back(song);
             }
         }
-        std::sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(), 
+        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
             sortFunctionMap.at(sort)
         );
     
@@ -391,13 +397,9 @@ inline auto SortDropdownContainer() {
         getLogger().debug("DropDown! %s", input.c_str());
         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
         SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch);
-
-        QuestUI::MainThreadScheduler::Schedule([]{
-            songListController->table.child.getStatefulVector(
-                    songListController->ctx) = std::vector<CellData>(
-                    DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
-            songListController->table.update();
-        });
+        std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
+        songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
+        songListController->table.update();
     }, sortModes);
 
     detail::VerticalLayoutGroup layout(sortDropdown);
