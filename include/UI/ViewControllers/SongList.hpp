@@ -225,7 +225,7 @@ namespace BetterSongSearch::UI {
                             Sombrero::FastColor::black()
                     )
             );
-            layout.padding = {1,1, 1, 2};
+            layout.padding = std::array<float, 4>{1,1,1,2};
 
             QUC::ModifyContentSizeFitter fitter(layout);
             fitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
@@ -282,12 +282,12 @@ namespace BetterSongSearch::UI {
 //                cellCtx.getChildDataOrCreate(fitter2.key).getData<UnityEngine::UI::ContentSizeFitter*>() = sizeFitter;
 
                 fitter2.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-                fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+                fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::Unconstrained;
 
-                QUC::HMUITouchable touchable(fitter2);
+                //QUC::HMUITouchable touchable(fitter2);
 
                 getLogger().debug("Building cell first time");
-                QUC::detail::renderSingle(touchable, cellCtx);
+                QUC::detail::renderSingle(fitter2, cellCtx);
             }
 
 

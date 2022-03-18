@@ -366,7 +366,7 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search)
             }
         }
         std::sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(), 
-            sortFuncs[sort]
+            sortFunctionMap.at(sort)
         );
     
     //}).detach();
@@ -390,7 +390,8 @@ inline auto SortDropdownContainer() {
             UnityEngine::Transform *, RenderContext &ctx) {
         getLogger().debug("DropDown! %s", input.c_str());
         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-        SortAndFilterSongs(std::distance(sortModes.begin(), itr), prevSearch);
+        SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch);
+
         QuestUI::MainThreadScheduler::Schedule([]{
             songListController->table.child.getStatefulVector(
                     songListController->ctx) = std::vector<CellData>(

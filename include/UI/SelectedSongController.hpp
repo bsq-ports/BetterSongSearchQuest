@@ -91,7 +91,7 @@ namespace BetterSongSearch::UI {
             );
 
             modifyLayout.childForceExpandHeight = true;
-            modifyLayout.padding = {2, 2, 2, 2};
+            modifyLayout.padding = std::array<float, 4>{2, 2, 2, 2};
 
             QUC::ModifyLayoutElement layoutElement(modifyLayout);
             layoutElement.preferredWidth = 40;
@@ -155,7 +155,7 @@ namespace BetterSongSearch::UI {
 
 
             buttons.childForceExpandHeight = false;
-            buttons.padding = {2,2,2,2};
+            buttons.padding = std::array<float, 4>{2, 2, 2, 2};
 
             QUC::ModifyLayoutElement modifyLayoutElement(buttons);
             modifyLayoutElement.preferredWidth = 40;
