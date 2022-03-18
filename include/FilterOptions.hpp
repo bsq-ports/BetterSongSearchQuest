@@ -82,7 +82,7 @@ class FilterOptions
     CharFilterType charFilter = CharFilterType::All;
 
     //Mods
-    std::string mods;
+    StringW mods = "Any";
 };
 
 DROPDOWN_CREATE_ENUM_CLASS(SortMode,

@@ -16,6 +16,7 @@
 #include "questui_components/shared/components/settings/DropdownSetting.hpp"
 #include "questui_components/shared/components/Text.hpp"
 #include "questui_components/shared/components/Backgroundable.hpp"
+#include "questui_components/shared/components/Modal.hpp"
 #include "HMUI/Touchable.hpp"
 
 #include "main.hpp"

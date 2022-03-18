@@ -100,7 +100,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     //Top Bar
     auto topBar = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
-    topBar->set_childAlignment(UnityEngine::TextAnchor::MiddleRight);
+    topBar->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
     topBar->set_childControlWidth(false);
 
     auto topBarElement = topBar->GetComponent<UnityEngine::UI::LayoutElement*>();
@@ -123,6 +123,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     imageView->curvedCanvasSettingsHelper->Reset();
 
     std::function<void()> clearButtonClick = []() {
+        
     };
     std::function<void()> presetsButtonClick = []() {
 
@@ -135,7 +136,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     topBarTitle->set_fontSize(7);
     topBarTitle->set_alignment(TMPro::TextAlignmentOptions::Center);
 
-    auto topBarButtonsLayout = BeatSaberUI::CreateHorizontalLayoutGroup(topBar->get_transform());
+    /*auto topBarButtonsLayout = BeatSaberUI::CreateHorizontalLayoutGroup(topBar->get_transform());
     auto topBarButtonsLayoutFitter = topBarButtonsLayout->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
     topBarButtonsLayoutFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
     topBarButtonsLayout->set_spacing(2);
@@ -144,7 +145,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     auto topBarClearButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Clear", clearButtonClick);
     topBarClearButton->get_transform()->Find(il2cpp_utils::newcsstr("Underline"))->GetComponent<HMUI::ImageView*>()->set_sprite(filterBorderSprite);
     auto topBarPresetsButton = BeatSaberUI::CreateUIButton(topBarButtonsLayout->get_transform(), "Presets", presetsButtonClick);
-    topBarPresetsButton->get_transform()->Find(il2cpp_utils::newcsstr("Underline"))->GetComponent<HMUI::ImageView*>()->set_sprite(filterBorderSprite);
+    topBarPresetsButton->get_transform()->Find(il2cpp_utils::newcsstr("Underline"))->GetComponent<HMUI::ImageView*>()->set_sprite(filterBorderSprite);*/
 
     
     //Filter Options
@@ -448,10 +449,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             return fmt::format("{:%b:%Y}", fmt::localtime(val));
         };
 
-        auto minUploadDate = FilterOptions::BEATSAVER_EPOCH;
+        auto minUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
         auto maxUploadDate = GetMonthsSinceDate(std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count());
 
-        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, minUploadDate, maxUploadDate, nullptr);
+        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, minUploadDate, 0, maxUploadDate, nullptr);
         minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
 
         std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
@@ -554,7 +555,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma"};
         std::function<void(StringW)> modsChange = [](StringW value) {
-            mods = value;
+            filterOptions.mods = value;
             Sort();
         };
         auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", "Any", modsOptions, modsChange);

@@ -249,6 +249,8 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     bool foundValidDiff = false;
     bool foundValidChar = false;
 
+    bool foundRequirement = false;
+
     for(auto diff : song->GetDifficultyVector())
     {
         float nps = (float)diff->notes / (float)song->duration_secs;
@@ -314,9 +316,22 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
                 if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Lawless) foundValidChar = true;
                 break;
         }
+        if(filterOptions.mods == "Any")
+        {
+            foundRequirement = true;
+        }
+        else
+        {
+            auto requirements = diff->GetRequirementVector();
+            if(std::find(requirements.begin(), requirements.end(), filterOptions.mods) != requirements.end())
+            {
+                foundRequirement = true;
+            }
+        }
     }
     if(!foundValidDiff) return false;
     if(!foundValidChar) return false;
+    if(!foundRequirement) return false;
 
     if(minNPS < filterOptions.minNPS) return false;
     if(maxNPS > filterOptions.maxNPS) return false;
@@ -350,8 +365,8 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search)
                 DataHolder::filteredSongList.emplace_back(song);
             }
         }
-        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-            sortFunctionMap.at(sort)
+        std::sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(), 
+            sortFuncs[sort]
         );
     
     //}).detach();
@@ -374,16 +389,18 @@ inline auto SortDropdownContainer() {
             auto &, std::string const &input,
             UnityEngine::Transform *, RenderContext &ctx) {
         getLogger().debug("DropDown! %s", input.c_str());
-        SortAndFilterSongs(QUC::StrToEnum<SortMode>::get().at(input), prevSearch);
-
-        songListController->table.child.getStatefulVector(
-                songListController->ctx) = std::vector<CellData>(
-                DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
-        songListController->table.update();
+        auto itr = std::find(sortModes.begin(), sortModes.end(), input);
+        SortAndFilterSongs(std::distance(sortModes.begin(), itr), prevSearch);
+        QuestUI::MainThreadScheduler::Schedule([]{
+            songListController->table.child.getStatefulVector(
+                    songListController->ctx) = std::vector<CellData>(
+                    DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());;
+            songListController->table.update();
+        });
     }, sortModes);
 
     detail::VerticalLayoutGroup layout(sortDropdown);
-    layout.padding = {1, 0, 0 ,0};
+    layout.padding = std::array<float, 4>{1,1,1,1};
 
     ModifyLayoutElement layoutElement(layout);
     layoutElement.preferredWidth = 44;
