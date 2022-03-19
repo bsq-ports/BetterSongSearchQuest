@@ -79,15 +79,19 @@ UnityEngine::GameObject* soloButton = nullptr;
 
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
     backButton->GetComponent<UnityEngine::UI::Button*>()->Press();
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.2)));
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2));
     soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
     soloButton->GetComponent<HMUI::NoTransitionsButton*>()->Press();
     HMUI::IconSegmentedControl* tabSelector = UnityEngine::GameObject::Find("HorizontalIconSegmentedControl")->GetComponent<HMUI::IconSegmentedControl*>();
-    HMUI::IconSegmentedControlCell* customLevelsTab = tabSelector->get_transform()->GetChild(2)->get_gameObject()->GetComponent<HMUI::IconSegmentedControlCell*>();
-    customLevelsTab->SetSelected(true, HMUI::SelectableCell::TransitionType::Instant, customLevelsTab, true);
-        tabSelector->SelectCellWithNumber(2);
+    HMUI::IconSegmentedControlCell* customLevelsTab;
+    if(tabSelector)
+        customLevelsTab = tabSelector->get_transform()->GetChild(1)->get_gameObject()->GetComponent<HMUI::IconSegmentedControlCell*>();
+    if(customLevelsTab)
+        customLevelsTab->SetSelected(true, HMUI::SelectableCell::TransitionType::Instant, customLevelsTab, true);
+        tabSelector->SelectCellWithNumber(1);
     UnityEngine::GameObject* levelTable = UnityEngine::GameObject::Find("LevelsTableView");
-    levelTable->GetComponent<GlobalNamespace::LevelCollectionTableView*>()->SelectLevel(level);
+    if(levelTable)
+        levelTable->GetComponent<GlobalNamespace::LevelCollectionTableView*>()->SelectLevel(level);
 }
 
 void BetterSongSearch::UI::SelectedSongController::PlaySong()
