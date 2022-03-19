@@ -42,6 +42,7 @@ out/
 [Oo]bj/
 [Oo]bjs/
 [Bb]uild/
+cmake-build-debug/
 ndkpath.txt
 *.zip
 *.txt
