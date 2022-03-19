@@ -85,6 +85,7 @@ custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel
     soloButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
     GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
     if(levelCollectionNavigationController) {
+        co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
         levelCollectionNavigationController->SelectLevel(level);
     }
 }
