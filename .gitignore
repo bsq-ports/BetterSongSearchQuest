@@ -51,3 +51,4 @@ Android.mk.backup
 qpm.shared.json
 *.log
 tombstone_00
+*.qmod

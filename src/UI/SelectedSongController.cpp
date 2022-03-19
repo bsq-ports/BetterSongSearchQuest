@@ -10,6 +10,7 @@
 #include "HMUI/IconSegmentedControl.hpp"
 #include "HMUI/IconSegmentedControlCell.hpp"
 #include "HMUI/SelectableCell.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include <fmt/core.h>
@@ -80,7 +81,7 @@ custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel
     backButton->GetComponent<UnityEngine::UI::Button*>()->Press();
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.2)));
     soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-    soloButton->GetComponent<UnityEngine::UI::Button*>()->Press();
+    soloButton->GetComponent<HMUI::NoTransitionsButton*>()->Press();
     HMUI::IconSegmentedControl* tabSelector = UnityEngine::GameObject::Find("HorizontalIconSegmentedControl")->GetComponent<HMUI::IconSegmentedControl*>();
     HMUI::IconSegmentedControlCell* customLevelsTab = tabSelector->get_transform()->GetChild(2)->get_gameObject()->GetComponent<HMUI::IconSegmentedControlCell*>();
     customLevelsTab->SetSelected(true, HMUI::SelectableCell::TransitionType::Instant, customLevelsTab, true);
