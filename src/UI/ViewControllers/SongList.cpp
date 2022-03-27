@@ -94,10 +94,6 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
         {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
                            {
                                return (struct1->rating < struct2->rating);
-                           }},
-        {SortMode::Most_Downloads, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Downloads
-                           {
-                               return (struct1->downloads > struct2->downloads);
                            }}
 };
 
@@ -150,7 +146,7 @@ std::string removeSpecialCharacter(std::string_view const s) {
     for (int i = 0; i < stringy.size(); i++) {
 
         if (stringy[i] < 'A' || stringy[i] > 'Z' &&
-            stringy[i] < 'a' || stringy[i] > 'z')
+                                stringy[i] < 'a' || stringy[i] > 'z')
         {
             stringy.erase(i, 1);
             i--;
@@ -205,6 +201,81 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
     return matches == words;
 }
 
+bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
+    auto const& currentFilter = DataHolder::filterOptions;
+
+
+    if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
+        return false;
+
+    switch(currentFilter.difficultyFilter)
+    {
+        case FilterOptions::DifficultyFilterType::All:
+            break;
+        case FilterOptions::DifficultyFilterType::Easy:
+            if(diff->GetName() != "Easy") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Normal:
+            if(diff->GetName() != "Normal") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Hard:
+            if(diff->GetName() != "Hard") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Expert:
+            if(diff->GetName() != "Expert") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::ExpertPlus:
+            if(diff->GetName() != "ExpertPlus") return false;
+            break;
+    }
+
+    switch(currentFilter.charFilter) //"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+    {
+        case FilterOptions::CharFilterType::All:
+            break;
+        case FilterOptions::CharFilterType::Custom:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Unknown) return false;
+            break;
+        case FilterOptions::CharFilterType::Standard:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Standard) return false;
+            break;
+        case FilterOptions::CharFilterType::OneSaber:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::OneSaber) return false;
+            break;
+        case FilterOptions::CharFilterType::NoArrows:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::NoArrows) return false;
+            break;
+        case FilterOptions::CharFilterType::NinetyDegrees:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree90) return false;
+            break;
+        case FilterOptions::CharFilterType::ThreeSixtyDegrees:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree360) return false;
+            break;
+        case FilterOptions::CharFilterType::LightShow:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lightshow) return false;
+            break;
+        case FilterOptions::CharFilterType::Lawless:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lawless) return false;
+            break;
+    }
+
+    if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
+        return false;
+
+    if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked && !diff->ranked)
+        return false;
+
+    // do mods check here
+
+    if(song->duration_secs > 0) {
+        float nps = (float)diff->notes / (float)song->duration_secs;
+
+        if(nps < currentFilter.minNPS || nps > currentFilter.maxNPS)
+            return false;
+    }
+
+    return true;
+}
 
 bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
@@ -212,7 +283,6 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     /*if(filterOptions->uploaders.size() != 0) {
 		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
-
 		} else {
 			return false;
 		}
@@ -233,123 +303,37 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
             return false;
     }
 
-    bool ranked = song->GetMaxStarValue() > 0;
-    if(filterOptions.rankedType != FilterOptions::RankedFilterType::All)
-    {
-        if(ranked)
-        {
-            if(filterOptions.rankedType == FilterOptions::RankedFilterType::HideRanked)
-                return false;
-        }
-        else
-        {
-            if(filterOptions.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
-                return false;
-        }
-    }
-
-    float minNPS = 500000, maxNPS = 0;
-    float minNJS = 500000, maxNJS = 0;
-    float minStars = 500000, maxStars = 0;
-
-    bool foundValidDiff = false;
-    bool foundValidChar = false;
-
-    bool foundRequirement = false;
+    bool passesFilter = true;
 
     for(auto diff : song->GetDifficultyVector())
     {
-        float nps = (float)diff->notes / (float)song->duration_secs;
-        float njs = diff->njs;
-        float stars = diff->stars;
-
-        minNPS = std::min(nps, minNPS);
-        maxNPS = std::max(nps, maxNPS);
-
-        minNJS = std::min(njs, minNJS);
-        maxNJS = std::max(njs, maxNJS);
-        
-        minStars = std::min(stars, minStars);
-        maxStars = std::max(stars, maxStars);
-        switch(filterOptions.difficultyFilter)
-        {
-            case FilterOptions::DifficultyFilterType::All:
-                foundValidDiff = true;
-                break;
-            case FilterOptions::DifficultyFilterType::Easy:
-                if(diff->GetName() == "Easy") foundValidDiff = true;
-                break;
-            case FilterOptions::DifficultyFilterType::Normal:
-                if(diff->GetName() == "Normal") foundValidDiff = true;
-                break;
-            case FilterOptions::DifficultyFilterType::Hard:
-                if(diff->GetName() == "Hard") foundValidDiff = true;
-                break;
-            case FilterOptions::DifficultyFilterType::Expert:
-                if(diff->GetName() == "Expert") foundValidDiff = true;
-                break;
-            case FilterOptions::DifficultyFilterType::ExpertPlus:
-                if(diff->GetName() == "ExpertPlus") foundValidDiff = true;
-                break;
-        }
-        switch(filterOptions.charFilter)//"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
-        {
-            case FilterOptions::CharFilterType::All:
-                foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::Custom:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Unknown) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::Standard:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Standard) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::OneSaber:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::OneSaber) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::NoArrows:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::NoArrows) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::NinetyDegrees:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Degree90) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::ThreeSixtyDegrees:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Degree360) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::LightShow:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Lightshow) foundValidChar = true;
-                break;
-            case FilterOptions::CharFilterType::Lawless:
-                if(diff->diff_characteristics == song_data_core::BeatStarCharacteristics::Lawless) foundValidChar = true;
-                break;
-        }
-        if(filterOptions.mods == "Any")
-        {
-            foundRequirement = true;
+        if(DifficultyCheck(diff, song)) {
+            passesFilter = true;
+            break;
         }
         else
-        {
-            auto requirements = diff->GetRequirementVector();
-            if(std::find(requirements.begin(), requirements.end(), filterOptions.mods) != requirements.end())
-            {
-                foundRequirement = true;
-            }
-        }
+            passesFilter = false;
     }
-    if(!foundValidDiff) return false;
-    if(!foundValidChar) return false;
-    if(!foundRequirement) return false;
 
-    if(minNPS < filterOptions.minNPS) return false;
-    if(maxNPS > filterOptions.maxNPS) return false;
-    if(minNJS < filterOptions.minNJS) return false;
-    if(maxNJS > filterOptions.maxNJS) return false;
-    if(minStars < filterOptions.minStars) return false;
-    if(maxStars > filterOptions.maxStars) return false;
+    if(!passesFilter)
+        return false;
+
+    if(song->duration_secs < filterOptions.minLength) return false;
+    if(song->duration_secs > filterOptions.maxLength) return false;
+
 
     return true;
 }
 
-void SortAndFilterSongs(SortMode sort, std::string_view const search)
+void ResetTable() {
+    std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
+    songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
+    QuestUI::MainThreadScheduler::Schedule([]() {
+        songListController->table.update();
+    });
+}
+
+void SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable)
 {
     if(songListController != nullptr && songListController->tablePtr)
     {
@@ -362,44 +346,40 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search)
 
     bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
 
-        //filteredSongList = songList;
-        DataHolder::filteredSongList.clear();
-        for(auto song : DataHolder::songList)
+    //filteredSongList = songList;
+    DataHolder::filteredSongList.clear();
+    for(auto song : DataHolder::songList)
+    {
+        if(deezContainsDat(song, split(search, " ")) && (!isRankedSort || rankedFilterFunction(song)) && MeetsFilter(song))
         {
-            if(deezContainsDat(song, split(search, " ")) && (!isRankedSort || rankedFilterFunction(song)) && MeetsFilter(song))
-            {
-                DataHolder::filteredSongList.emplace_back(song);
-            }
+            DataHolder::filteredSongList.emplace_back(song);
         }
-        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-            sortFunctionMap.at(sort)
-        );
-    
+    }
+    std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
+                     sortFunctionMap.at(sort)
+    );
+
+    if(resetTable)
+        ResetTable();
+    getLogger().info("table reset");
     //}).detach();
 }
 
-void Sort()
+void Sort(bool resetTable)
 {
-    SortAndFilterSongs(prevSort, prevSearch);
-    std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
-    songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
-    songListController->table.update();
+    SortAndFilterSongs(prevSort, prevSearch, resetTable);
 }
 
 inline auto SortDropdownContainer() {
-    std::array<std::string, 8> sortModes(
-            {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated",
-             "Most Downloads"});
+    std::array<std::string, 7> sortModes(
+            {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated"});
 
     SongListDropDown<std::tuple_size_v<decltype(sortModes)>> sortDropdown("", "Newest", [sortModes](
             auto &, std::string const &input,
             UnityEngine::Transform *, RenderContext &ctx) {
         getLogger().debug("DropDown! %s", input.c_str());
         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-        SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch);
-        std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
-        songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
-        songListController->table.update();
+        SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch, true);
     }, sortModes);
 
     detail::VerticalLayoutGroup layout(sortDropdown);
@@ -493,7 +473,7 @@ inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController
             tableContainer,
             QUC::detail::refComp(*view->loadingIndicatorContainer),
             selectedSongControllerRefComp
-       );
+    );
 }
 
 custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewController* view) {
@@ -560,13 +540,13 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                       [](StringSetting &, std::string const &input, UnityEngine::Transform *,
                                          RenderContext &ctx) {
                                           getLogger().debug("Input! %s", input.c_str());
-                                          SortAndFilterSongs(prevSort, input);
-
-                                          songListController->table.child.getStatefulVector(
-                                                  songListController->ctx) = std::vector<CellData>(
-                                                  DataHolder::filteredSongList.begin(),
-                                                  DataHolder::filteredSongList.end());;
-                                          songListController->table.update();
+                                          std::thread([input]{
+                                              SortAndFilterSongs(prevSort, input, false);
+                                              songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(),DataHolder::filteredSongList.end());
+                                              QuestUI::MainThreadScheduler::Schedule([]() {
+                                                  songListController->table.update();
+                                              });
+                                          }).detach();
                                       }),
                         SortDropdownContainer()
                 ),
@@ -585,7 +565,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
 
     if (!firstActivation &&
         DataHolder::loadedSDC && table.renderedAllowed.isRenderDiffModified(*table.ctx) // returns true if it's the state isn't updated
-        ) {
+            ) {
         table.update();
         loadingIndicatorContainer->update();
     }

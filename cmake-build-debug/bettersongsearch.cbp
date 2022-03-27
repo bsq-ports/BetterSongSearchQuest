@@ -115,6 +115,12 @@
 		<Unit filename="E:/BSMG/BetterSongSearchQuest/extern/includes/beatsaber-hook/src/inline-hook/relocate.c">
 			<Option target="bettersongsearch"/>
 		</Unit>
+		<Unit filename="E:/BSMG/BetterSongSearchQuest/src/PluginConfig.cpp">
+			<Option target="bettersongsearch"/>
+		</Unit>
+		<Unit filename="E:/BSMG/BetterSongSearchQuest/src/ThreadWorker.cpp">
+			<Option target="bettersongsearch"/>
+		</Unit>
 		<Unit filename="E:/BSMG/BetterSongSearchQuest/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp">
 			<Option target="bettersongsearch"/>
 		</Unit>

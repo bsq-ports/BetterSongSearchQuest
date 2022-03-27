@@ -68,10 +68,38 @@ include CMakeFiles/bettersongsearch.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/bettersongsearch.dir/flags.make
 
+CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
+CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o: ../src/PluginConfig.cpp
+CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\PluginConfig.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\PluginConfig.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\PluginConfig.cpp
+
+CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.i"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E E:\BSMG\BetterSongSearchQuest\src\PluginConfig.cpp > CMakeFiles\bettersongsearch.dir\src\PluginConfig.cpp.i
+
+CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.s"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S E:\BSMG\BetterSongSearchQuest\src\PluginConfig.cpp -o CMakeFiles\bettersongsearch.dir\src\PluginConfig.cpp.s
+
+CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
+CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o: ../src/ThreadWorker.cpp
+CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\ThreadWorker.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\ThreadWorker.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\ThreadWorker.cpp
+
+CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.i"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E E:\BSMG\BetterSongSearchQuest\src\ThreadWorker.cpp > CMakeFiles\bettersongsearch.dir\src\ThreadWorker.cpp.i
+
+CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.s"
+	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S E:\BSMG\BetterSongSearchQuest\src\ThreadWorker.cpp -o CMakeFiles\bettersongsearch.dir\src\ThreadWorker.cpp.s
+
 CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o: ../src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp
 CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\UI\FlowCoordinators\BetterSongSearchFlowCoordinator.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\UI\FlowCoordinators\BetterSongSearchFlowCoordinator.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\UI\FlowCoordinators\BetterSongSearchFlowCoordinator.cpp
 
 CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.i: cmake_force
@@ -85,7 +113,7 @@ CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoor
 CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o: ../src/UI/SelectedSongController.cpp
 CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\UI\SelectedSongController.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\UI\SelectedSongController.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\UI\SelectedSongController.cpp
 
 CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.i: cmake_force
@@ -99,7 +127,7 @@ CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.s: cmake_force
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o: ../src/UI/ViewControllers/DownloadHistory.cpp
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\DownloadHistory.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\DownloadHistory.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\UI\ViewControllers\DownloadHistory.cpp
 
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.i: cmake_force
@@ -113,7 +141,7 @@ CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.s: cm
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o: ../src/UI/ViewControllers/FilterView.cpp
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\FilterView.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\FilterView.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\UI\ViewControllers\FilterView.cpp
 
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.i: cmake_force
@@ -127,7 +155,7 @@ CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/FilterView.cpp.s: cmake_f
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o: ../src/UI/ViewControllers/SongList.cpp
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\SongList.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\UI\ViewControllers\SongList.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\UI\ViewControllers\SongList.cpp
 
 CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.i: cmake_force
@@ -141,7 +169,7 @@ CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/SongList.cpp.s: cmake_for
 CMakeFiles/bettersongsearch.dir/src/main.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/src/main.cpp.o: ../src/main.cpp
 CMakeFiles/bettersongsearch.dir/src/main.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/bettersongsearch.dir/src/main.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/bettersongsearch.dir/src/main.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/src/main.cpp.o -MF CMakeFiles\bettersongsearch.dir\src\main.cpp.o.d -o CMakeFiles\bettersongsearch.dir\src\main.cpp.o -c E:\BSMG\BetterSongSearchQuest\src\main.cpp
 
 CMakeFiles/bettersongsearch.dir/src/main.cpp.i: cmake_force
@@ -155,7 +183,7 @@ CMakeFiles/bettersongsearch.dir/src/main.cpp.s: cmake_force
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o: ../extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building C object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building C object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.o -MF CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\inlineHook.c.o.d -o CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\inlineHook.c.o -c E:\BSMG\BetterSongSearchQuest\extern\includes\beatsaber-hook\src\inline-hook\inlineHook.c
 
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/inlineHook.c.i: cmake_force
@@ -169,7 +197,7 @@ CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/i
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o: ../extern/includes/beatsaber-hook/src/inline-hook/relocate.c
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building C object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building C object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.o -MF CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\relocate.c.o.d -o CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\relocate.c.o -c E:\BSMG\BetterSongSearchQuest\extern\includes\beatsaber-hook\src\inline-hook\relocate.c
 
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.i: cmake_force
@@ -183,7 +211,7 @@ CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/r
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o: CMakeFiles/bettersongsearch.dir/flags.make
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o: ../extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o: CMakeFiles/bettersongsearch.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o"
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\clang++.exe --target=aarch64-none-linux-android24 --gcc-toolchain=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/BSMG/Android/android-ndk-r22b/toolchains/llvm/prebuilt/windows-x86_64/sysroot $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.o -MF CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\And64InlineHook.cpp.o.d -o CMakeFiles\bettersongsearch.dir\extern\includes\beatsaber-hook\src\inline-hook\And64InlineHook.cpp.o -c E:\BSMG\BetterSongSearchQuest\extern\includes\beatsaber-hook\src\inline-hook\And64InlineHook.cpp
 
 CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/And64InlineHook.cpp.i: cmake_force
@@ -196,6 +224,8 @@ CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/A
 
 # Object files for target bettersongsearch
 bettersongsearch_OBJECTS = \
+"CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o" \
+"CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o" \
 "CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o" \
 "CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o" \
 "CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o" \
@@ -209,6 +239,8 @@ bettersongsearch_OBJECTS = \
 # External object files for target bettersongsearch
 bettersongsearch_EXTERNAL_OBJECTS =
 
+libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o
+libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o
 libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o
 libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/src/UI/SelectedSongController.cpp.o
 libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/src/UI/ViewControllers/DownloadHistory.cpp.o
@@ -228,7 +260,7 @@ libbettersongsearch.so: ../extern/libs/libquestui.so
 libbettersongsearch.so: ../extern/libs/libsongdownloader.so
 libbettersongsearch.so: ../extern/libs/libsongloader.so
 libbettersongsearch.so: CMakeFiles/bettersongsearch.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Linking CXX shared library libbettersongsearch.so"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=E:\BSMG\BetterSongSearchQuest\cmake-build-debug\CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Linking CXX shared library libbettersongsearch.so"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles\bettersongsearch.dir\link.txt --verbose=$(VERBOSE)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold "Strip debug symbols done on final binary."
 	E:\BSMG\Android\android-ndk-r22b\toolchains\llvm\prebuilt\windows-x86_64\bin\llvm-strip.exe -d --strip-all libbettersongsearch.so -o stripped_libbettersongsearch.so

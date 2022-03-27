@@ -12,6 +12,8 @@
 #include "HMUI/IconSegmentedControlCell.hpp"
 #include "HMUI/SelectableCell.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
+#include "HMUI/ViewController_AnimationDirection.hpp"
+
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include <fmt/core.h>

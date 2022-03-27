@@ -200,6 +200,54 @@ extern/includes/beatsaber-hook/src/inline-hook/relocate.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/extern/includes/beatsaber-hook/src/inline-hook/relocate.c.s
 .PHONY : extern/includes/beatsaber-hook/src/inline-hook/relocate.c.s
 
+src/PluginConfig.o: src/PluginConfig.cpp.o
+.PHONY : src/PluginConfig.o
+
+# target to build an object file
+src/PluginConfig.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.o
+.PHONY : src/PluginConfig.cpp.o
+
+src/PluginConfig.i: src/PluginConfig.cpp.i
+.PHONY : src/PluginConfig.i
+
+# target to preprocess a source file
+src/PluginConfig.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.i
+.PHONY : src/PluginConfig.cpp.i
+
+src/PluginConfig.s: src/PluginConfig.cpp.s
+.PHONY : src/PluginConfig.s
+
+# target to generate assembly for a file
+src/PluginConfig.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/PluginConfig.cpp.s
+.PHONY : src/PluginConfig.cpp.s
+
+src/ThreadWorker.o: src/ThreadWorker.cpp.o
+.PHONY : src/ThreadWorker.o
+
+# target to build an object file
+src/ThreadWorker.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.o
+.PHONY : src/ThreadWorker.cpp.o
+
+src/ThreadWorker.i: src/ThreadWorker.cpp.i
+.PHONY : src/ThreadWorker.i
+
+# target to preprocess a source file
+src/ThreadWorker.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.i
+.PHONY : src/ThreadWorker.cpp.i
+
+src/ThreadWorker.s: src/ThreadWorker.cpp.s
+.PHONY : src/ThreadWorker.s
+
+# target to generate assembly for a file
+src/ThreadWorker.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\bettersongsearch.dir\build.make CMakeFiles/bettersongsearch.dir/src/ThreadWorker.cpp.s
+.PHONY : src/ThreadWorker.cpp.s
+
 src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.o: src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.cpp.o
 .PHONY : src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.o
 
@@ -362,6 +410,12 @@ help:
 	@echo ... extern/includes/beatsaber-hook/src/inline-hook/relocate.o
 	@echo ... extern/includes/beatsaber-hook/src/inline-hook/relocate.i
 	@echo ... extern/includes/beatsaber-hook/src/inline-hook/relocate.s
+	@echo ... src/PluginConfig.o
+	@echo ... src/PluginConfig.i
+	@echo ... src/PluginConfig.s
+	@echo ... src/ThreadWorker.o
+	@echo ... src/ThreadWorker.i
+	@echo ... src/ThreadWorker.s
 	@echo ... src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.o
 	@echo ... src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.i
 	@echo ... src/UI/FlowCoordinators/BetterSongSearchFlowCoordinator.s

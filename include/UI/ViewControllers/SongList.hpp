@@ -358,5 +358,5 @@ public:
     QUC::RenderContext ctx{nullptr}; // initialized at DidActivate
 )
 
-void Sort();
+void Sort(bool resetTable);
 extern BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
