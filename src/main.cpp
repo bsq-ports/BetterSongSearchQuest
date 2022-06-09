@@ -13,6 +13,7 @@
 #include "System/Action.hpp"
 
 #include "PluginConfig.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 using namespace QuestUI;
 
@@ -41,6 +42,7 @@ extern "C" void setup(ModInfo& info) {
     getConfig().Reload();
     getConfig().Write();
     getLogger().info("Completed setup!");
+
     std::thread([]{
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
         DataHolder::songList = std::unordered_set(songs.begin(), songs.end());

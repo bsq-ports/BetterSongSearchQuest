@@ -9,6 +9,7 @@
 #include "HMUI/TableCell.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
+#include "TMPro/TextAlignmentOptions.hpp"
 
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
@@ -23,7 +24,9 @@
 
 #include "FilterOptions.hpp"
 
+#include "questui_components/shared/state.hpp"
 #include "questui_components/shared/context.hpp"
+#include "questui_components/shared/components/Text.hpp"
 #include "questui_components/shared/components/list/CustomCelledList.hpp"
 #include "questui_components/shared/components/misc/Utility.hpp"
 #include "questui_components/shared/components/misc/HMUITouchable.hpp"
@@ -158,7 +161,9 @@ namespace BetterSongSearch::UI {
         auto cellElementsLayout() {
             getLogger().debug("Building cell layout");
 
+
             // top layout
+
             songText.alignmentOptions = TMPro::TextAlignmentOptions::MidlineLeft;
             songText.overflowMode = TMPro::TextOverflowModes::Ellipsis;
             songText.wordWrapping = false;
@@ -269,7 +274,7 @@ namespace BetterSongSearch::UI {
                 layoutElement.preferredWidth = 70;
 
                 QUC::ModifyContentSizeFitter fitter2(layoutElement);
-                
+
                 fitter2.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
                 fitter2.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 

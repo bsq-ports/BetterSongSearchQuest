@@ -541,11 +541,11 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                          RenderContext &ctx) {
                                           getLogger().debug("Input! %s", input.c_str());
                                           std::thread([input]{
-                                              SortAndFilterSongs(prevSort, input, false);
-                                              songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(),DataHolder::filteredSongList.end());
+                                              SortAndFilterSongs(prevSort, input, true);
+                                              /*songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(),DataHolder::filteredSongList.end());
                                               QuestUI::MainThreadScheduler::Schedule([]() {
                                                   songListController->table.update();
-                                              });
+                                              });*/
                                           }).detach();
                                       }),
                         SortDropdownContainer()

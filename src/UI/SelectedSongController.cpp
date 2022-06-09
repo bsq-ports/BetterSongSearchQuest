@@ -6,6 +6,7 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/PlatformLeaderboardViewController.hpp"
 #include "System/Collections/IEnumerator.hpp"
 #include "UnityEngine/UI/Button.hpp"
 #include "HMUI/IconSegmentedControl.hpp"
@@ -16,7 +17,7 @@
 
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include <fmt/core.h>
+#include "fmt/fmt/include/fmt/core.h"
 
 #include <iomanip>
 #include <sstream>
@@ -101,6 +102,7 @@ void BetterSongSearch::UI::SelectedSongController::PlaySong()
         currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
     }
     GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
+
 }
 
 void BetterSongSearch::UI::SelectedSongController::update() {
@@ -137,7 +139,7 @@ void BetterSongSearch::UI::SelectedSongController::update() {
                           if (song != this->currentSong.getData()) return;
 
                           this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(arr);
-                          this->coverImage.child.sizeDelta = {160, 160};
+                          this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
                           this->coverImage.update();
                       });
                   }

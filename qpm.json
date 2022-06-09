@@ -18,7 +18,7 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.7.4",
+      "versionRange": "^3.8.5",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -27,12 +27,12 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.21.0",
+      "versionRange": "^0.22.0",
       "additionalData": {}
     },
     {
       "id": "questui",
-      "versionRange": "^0.13.4",
+      "versionRange": "^0.13.5",
       "additionalData": {}
     },
     {
@@ -47,12 +47,12 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.15.8",
+      "versionRange": "^0.15.12",
       "additionalData": {}
     },
     {
       "id": "songdatacore",
-      "versionRange": "^0.4.7",
+      "versionRange": "^0.4.8",
       "additionalData": {}
     },
     {
@@ -67,7 +67,7 @@
     },
     {
       "id": "songloader",
-      "versionRange": "^0.9.1",
+      "versionRange": "^0.9.3",
       "additionalData": {}
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.4.2",
+      "versionRange": "^0.4.4",
       "additionalData": {}
     }
   ],
