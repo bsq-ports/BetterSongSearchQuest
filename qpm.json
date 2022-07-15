@@ -18,7 +18,7 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.8.5",
+      "versionRange": "^3.9.0",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -27,12 +27,12 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.22.0",
+      "versionRange": "^0.24.0",
       "additionalData": {}
     },
     {
       "id": "questui",
-      "versionRange": "^0.13.5",
+      "versionRange": "^0.16.0",
       "additionalData": {}
     },
     {
@@ -67,7 +67,7 @@
     },
     {
       "id": "songloader",
-      "versionRange": "^0.9.3",
+      "versionRange": "^0.10.0",
       "additionalData": {}
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.4.4",
+      "versionRange": "^0.4.8",
       "additionalData": {}
     }
   ],
