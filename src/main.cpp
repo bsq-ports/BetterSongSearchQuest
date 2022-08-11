@@ -2,18 +2,26 @@
 
 #include "questui/shared/QuestUI.hpp"
 
+#include "songloader/shared/API.hpp"
+
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 #include "custom-types/shared/register.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
+#include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/PlayerData.hpp"
+#include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
+#include "GlobalNamespace/BeatmapDifficulty.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/ViewController_AnimationType.hpp"
 #include "System/Action.hpp"
 
 #include "PluginConfig.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+
+#include <regex>
 
 using namespace QuestUI;
 
@@ -67,9 +75,9 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         //filterOptions.mods = bazinga
 
-        getLogger().info("yes");
-        SortAndFilterSongs(SortMode::Newest, "", false);
+        getLogger().info("Finished loading songs.");
         DataHolder::loadedSDC = true;
+        SortAndFilterSongs(SortMode::Newest, "", false);
     }).detach();
 }
 
@@ -85,9 +93,8 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
     ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
     auto currentFlowCoordinator = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
     auto betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>().FirstOrDefault();
-    getLogger().info("%s", betterSongSearchFlowCoordinator != nullptr ? "not null" : "null");
     if(betterSongSearchFlowCoordinator)
-        currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::In, false);
+        currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::Out, false);
 }
 
 // Called later on in the game loading - a good time to install function hooks
