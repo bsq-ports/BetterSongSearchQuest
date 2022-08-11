@@ -89,7 +89,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     std::vector<StringW> downloadFilterOptions({"Show All", "Only Downloaded", "Hide Downloaded"});
     std::vector<StringW> scoreFilterOptions = {"Show All", "Hide Passed", "Only Passed"};
-    std::vector<StringW> rankedFilterOptions = {"Show All", "Only Ranked", "Hide Ranked"};
+    std::vector<StringW> rankedFilterOptions = {"Show All", "Hide Ranked", "Only Ranked"};
     std::vector<StringW> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
     std::vector<StringW> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
     std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma"};

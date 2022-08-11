@@ -18,7 +18,7 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.9.0",
+      "versionRange": "^3.10.0",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -27,12 +27,12 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.24.0",
+      "versionRange": "^0.25.0",
       "additionalData": {}
     },
     {
       "id": "questui",
-      "versionRange": "^0.16.0",
+      "versionRange": "^0.16.4",
       "additionalData": {}
     },
     {
@@ -47,12 +47,12 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.15.12",
+      "versionRange": "^0.15.18",
       "additionalData": {}
     },
     {
       "id": "songdatacore",
-      "versionRange": "^0.4.8",
+      "versionRange": "^0.5.1",
       "additionalData": {}
     },
     {
@@ -67,7 +67,7 @@
     },
     {
       "id": "songloader",
-      "versionRange": "^0.10.0",
+      "versionRange": "^0.10.3",
       "additionalData": {}
     },
     {
@@ -77,7 +77,12 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.4.8",
+      "versionRange": "^0.4.10",
+      "additionalData": {}
+    },
+    {
+      "id": "libcurl",
+      "versionRange": "^7.78.0",
       "additionalData": {}
     }
   ],
