@@ -1,5 +1,6 @@
 #include "main.hpp"
 #include "UI/SelectedSongController.hpp"
+#include "BeatSaverRegionManager.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
@@ -21,8 +22,22 @@
 
 #include <iomanip>
 #include <sstream>
+#include <map>
 //For when doing stuff on versions where song downloader doesnt exist. Saves a bit of time
 #define SONGDOWNLOADER
+
+inline std::string toLower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return s;
+}
+
+inline std::string toLower(std::string_view s) {
+    return toLower(std::string(s));
+}
+
+inline std::string toLower(char const* s) {
+    return toLower(std::string(s));
+}
 
 void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::BeatStarSong* song)
 {
@@ -37,10 +52,10 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
     downloadButton->interactable = false;
     downloadButton.update();
     std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
-        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.4f}", downloadPercentage);
+        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);
 
-        if (downloadPercentage < 100) {
-            downloadButton->text.text = fmt::format("{:.4f}%", downloadPercentage);
+        if (downloadPercentage <= 100) {
+            downloadButton->text.text = fmt::format("{:.2f}%", downloadPercentage);
             QuestUI::MainThreadScheduler::Schedule([this] {
                 downloadButton.update();
             });
@@ -105,6 +120,15 @@ void BetterSongSearch::UI::SelectedSongController::PlaySong()
 
 }
 
+void GetCoverImageByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
+    BeatSaverRegionManager::GetAsync(url,
+           [finished](long httpCode, std::string data) {
+               std::vector<uint8_t> bytes(data.begin(), data.end());
+               finished(bytes);
+           }, [](float progress){}
+    );
+}
+
 void BetterSongSearch::UI::SelectedSongController::update() {
     if (!currentSong.getData()) {
         updateView();
@@ -122,28 +146,43 @@ void BetterSongSearch::UI::SelectedSongController::update() {
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
-    getLogger().info("Downloading");
+    //getLogger().info("Gathering information...");
     coverImage.child.sprite = defaultImage;
 
-    getLogger().info("No Method: %s", song->hash.string_data);
-    getLogger().info("Method: %s", song->GetHash().data());
-    BeatSaver::API::GetBeatmapByHashAsync(std::string(song->GetHash()), [this, song](std::optional<BeatSaver::Beatmap> beatmap) {
-                  if (beatmap.has_value()) {
-                      std::vector<uint8_t> result = BeatSaver::API::GetCoverImage(beatmap.value());
-                      ArrayW<uint8_t> arr(result.size());
-                      memcpy(arr.begin(), result.data(), result.size() * sizeof(uint8_t));
+    //getLogger().info("No Method: %s", song->hash.string_data);
+    //getLogger().info("Method: %s", song->GetHash().data());
 
-                      getLogger().info("Downloaded");
-                      QuestUI::MainThreadScheduler::Schedule([this, arr, song] {
+    if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
+        std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];
+        Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
+        this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(spriteArray);
+        this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
+        this->coverImage.update();
+    }
+
+    BeatSaver::API::GetBeatmapByHashAsync(std::string(song->GetHash()), [this, song](std::optional<BeatSaver::Beatmap> beatmap) {
+          if (beatmap.has_value()) {
+              if(!this->imageCoverCache.contains(std::string(song->GetHash()))) {
+                  //getLogger().info("Started cover download...");
+                  std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+                  //getLogger().info("new cover url: %s", newUrl.c_str());
+                  GetCoverImageByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
+
+                      //getLogger().info("Downloaded");
+                      QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
+                          std::vector<uint8_t> data = bytes;
                           // avoid cover image race conditions
                           if (song != this->currentSong.getData()) return;
-
-                          this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(arr);
+                          this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
+                          Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
+                          this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(spriteArray);
                           this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
                           this->coverImage.update();
                       });
-                  }
-              });
+                  });
+              }
+          }
+      });
     #endif
 
     float minNPS = 500000, maxNPS = 0;
@@ -159,6 +198,10 @@ void BetterSongSearch::UI::SelectedSongController::update() {
         maxNJS = std::max(njs, maxNJS);
     }
 
+    downloadButton->text.text = "Download";
+    QuestUI::MainThreadScheduler::Schedule([this] {
+        downloadButton.update();
+    });
     playButton->active = downloaded;
     playButton->interactable = downloaded;
     downloadButton->active = !downloaded;

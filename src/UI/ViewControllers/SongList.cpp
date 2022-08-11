@@ -1,5 +1,6 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "main.hpp"
+#include "BeatSaverRegionManager.hpp"
 
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
@@ -12,6 +13,7 @@
 #include "questui_components/shared/components/settings/StringSetting.hpp"
 #include "questui_components/shared/components/settings/DropdownSetting.hpp"
 
+#include "songloader/shared/API.hpp"
 
 #include "config-utils/shared/config-utils.hpp"
 
@@ -25,8 +27,12 @@
 #include "HMUI/TableView_ScrollPositionType.hpp"
 #include "HMUI/VerticalScrollIndicator.hpp"
 #include "GlobalNamespace/IVRPlatformHelper.hpp"
+#include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/PlayerData.hpp"
+#include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "System/StringComparison.hpp"
 #include "System/Action_2.hpp"
+#include "PluginConfig.hpp"
 #include <iomanip>
 #include <sstream>
 
@@ -34,6 +40,7 @@
 #include <string>
 #include <algorithm>
 #include <functional>
+#include <regex>
 
 using namespace BetterSongSearch::UI;
 using namespace QuestUI;
@@ -45,8 +52,19 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_QUC_CUSTOMLIST_TABLEDATA(BetterSongSearch::UI, QUCObjectTableData);
 DEFINE_QUC_CUSTOMLIST_CELL(BetterSongSearch::UI, QUCObjectTableCell)
 
+double GetMinStarValue(const SDC_wrapper::BeatStarSong* song)
+{
+    auto diffVec = song->GetDifficultyVector();
+    double min = song->GetMaxStarValue();
+    for (auto diff : diffVec)
+    {
+        if (diff->stars > 0.0 && diff->stars < min) min = diff->stars;
+    }
+    return min;
+}
 
-
+const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
@@ -85,7 +103,7 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }},
         {SortMode::Least_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
                            {
-                               return struct1->GetMaxStarValue() < struct2->GetMaxStarValue();
+                               return GetMinStarValue(struct1) < GetMinStarValue(struct2);
                            }},
         {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
                            {
@@ -96,14 +114,6 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                                return (struct1->rating < struct2->rating);
                            }}
 };
-
-//This is so unranked songs dont show up in the Least Stars Sort
-static const std::function<bool(const SDC_wrapper::BeatStarSong* song)> rankedFilterFunction = [] (const SDC_wrapper::BeatStarSong* song)//Least Stars
-{
-    auto ranked = song->GetMaxStarValue() > 0;
-    return ranked;
-};
-
 
 void BetterSongSearch::UI::QUCObjectTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
 {
@@ -168,7 +178,9 @@ inline std::string toLower(char const* s) {
     return toLower(std::string(s));
 }
 
-bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
+
+
+bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
 {
     int words = 0;
     int matches = 0;
@@ -204,9 +216,13 @@ bool deezContainsDat(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
     auto const& currentFilter = DataHolder::filterOptions;
 
+    if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
+        if(!diff->ranked)
+            return false;
 
-    if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
-        return false;
+    if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
+        if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
+            return false;
 
     switch(currentFilter.difficultyFilter)
     {
@@ -262,9 +278,6 @@ bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const
     if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked && !diff->ranked)
-        return false;
-
     // do mods check here
 
     if(song->duration_secs > 0) {
@@ -288,10 +301,10 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 		}
 	}*/
 
+
     if(song->GetRating() < filterOptions.minRating) return false;
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
-
-    bool downloaded = DataHolder::downloadedSongList.contains(song);
+    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(song->hash.string_data).has_value();
     if(downloaded)
     {
         if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
@@ -302,6 +315,27 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
         if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
             return false;
     }
+
+    bool hasLocalScore = false;
+
+    /*if(filterOptions.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
+        std::string serializedDiff = fmt::format("{}_{}", CHAR_FILTER_OPTIONS.at((int)song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->diff_characteristics), song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->GetName());
+        hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data) && DataHolder::songsWithScores[song->hash.string_data].contains(serializedDiff);
+    }
+    else {
+        hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data);
+    }
+
+    if(hasLocalScore) {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed) {
+            return false;
+        }
+    }
+    else {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed) {
+            return false;
+        }
+    }*/
 
     bool passesFilter = true;
 
@@ -350,7 +384,9 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search, bool reset
     DataHolder::filteredSongList.clear();
     for(auto song : DataHolder::songList)
     {
-        if(deezContainsDat(song, split(search, " ")) && (!isRankedSort || rankedFilterFunction(song)) && MeetsFilter(song))
+        bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+        bool meetsFilter = MeetsFilter(song);
+        if(songMeetsSearch && meetsFilter)
         {
             DataHolder::filteredSongList.emplace_back(song);
         }
@@ -359,9 +395,11 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search, bool reset
                      sortFunctionMap.at(sort)
     );
 
-    if(resetTable)
+    if(resetTable) {
         ResetTable();
-    getLogger().info("table reset");
+        //getLogger().info("first song ranked: %s", DataHolder::filteredSongList[0]->GetMaxStarValue() > 0 ? "true" : "false");
+        getLogger().info("table reset");
+    }
     //}).detach();
 }
 
@@ -513,10 +551,34 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         this->ctx = RenderContext(get_transform());
     }
 
+    getLogger().info("Checking for local scores...");
+    auto playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
+    if(playerDataModel) {
+        for(int i = 0; i < playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
+            auto x = playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
+            if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40 || !x->levelID->StartsWith("custom_level_"))
+                continue;
+            auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
+            //getLogger().info("Song hash: %s", sh.c_str());
+            auto song = SDC_wrapper::BeatStarSong::GetSong(sh);
+            if(!song)
+                continue;
+            if(!song->GetDifficulty(x->difficulty)) continue;
+
+            auto itr = DataHolder::songsWithScores.find(sh);
+            if (itr == DataHolder::songsWithScores.end())
+                itr = DataHolder::songsWithScores.emplace(sh, std::unordered_map<std::string, float>()).first;
+            itr->second[fmt::format("{}_{}", static_cast<std::string>(x->beatmapCharacteristic->serializedName), DIFFS.at(x->difficulty.value))] = 0;
+
+        }
+        //getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
+    }
+
+
     table.renderedAllowed = DataHolder::loadedSDC;
     loadingIndicator.enabled = !DataHolder::loadedSDC;
 
-    getLogger().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
+    //getLogger().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
 
     // Periodically check if SDC loaded and update the view
     if (firstActivation && loadingIndicator.enabled.getData()) {
@@ -561,6 +623,8 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         getLogger().debug("Rendering layout");
         detail::renderSingle(songListControllerView, ctx);
         getLogger().debug("Rendered layout");
+
+        BeatSaverRegionManager::RegionLookup();
     }
 
     if (!firstActivation &&
@@ -569,7 +633,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         table.update();
         loadingIndicatorContainer->update();
     }
-
     auto end = std::chrono::high_resolution_clock::now();
     auto difference = end - start;
     auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();

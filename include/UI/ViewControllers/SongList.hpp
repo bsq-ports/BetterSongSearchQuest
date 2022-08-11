@@ -11,6 +11,8 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
 
+#include "songloader/shared/API.hpp"
+
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
@@ -36,7 +38,7 @@
 
 namespace BetterSongSearch::UI {
     struct DataHolder {
-        inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> downloadedSongList;
+        inline static std::unordered_map<std::string, std::unordered_map<std::string, float>> songsWithScores;
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
         inline static bool loadedSDC = false;
@@ -126,11 +128,18 @@ namespace BetterSongSearch::UI {
                     if (diffData->ranked) {
                         strs[i] = fmt::format(FMT_STRING("<color=white>{}</color> <color=#ffa500>{:.1f}</color>"), diffData->GetName(), diffData->stars);
                     } else {
-                        if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow()) {
-                            strs[i] = fmt::format(FMT_STRING("<color=white>{}</color>"), ShortMapDiffNames(diffData->GetName()));
-                        } else {
+                        if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow())
+                            strs[i] = fmt::format(FMT_STRING("<color=#AAAAAA>{}(LS)</color>"), diffData->GetName());
+                        else if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lawless())
+                            strs[i] = fmt::format(FMT_STRING("<color=#AAAAAA>{}(LL)</color>"), diffData->GetName());
+                        else if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Degree90())
+                            strs[i] = fmt::format(FMT_STRING("<color=#AAAAAA>{}(90)</color>"), diffData->GetName());
+                        else if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Degree360())
+                            strs[i] = fmt::format(FMT_STRING("<color=#AAAAAA>{}(360)</color>"), diffData->GetName());
+                        else if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Standard())
                             strs[i] = fmt::format(FMT_STRING("<color=white>{}</color>"), diffData->GetName());
-                        }
+                        else
+                            strs[i] = fmt::format(FMT_STRING("<color=#AAAAAA>{}</color>"), ShortMapDiffNames(diffData->GetName()));
                     }
                     i++;
                 }
@@ -286,7 +295,7 @@ namespace BetterSongSearch::UI {
 
 
             auto ranked = cellData.song->GetMaxStarValue() > 0;
-            bool downloaded = DataHolder::downloadedSongList.contains(songData);
+            bool downloaded = RuntimeSongLoader::API::GetLevelByHash(cellData.song->hash.string_data).has_value();
 
             Sombrero::FastColor songColor = Sombrero::FastColor::white();
 
@@ -302,7 +311,7 @@ namespace BetterSongSearch::UI {
             songText.text = fmt::format("{} - {}", songData->GetName(), songData->GetSongAuthor());
             songText.color = songColor;
             mapperText.text = cellData.song->GetAuthor();
-            uploadDateText.text = fmt::format("{:%d-%m-%Y}", fmt::localtime(songData->uploaded_unix_time));
+            uploadDateText.text = fmt::format("{:%d. %b %Y}", fmt::localtime(songData->uploaded_unix_time));
             ratingText.text = fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(songData->duration_secs), songData->upvotes, songData->downvotes);
             cellDiff.diffs = songData->GetDifficultyVector();
 

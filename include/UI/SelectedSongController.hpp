@@ -22,6 +22,8 @@
 #include "CustomComponents.hpp"
 #include "shared/components/list/CustomCelledList.hpp"
 
+#include <map>
+
 namespace BetterSongSearch::UI {
 
     struct SelectedSongController {
@@ -42,6 +44,8 @@ namespace BetterSongSearch::UI {
         UnityEngine::Sprite *defaultImage = nullptr;
         QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
         QUC::RenderContext* ctx; // this is ugly, oh well
+
+        std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
 
         const QUC::Key key;
 
