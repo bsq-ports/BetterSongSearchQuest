@@ -42,7 +42,7 @@
     },
     {
       "id": "questui_components",
-      "versionRange": "=2.4.1",
+      "versionRange": "=2.5.2",
       "additionalData": {}
     },
     {
@@ -72,7 +72,7 @@
     },
     {
       "id": "fmt",
-      "versionRange": "^8.0.5",
+      "versionRange": "^9.0.0",
       "additionalData": {}
     },
     {

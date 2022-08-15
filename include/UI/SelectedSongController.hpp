@@ -15,6 +15,7 @@
 #include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
 
 #include "questui_components/shared/components/Text.hpp"
+#include "questui_components/shared/components/LoadingIndicator.hpp"
 #include "questui_components/shared/components/Button.hpp"
 #include "questui_components/shared/components/Image.hpp"
 #include "questui_components/shared/reference_comp.hpp"
@@ -41,6 +42,7 @@ namespace BetterSongSearch::UI {
         QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};
         QUC::Text infoText{"details"};
         LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
+        QUC::LoadingIndicator coverImageLoading{false};
         UnityEngine::Sprite *defaultImage = nullptr;
         QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
         QUC::RenderContext* ctx; // this is ugly, oh well
@@ -108,7 +110,10 @@ namespace BetterSongSearch::UI {
             coverElement.preferredHeight = 28;
             coverElement.preferredWidth = 28;
 
-            QUC::detail::HorizontalLayoutGroup metaLayout(coverElement);
+            QUC::ModifyLayoutElement loadingElement(QUC::detail::refComp(coverImageLoading));
+            loadingElement.ignoreLayout = true;
+
+            QUC::detail::HorizontalLayoutGroup metaLayout(coverElement, loadingElement);
 
             QUC::ModifyContentSizeFitter metaFitter(metaLayout);
             metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
@@ -160,6 +165,7 @@ namespace BetterSongSearch::UI {
 
             buttons.childForceExpandHeight = false;
             buttons.padding = std::array<float, 4>{2, 2, 2, 2};
+            coverImage.child.sprite = defaultImage;
 
             QUC::ModifyLayoutElement modifyLayoutElement(buttons);
             modifyLayoutElement.preferredWidth = 40;

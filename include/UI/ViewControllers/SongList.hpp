@@ -186,7 +186,7 @@ namespace BetterSongSearch::UI {
                     QUC::detail::refComp(uploadDateText)
             );
 
-            topLayout.childControlWidth = true;
+            topLayout.spacing = 3;
 
             //
 
@@ -203,6 +203,10 @@ namespace BetterSongSearch::UI {
                     QUC::detail::refComp(mapperText),
                     QUC::detail::refComp(ratingText)
             );
+
+            midLayout.spacing = 2;
+            midLayout.padding = std::array<float, 4>{0,0,1,2};
+
             //
 
             // BOTTOM

@@ -7,8 +7,12 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/BeatmapLevelsModel.hpp"
 #include "GlobalNamespace/PlatformLeaderboardViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "System/Collections/IEnumerator.hpp"
+#include "System/Threading/Tasks/Task_1.hpp"
 #include "UnityEngine/UI/Button.hpp"
 #include "HMUI/IconSegmentedControl.hpp"
 #include "HMUI/IconSegmentedControlCell.hpp"
@@ -17,6 +21,11 @@
 #include "HMUI/ViewController_AnimationDirection.hpp"
 
 #include "UnityEngine/WaitForSeconds.hpp"
+#include "UnityEngine/AudioClip.hpp"
+#include "UnityEngine/AudioType.hpp"
+#include "UnityEngine/Networking/DownloadHandlerAudioClip.hpp"
+#include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
+#include "UnityEngine/Networking/UnityWebRequest.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "fmt/fmt/include/fmt/core.h"
 
@@ -95,6 +104,9 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 
 UnityEngine::GameObject* backButton = nullptr;
 UnityEngine::GameObject* soloButton = nullptr;
+GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
+GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
+GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
 
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
     backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
@@ -120,13 +132,26 @@ void BetterSongSearch::UI::SelectedSongController::PlaySong()
 
 }
 
-void GetCoverImageByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
+void GetByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
     BeatSaverRegionManager::GetAsync(url,
            [finished](long httpCode, std::string data) {
                std::vector<uint8_t> bytes(data.begin(), data.end());
                finished(bytes);
            }, [](float progress){}
     );
+}
+
+custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip*)> finished) {
+    auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
+    if(webRequest->get_isNetworkError())
+        getLogger().info("Network error");
+
+    while(webRequest->GetDownloadProgress() < 1.0f);
+
+    getLogger().info("Download complete");
+    UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+    finished(clip);
 }
 
 void BetterSongSearch::UI::SelectedSongController::update() {
@@ -139,6 +164,18 @@ void BetterSongSearch::UI::SelectedSongController::update() {
     if (!currentSong.readAndClear(*ctx)) {
         updateView();
         return;
+    }
+
+    if(!songPreviewPlayer)
+        songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
+    if(!levelCollectionViewController)
+        levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
+    if(!beatmapLevelsModel) {
+        beatmapLevelsModel = QuestUI::ArrayUtil::First(
+                UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
+                [](GlobalNamespace::BeatmapLevelsModel *x) {
+                    return x->customLevelPackCollection != nullptr;
+                });
     }
 
     auto song = *currentSong;
@@ -159,30 +196,49 @@ void BetterSongSearch::UI::SelectedSongController::update() {
         this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
         this->coverImage.update();
     }
+    else {
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+        coverImageLoading.enabled = true;
+        GetByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
+            QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
+                std::vector<uint8_t> data = bytes;
 
-    BeatSaver::API::GetBeatmapByHashAsync(std::string(song->GetHash()), [this, song](std::optional<BeatSaver::Beatmap> beatmap) {
-          if (beatmap.has_value()) {
-              if(!this->imageCoverCache.contains(std::string(song->GetHash()))) {
-                  //getLogger().info("Started cover download...");
-                  std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
-                  //getLogger().info("new cover url: %s", newUrl.c_str());
-                  GetCoverImageByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
+                if (song != this->currentSong.getData()) return;
+                this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
+                Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
+                this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(spriteArray);
+                this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
+                this->coverImage.update();
+                this->coverImageLoading.enabled = false;
+                this->updateView();
+            });
+        });
+    }
 
-                      //getLogger().info("Downloaded");
-                      QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
-                          std::vector<uint8_t> data = bytes;
-                          // avoid cover image race conditions
-                          if (song != this->currentSong.getData()) return;
-                          this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
-                          Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
-                          this->coverImage.child.sprite = QuestUI::BeatSaberUI::ArrayToSprite(spriteArray);
-                          this->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
-                          this->coverImage.update();
-                      });
-                  });
-              }
-          }
-      });
+    if(downloaded) {
+        //Get preview from beatmap
+        if(!beatmapLevelsModel)
+            return;
+        if(!levelCollectionViewController)
+            return;
+
+        auto preview = beatmapLevelsModel->GetLevelPreviewForLevelId(beatmap.value()->levelID);
+        if(preview)
+            levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(preview);
+    }
+    else {
+        if(!songPreviewPlayer)
+            return;
+
+        auto ssp = songPreviewPlayer;
+
+        std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+
+        GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(GetPreview(newUrl, [ssp](UnityEngine::AudioClip* clip) {
+            ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
+        })));
+    }
+
     #endif
 
     float minNPS = 500000, maxNPS = 0;

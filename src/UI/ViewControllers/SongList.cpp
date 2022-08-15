@@ -301,6 +301,8 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 		}
 	}*/
 
+    if(song->uploaded_unix_time < filterOptions.minUploadDate)
+        return false;
 
     if(song->GetRating() < filterOptions.minRating) return false;
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
@@ -405,6 +407,8 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search, bool reset
 
 void Sort(bool resetTable)
 {
+    if(!DataHolder::loadedSDC)
+        return;
     SortAndFilterSongs(prevSort, prevSearch, resetTable);
 }
 
@@ -536,7 +540,9 @@ custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewCont
             auto& tableState = view->table.ctx->getChildDataOrCreate(view->table.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
 
             onRenderTable(view, tableState);
-
+            view->tablePtr->tableView->SelectCellWithIdx(0, false);
+            auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(view->tablePtr->tableView->dataSource)->descriptors;
+            view->selectedSongController.child.SetSong(songList[0].song);
             co_return;
         }
     }
@@ -595,8 +601,13 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                         Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
                             int random = rand() % DataHolder::filteredSongList.size();
                             songListController->tablePtr->tableView->ScrollToCellWithIdx(random,
-                                                                                         HMUI::TableView::ScrollPositionType::Center,
+                                                                                         HMUI::TableView::ScrollPositionType::Beginning,
                                                                                          true);
+                            songListController->tablePtr->tableView->SelectCellWithIdx(random, false);
+                            QuestUI::MainThreadScheduler::Schedule([&random]() {
+                                auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(songListController->tablePtr->tableView->dataSource)->descriptors;
+                                songListController->selectedSongController.child.SetSong(songList[random].song);
+                            });
                         }),
                         StringSetting("Search by Song, Key, Mapper...",
                                       [](StringSetting &, std::string const &input, UnityEngine::Transform *,
