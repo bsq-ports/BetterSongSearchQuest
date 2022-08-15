@@ -65,6 +65,7 @@ double GetMinStarValue(const SDC_wrapper::BeatStarSong* song)
 
 const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
+const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
@@ -318,9 +319,9 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
             return false;
     }
 
-    bool hasLocalScore = false;
+    /*bool hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data);
 
-    /*if(filterOptions.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
+    if(filterOptions.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
         std::string serializedDiff = fmt::format("{}_{}", CHAR_FILTER_OPTIONS.at((int)song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->diff_characteristics), song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->GetName());
         hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data) && DataHolder::songsWithScores[song->hash.string_data].contains(serializedDiff);
     }
@@ -329,29 +330,27 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     }
 
     if(hasLocalScore) {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed) {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
             return false;
-        }
     }
     else {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed) {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
             return false;
-        }
     }*/
 
-    bool passesFilter = true;
+    bool passesDiffFilter = true;
 
     for(auto diff : song->GetDifficultyVector())
     {
         if(DifficultyCheck(diff, song)) {
-            passesFilter = true;
+            passesDiffFilter = true;
             break;
         }
         else
-            passesFilter = false;
+            passesDiffFilter = false;
     }
 
-    if(!passesFilter)
+    if(!passesDiffFilter)
         return false;
 
     if(song->duration_secs < filterOptions.minLength) return false;
@@ -577,7 +576,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             itr->second[fmt::format("{}_{}", static_cast<std::string>(x->beatmapCharacteristic->serializedName), DIFFS.at(x->difficulty.value))] = 0;
 
         }
-        //getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
+        getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
     }
 
 

@@ -23,6 +23,7 @@ CONFIG_VALUE(MaxNPS, float, "Maximum Note Per Second", 12);
 CONFIG_VALUE(RankedType, int, "Ranked Type", 0);
 CONFIG_VALUE(MinStars, float, "Minimum Ranked Stars", 0);
 CONFIG_VALUE(MaxStars, float, "Maximum Ranked Stars", 14);
+CONFIG_VALUE(MinUploadDateInMonths, int, "Minimum Upload Date In Months", 0); //TEMPORARY UNTIL I FIX CONVERTING UNIX -> MONTHS SINCE BEAT SAVER
 CONFIG_VALUE(MinUploadDate, int, "Minimum Upload Date", FilterOptions::BEATSAVER_EPOCH);
 CONFIG_VALUE(MinRating, float, "Minimum Rating", 0);
 CONFIG_VALUE(MinVotes, int, "Minimum Votes", 0);
@@ -41,6 +42,7 @@ CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
         CONFIG_INIT_VALUE(RankedType);
         CONFIG_INIT_VALUE(MinStars);
         CONFIG_INIT_VALUE(MaxStars);
+        CONFIG_INIT_VALUE(MinUploadDateInMonths);
         CONFIG_INIT_VALUE(MinUploadDate);
         CONFIG_INIT_VALUE(MinRating);
         CONFIG_INIT_VALUE(MinVotes);

@@ -189,7 +189,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         generalText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
         std::function<void(StringW)> downloadFilterChange = [downloadFilterOptions](StringW value) {
-            FilterOptions::DownloadFilterType type = FilterOptions::DownloadFilterType::All;
             filterOptions.downloadType = (FilterOptions::DownloadFilterType) getIndex(downloadFilterOptions, value);
             getPluginConfig().DownloadType.SetValue((int) getIndex(downloadFilterOptions, value));
             std::thread([]{
@@ -199,7 +198,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto downloadFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Downloaded", downloadFilterOptions[(int)getPluginConfig().DownloadType.GetValue()], downloadFilterOptions, downloadFilterChange);
 
         std::function<void(StringW)> scoreFilterChange = [scoreFilterOptions](StringW value) {
+            filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getIndex(scoreFilterOptions, value);
             getPluginConfig().LocalScoreType.SetValue((int) getIndex(scoreFilterOptions, value));
+            std::thread([]{
+                Sort(true);
+            }).detach();
         };
         auto scoreFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Local score", scoreFilterOptions[(int)getPluginConfig().LocalScoreType.GetValue()], scoreFilterOptions, scoreFilterChange);
         std::function<void(float)> minLengthChange = [](float value) {
@@ -461,8 +464,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         QuestUI::SliderSetting* minUploadDateSlider;
         std::function<void(float)> minUploadDateChange = [](float value) {
-            filterOptions.minUploadDate = value;
-            getPluginConfig().MinUploadDate.SetValue(value);
+            std::chrono::time_point val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months((int)value);
+            int sec = duration_cast<std::chrono::seconds>(val.time_since_epoch()).count();
+            filterOptions.minUploadDate = sec;
+            getPluginConfig().MinUploadDate.SetValue(sec);
+            getPluginConfig().MinUploadDateInMonths.SetValue((int)value);
             std::thread([]{
                 Sort(true);
             }).detach();
@@ -493,7 +499,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto minUploadDate = 0;
         auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
-        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, getPluginConfig().MinUploadDate.GetValue(), minUploadDate, maxUploadDate, minUploadDateChange);
+        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, getPluginConfig().MinUploadDateInMonths.GetValue(), minUploadDate, maxUploadDate, minUploadDateChange);
         minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
 
         std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {

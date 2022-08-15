@@ -113,7 +113,10 @@ namespace BetterSongSearch::UI {
             QUC::ModifyLayoutElement loadingElement(QUC::detail::refComp(coverImageLoading));
             loadingElement.ignoreLayout = true;
 
-            QUC::detail::HorizontalLayoutGroup metaLayout(coverElement, loadingElement);
+            QUC::detail::HorizontalLayoutGroup metaLayout(
+                    coverElement,
+                    loadingElement
+            );
 
             QUC::ModifyContentSizeFitter metaFitter(metaLayout);
             metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
