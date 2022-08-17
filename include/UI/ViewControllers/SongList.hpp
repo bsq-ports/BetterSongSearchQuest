@@ -7,6 +7,7 @@
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableCell.hpp"
+#include "HMUI/ImageView.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
@@ -16,6 +17,8 @@
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
+
+#include "bsml/shared/BSML/Components/ModalView.hpp"
 
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
@@ -33,6 +36,7 @@
 #include "questui_components/shared/components/misc/Utility.hpp"
 #include "questui_components/shared/components/misc/HMUITouchable.hpp"
 #include "questui_components/shared/components/LoadingIndicator.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 
 #include <fmt/chrono.h>
 
@@ -351,10 +355,23 @@ static std::vector<Il2CppClass*> GetInterfaces() {
 	return { classof(HMUI::TableView::IDataSource*) };
 }
 
-
-
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewController, HMUI::ViewController,
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_INSTANCE_METHOD(void, CloseModal);
+public:
+    void Populate(const SDC_wrapper::BeatStarSong* song);
+
+    DECLARE_INSTANCE_FIELD(BSML::ModalView*, rootModal);
+
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedDownloadCount);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
+
+    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
+
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDescription);
+
 
 public:
     DECLARE_DEFAULT_CTOR();

@@ -28,6 +28,8 @@
 namespace BetterSongSearch::UI {
 
     struct SelectedSongController {
+        std::function<void(const SDC_wrapper::BeatStarSong*)> showInfo = nullptr;
+
         LazyInitAndUpdate<HideObject<QUC::Button>> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             PlaySong();
         },"PlayButton", true, false};
@@ -36,7 +38,10 @@ namespace BetterSongSearch::UI {
             DownloadSong();
         },"PlayButton", true, false};
 
-        QUC::Button infoButton{"Song Details", nullptr, "PlayButton", true, false};
+        QUC::Button infoButton{"Song Details", [this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx) {
+            if(showInfo)
+                showInfo(currentSong.getData());
+        }, "PlayButton", true, false};
 
         QUC::Text authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
         QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};
@@ -65,6 +70,8 @@ namespace BetterSongSearch::UI {
         void DownloadSong();
 
         void PlaySong();
+
+        void ShowSongDetails();
 
         [[nodiscard]] constexpr auto DefaultAuthorText() {
             QUC::ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));

@@ -142,6 +142,11 @@ void BetterSongSearch::UI::SelectedSongController::PlaySong()
 
 }
 
+void BetterSongSearch::UI::SelectedSongController::ShowSongDetails() {
+    if(!currentSong.getData())
+        return;
+}
+
 void GetByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
     BeatSaverRegionManager::GetAsync(url,
            [finished](long httpCode, std::string data) {

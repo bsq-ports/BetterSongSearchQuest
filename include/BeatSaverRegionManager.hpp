@@ -178,6 +178,17 @@ static class BeatSaverRegionManager {
         );
     }
 
+    static std::string GetSongDescription(std::string key) {
+        std::string desc = "";
+        GetJSONAsync(detailsDownloadUrl + key, [&desc](long status, bool error, rapidjson::Document const& result){
+            if (status == 200) {
+                std::string description = result["description"].GetString();
+                desc = description;
+            }
+        });
+        return desc;
+    }
+
     static void RegionLookup(bool force = false) {
             if(didTheThing && !force)
                 return;

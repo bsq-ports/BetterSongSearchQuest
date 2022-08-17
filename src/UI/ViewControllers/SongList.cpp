@@ -36,6 +36,9 @@
 #include <iomanip>
 #include <sstream>
 
+#include "bsml/shared/BSML.hpp"
+
+#include <map>
 #include <chrono>
 #include <string>
 #include <algorithm>
@@ -52,17 +55,16 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
 DEFINE_QUC_CUSTOMLIST_TABLEDATA(BetterSongSearch::UI, QUCObjectTableData);
 DEFINE_QUC_CUSTOMLIST_CELL(BetterSongSearch::UI, QUCObjectTableCell)
 
-double GetMinStarValue(const SDC_wrapper::BeatStarSong* song)
-{
+double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
     auto diffVec = song->GetDifficultyVector();
     double min = song->GetMaxStarValue();
-    for (auto diff : diffVec)
-    {
+    for (auto diff: diffVec) {
         if (diff->stars > 0.0 && diff->stars < min) min = diff->stars;
     }
     return min;
 }
 
+const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"};
 const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
 const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
@@ -550,12 +552,61 @@ custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewCont
 
 }
 
+//name and count
+std::unordered_map<std::string, int> GroupCharByDiff(std::vector<const SDC_wrapper::BeatStarSongDifficultyStats *> diffs) {
+    std::unordered_map<std::string, int> groupedChars;
+    for(auto diff : diffs) {
+        auto key = CHAR_GROUPING[(int)diff->diff_characteristics];
+        if(!groupedChars.contains(key))
+            groupedChars.emplace(key, 1);
+        else groupedChars[key] += 1;
+    }
+    return groupedChars;
+}
+
+void ViewControllers::SongListViewController::CloseModal() {
+    rootModal->Hide();
+}
+
+void ViewControllers::SongListViewController::Populate(const SDC_wrapper::BeatStarSong *song) {
+    auto diffs = song->GetDifficultyVector();
+    auto groupedDiffs = GroupCharByDiff(diffs);
+    std::string characteristicsText = "";
+    int loopCount = 1;
+    for(auto& it: groupedDiffs) {
+        if(loopCount < groupedDiffs.size())
+            characteristicsText.append(fmt::format("{}x {},", it.second, it.first));
+        else
+            characteristicsText.append(fmt::format("{}x {}", it.second, it.first));
+        loopCount++;
+    }
+    getLogger().info("%s", characteristicsText.c_str());
+    selectedCharacteristics->set_text(characteristicsText);
+    selectedSongKey->set_text(song->key.string_data);
+    selectedRating->set_text(fmt::format("{:.1f}%", song->rating));
+    selectedSongDescription->set_text("Loading...");
+
+    songDetailsLoading->get_gameObject()->SetActive(true);
+
+    std::string description = BeatSaverRegionManager::GetSongDescription(std::string(song->key.string_data));
+    if(description == "")
+        selectedSongDescription->set_text("Failed to load description");
+    else
+        selectedSongDescription->set_text(description);
+    songDetailsLoading->get_gameObject()->SetActive(false);
+}
+
 //SongListViewController
 void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     songListController = this;
 
     if (firstActivation) {
         this->ctx = RenderContext(get_transform());
+        BSML::parse_and_construct("/sdcard/UploadDetails.bsml", this->get_transform(), this);
+        selectedSongController->showInfo = [this](const SDC_wrapper::BeatStarSong* song) {
+            this->rootModal->Show();
+            this->Populate(song);
+        };
     }
 
     getLogger().info("Checking for local scores...");
@@ -592,8 +643,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     auto start = std::chrono::high_resolution_clock::now();
 
     if (firstActivation) {
-
-
         auto songListControllerView = SongListVerticalLayoutGroup(
                 SongListHorizontalFilterBar(
                         Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
