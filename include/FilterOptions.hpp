@@ -52,6 +52,15 @@ public:
         LightShow,
         Lawless,
     };
+
+    enum class RequirementType {
+        Any,
+        NoodleExtensions,
+        MappingExtensions,
+        Chroma,
+        Cinema
+    };
+
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
     const float STAR_FILTER_MAX = 14.0f;
     const float NJS_FILTER_MAX = 25.0f;
@@ -82,7 +91,7 @@ public:
     CharFilterType charFilter = CharFilterType::All;
 
     //Mods
-    StringW mods = "Any";
+    RequirementType modRequirement = RequirementType::Any;
 };
 
 DROPDOWN_CREATE_ENUM_CLASS(SortMode,

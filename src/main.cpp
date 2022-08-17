@@ -73,7 +73,7 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
         filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
-        //filterOptions.mods = bazinga
+        filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
 
         getLogger().info("Finished loading songs.");
         DataHolder::loadedSDC = true;

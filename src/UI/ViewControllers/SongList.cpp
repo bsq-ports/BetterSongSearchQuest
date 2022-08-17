@@ -65,9 +65,11 @@ double GetMinStarValue(const SDC_wrapper::BeatStarSong* song)
 
 const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
+const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
 const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
+int currentSelectedSong = 0;
 BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
 
 using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
@@ -279,7 +281,11 @@ bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const
     if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    // do mods check here
+    auto requirements = diff->GetRequirementVector();
+    if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
+        if(std::find(requirements.begin(), requirements.end(), REQUIREMENTS[(int)currentFilter.modRequirement]) == requirements.end())
+            return false;
+    }
 
     if(song->duration_secs > 0) {
         float nps = (float)diff->notes / (float)song->duration_secs;
@@ -294,6 +300,7 @@ bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const
 bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
     auto const& filterOptions = DataHolder::filterOptions;
+    std::string songHash = song->hash.string_data;
 
     /*if(filterOptions->uploaders.size() != 0) {
 		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
@@ -307,7 +314,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     if(song->GetRating() < filterOptions.minRating) return false;
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
-    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(song->hash.string_data).has_value();
+    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
     if(downloaded)
     {
         if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
@@ -319,24 +326,18 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
             return false;
     }
 
-    /*bool hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data);
+    bool hasLocalScore = false;
 
-    if(filterOptions.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
-        std::string serializedDiff = fmt::format("{}_{}", CHAR_FILTER_OPTIONS.at((int)song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->diff_characteristics), song->GetDifficulty((int)filterOptions.difficultyFilter - 1)->GetName());
-        hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data) && DataHolder::songsWithScores[song->hash.string_data].contains(serializedDiff);
-    }
-    else {
-        hasLocalScore = DataHolder::songsWithScores.contains(song->hash.string_data);
-    }
-
-    if(hasLocalScore) {
+    if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
+        hasLocalScore = true;
+    //getLogger().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
+    if (hasLocalScore) {
         if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
             return false;
-    }
-    else {
+    } else {
         if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
             return false;
-    }*/
+    }
 
     bool passesDiffFilter = true;
 
@@ -444,6 +445,7 @@ inline void onRenderTable(ViewControllers::SongListViewController* view, decltyp
         //Make Lists
         auto click = std::function([view](HMUI::TableView *tableView, int row) {
             getLogger().info("selected %i", row);
+            currentSelectedSong = row;
             // Get song list actually inside the table
             auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
             view->selectedSongController.child.SetSong(songList[row].song);
@@ -570,10 +572,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                 continue;
             if(!song->GetDifficulty(x->difficulty)) continue;
 
-            auto itr = DataHolder::songsWithScores.find(sh);
-            if (itr == DataHolder::songsWithScores.end())
-                itr = DataHolder::songsWithScores.emplace(sh, std::unordered_map<std::string, float>()).first;
-            itr->second[fmt::format("{}_{}", static_cast<std::string>(x->beatmapCharacteristic->serializedName), DIFFS.at(x->difficulty.value))] = 0;
+            DataHolder::songsWithScores.push_back(sh);
 
         }
         getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
@@ -607,6 +606,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                 auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(songListController->tablePtr->tableView->dataSource)->descriptors;
                                 songListController->selectedSongController.child.SetSong(songList[random].song);
                             });
+                            currentSelectedSong = random;
                         }),
                         StringSetting("Search by Song, Key, Mapper...",
                                       [](StringSetting &, std::string const &input, UnityEngine::Transform *,
@@ -649,4 +649,14 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     getLogger().debug("UI rendering for SongList took %lldms", millisElapsed);
 
     getLogger().debug("Finished song list view controller");
+
+    if(!firstActivation && DataHolder::loadedSDC) {
+        songListController->tablePtr->tableView->ScrollToCellWithIdx(currentSelectedSong,
+                                                                     HMUI::TableView::ScrollPositionType::Beginning,
+                                                                     false);
+        songListController->tablePtr->tableView->SelectCellWithIdx(currentSelectedSong, false);
+        auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(songListController->tablePtr->tableView->dataSource)->descriptors;
+        songListController->selectedSongController.child.SetSong(songList[currentSelectedSong].song);
+    }
+    songListController->selectedSongController->DidActivate(firstActivation);
 }

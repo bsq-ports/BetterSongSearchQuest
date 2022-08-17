@@ -38,9 +38,9 @@
 
 namespace BetterSongSearch::UI {
     struct DataHolder {
-        inline static std::unordered_map<std::string, std::unordered_map<std::string, float>> songsWithScores;
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
+        inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
         inline static FilterOptions filterOptions;
     };
@@ -125,7 +125,7 @@ namespace BetterSongSearch::UI {
                 ArrayW<StringW> strs = segmentedControl->texts.size() == diffsVector.size() ? segmentedControl->texts : ArrayW<StringW>(diffsVector.size());
                 int i = 0;
                 for (auto const &diffData: diffsVector) {
-                    if (diffData->ranked) {
+                    if (diffData->stars > 0) {
                         strs[i] = fmt::format(FMT_STRING("<color=white>{}</color> <color=#ffa500>{:.1f}</color>"), diffData->GetName(), diffData->stars);
                     } else {
                         if (diffData->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Lightshow())

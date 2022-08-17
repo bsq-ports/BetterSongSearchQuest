@@ -108,6 +108,16 @@ GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
 GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
 GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
 
+void BetterSongSearch::UI::SelectedSongController::DidActivate(bool firstActivation) {
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
+    beatmapLevelsModel = QuestUI::ArrayUtil::First(
+            UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
+            [](GlobalNamespace::BeatmapLevelsModel *x) {
+                return x->customLevelPackCollection != nullptr;
+            });
+}
+
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
     backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
     co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
@@ -164,18 +174,6 @@ void BetterSongSearch::UI::SelectedSongController::update() {
     if (!currentSong.readAndClear(*ctx)) {
         updateView();
         return;
-    }
-
-    if(!songPreviewPlayer)
-        songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
-    if(!levelCollectionViewController)
-        levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
-    if(!beatmapLevelsModel) {
-        beatmapLevelsModel = QuestUI::ArrayUtil::First(
-                UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
-                [](GlobalNamespace::BeatmapLevelsModel *x) {
-                    return x->customLevelPackCollection != nullptr;
-                });
     }
 
     auto song = *currentSong;

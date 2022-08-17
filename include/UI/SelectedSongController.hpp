@@ -58,6 +58,8 @@ namespace BetterSongSearch::UI {
             coverImage.child.preserveAspectRatio = true;
         }
 
+        void DidActivate(bool firstActivation);
+
         void SetSong(const SDC_wrapper::BeatStarSong *);
 
         void DownloadSong();

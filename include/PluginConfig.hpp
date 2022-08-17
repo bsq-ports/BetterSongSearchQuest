@@ -12,6 +12,7 @@
 DECLARE_CONFIG(PluginConfig,
 
 CONFIG_VALUE(ReturnToBSS, bool, "Return to BSS from Solo", true);
+CONFIG_VALUE(SortMode, int, "Sort Mode", 0);
 CONFIG_VALUE(DownloadType, int, "Download Type", 0);
 CONFIG_VALUE(LocalScoreType, int, "Local Score Type", 0);
 CONFIG_VALUE(MinLength, float, "Minimum Song Length", 0);
@@ -29,8 +30,10 @@ CONFIG_VALUE(MinRating, float, "Minimum Rating", 0);
 CONFIG_VALUE(MinVotes, int, "Minimum Votes", 0);
 CONFIG_VALUE(DifficultyType, int, "Difficulty Type", 0);
 CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
+CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
     CONFIG_INIT_FUNCTION(
         CONFIG_INIT_VALUE(ReturnToBSS);
+        CONFIG_INIT_VALUE(SortMode);
         CONFIG_INIT_VALUE(DownloadType);
         CONFIG_INIT_VALUE(LocalScoreType);
         CONFIG_INIT_VALUE(MinLength);
@@ -48,5 +51,6 @@ CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
         CONFIG_INIT_VALUE(MinVotes);
         CONFIG_INIT_VALUE(DifficultyType);
         CONFIG_INIT_VALUE(CharacteristicType);
+        CONFIG_INIT_VALUE(RequirementType);
     )
 )

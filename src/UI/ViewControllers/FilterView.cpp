@@ -92,7 +92,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     std::vector<StringW> rankedFilterOptions = {"Show All", "Hide Ranked", "Only Ranked"};
     std::vector<StringW> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
     std::vector<StringW> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
-    std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma"};
+    std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
 
     auto& filterOptions = DataHolder::filterOptions;
 
@@ -205,6 +205,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             }).detach();
         };
         auto scoreFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Local score", scoreFilterOptions[(int)getPluginConfig().LocalScoreType.GetValue()], scoreFilterOptions, scoreFilterChange);
+
         std::function<void(float)> minLengthChange = [](float value) {
             filterOptions.minLength = value * 60;
             getPluginConfig().MinLength.SetValue(value * 60);
@@ -606,14 +607,15 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         modsText->set_fontStyle(TMPro::FontStyles::Underline);
         modsText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
 
-        std::function<void(StringW)> modsChange = [](StringW value) {
-            filterOptions.mods = value;
+        std::function<void(StringW)> modsChange = [modsOptions](StringW value) {
+            filterOptions.modRequirement = (FilterOptions::RequirementType) getIndex(modsOptions, value);
+            getPluginConfig().RequirementType.SetValue((int) getIndex(modsOptions, value));
             std::thread([]{
                 Sort(true);
             }).detach();
         };
 
-        auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", "Any", modsOptions, modsChange);
+        auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", modsOptions[(int)getPluginConfig().RequirementType.GetValue()], modsOptions, modsChange);
 #define CODEGEN_FIELD_ACCESSIBILITY
         reinterpret_cast<UnityEngine::RectTransform*>(reinterpret_cast<HMUI::DropdownWithTableView*>(modsDropdown)->modalView->get_transform())->set_pivot(Sombrero::FastVector2(0.5f, 0.3f));
     }
