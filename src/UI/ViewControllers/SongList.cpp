@@ -13,6 +13,8 @@
 #include "questui_components/shared/components/settings/StringSetting.hpp"
 #include "questui_components/shared/components/settings/DropdownSetting.hpp"
 
+#include "assets.hpp"
+
 #include "songloader/shared/API.hpp"
 
 #include "config-utils/shared/config-utils.hpp"
@@ -568,7 +570,8 @@ void ViewControllers::SongListViewController::CloseModal() {
     rootModal->Hide();
 }
 
-void ViewControllers::SongListViewController::Populate(const SDC_wrapper::BeatStarSong *song) {
+void ViewControllers::SongListViewController::Populate() {
+    auto song = selectedSongController->currentSong.getData();
     auto diffs = song->GetDifficultyVector();
     auto groupedDiffs = GroupCharByDiff(diffs);
     std::string characteristicsText = "";
@@ -602,11 +605,12 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
 
     if (firstActivation) {
         this->ctx = RenderContext(get_transform());
-        BSML::parse_and_construct("/sdcard/UploadDetails.bsml", this->get_transform(), this);
-        selectedSongController->showInfo = [this](const SDC_wrapper::BeatStarSong* song) {
+        BSML::parse_and_construct(IncludedAssets::UploadDetails_bsml, this->get_transform(), this);
+        selectedSongController->showInfo = [this]() {
             this->rootModal->Show();
-            this->Populate(song);
+            this->Populate();
         };
+        getLogger().info("finished setting up show details button");
     }
 
     getLogger().info("Checking for local scores...");

@@ -359,17 +359,13 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SongListViewControl
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_METHOD(void, CloseModal);
 public:
-    void Populate(const SDC_wrapper::BeatStarSong* song);
+    void Populate();
 
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, rootModal);
-
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedDownloadCount);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
-
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
-
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDescription);
 
 
