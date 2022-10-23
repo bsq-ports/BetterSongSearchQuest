@@ -42,6 +42,8 @@ struct IncludedAsset {
 
 namespace IncludedAssets {
 
+	DECLARE_FILE(DownloadHistory_bsml)
+	DECLARE_FILE(DownloadHistoryCell_bsml)
 	DECLARE_FILE(UploadDetails_bsml)
 
 }

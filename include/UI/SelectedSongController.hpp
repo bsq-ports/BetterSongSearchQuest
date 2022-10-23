@@ -41,7 +41,7 @@ namespace BetterSongSearch::UI {
         LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", [this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx) {
             if(showInfo)
                 showInfo();
-        }, "PlayButton", true, true};
+        }, "PlayButton", true, false};
 
         QUC::Text authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
         QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};

@@ -221,17 +221,15 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
             }).detach();
         };
 
-        auto lengthSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(generalOptionsLayout->get_transform());
-        lengthSliderLayout->set_spacing(2);
-        auto lengthSliders = BeatSaberUI::CreateHorizontalLayoutGroup(lengthSliderLayout->get_transform());
-        lengthSliders->set_spacing(-2);
-        auto lengthLabels = BeatSaberUI::CreateHorizontalLayoutGroup(lengthSliderLayout->get_transform());
+        auto LengthSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(generalOptionsLayout->get_transform());
+        LengthSliderLayout->set_spacing(2);
 
-        auto lengthLabel = BeatSaberUI::CreateText(lengthLabels->get_transform(), "Length");
-        lengthLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
+        auto LengthLabels = BeatSaberUI::CreateHorizontalLayoutGroup(LengthSliderLayout->get_transform());
+        auto LengthLabel = BeatSaberUI::CreateText(LengthLabels->get_transform(), "Length");
+        LengthLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
-        auto minLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MinLength.GetValue() / 60, 0, 15, minLengthChange);
-        auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MaxLength.GetValue() / 60, 0, 15, maxLengthChange);
+        auto minLengthSlider = BeatSaberUI::CreateSliderSetting(LengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MinLength.GetValue() / 60, 0, 15, minLengthChange);
+        auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(LengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MaxLength.GetValue() / 60, 0, 15, maxLengthChange);
 
         std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
             float totalSeconds = value * 60;
@@ -250,9 +248,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         minLengthSlider->FormatString = minLengthSliderFormatFunction;
         maxLengthSlider->FormatString = maxLengthSliderFormatFunction;
-
-        reinterpret_cast<UnityEngine::RectTransform*>(minLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
+        reinterpret_cast<UnityEngine::RectTransform*>(minLengthSlider->get_transform()->Find("QuestUISlider"))->set_offsetMax(UnityEngine::Vector2(-20, 0));
+        reinterpret_cast<UnityEngine::RectTransform*>(maxLengthSlider->get_transform()->Find("QuestUISlider"))->set_offsetMin(UnityEngine::Vector2(-20, 0));
+        maxLengthSlider->GetComponentInChildren<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
+        maxLengthSlider->get_transform()->set_position(minLengthSlider->get_transform()->get_position());
+        auto minTimeSlider = minLengthSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        auto maxTimeSlider = maxLengthSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        maxTimeSlider->valueSize = minTimeSlider->valueSize /= 2.1f;
     }
     {
         auto mappingOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(leftOptionsLayout->get_transform());
@@ -301,10 +303,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto NJSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
         NJSSliderLayout->set_spacing(2);
-        auto NJSSliders = BeatSaberUI::CreateHorizontalLayoutGroup(NJSSliderLayout->get_transform());
-        NJSSliders->set_spacing(-2);
-        auto NJSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NJSSliderLayout->get_transform());
 
+        auto NJSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NJSSliderLayout->get_transform());
         auto NJSLabel = BeatSaberUI::CreateText(NJSLabels->get_transform(), "NJS");
         NJSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
@@ -313,8 +313,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         minNJSSlider->FormatString = minNJSFormat;
         maxNJSSlider->FormatString = maxNJSFormat;
 
-        reinterpret_cast<UnityEngine::RectTransform*>(minNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
+        reinterpret_cast<UnityEngine::RectTransform*>(minNJSSlider->get_transform()->Find("QuestUISlider"))->set_offsetMax(UnityEngine::Vector2(-20, 0));
+        reinterpret_cast<UnityEngine::RectTransform*>(maxNJSSlider->get_transform()->Find("QuestUISlider"))->set_offsetMin(UnityEngine::Vector2(-20, 0));
+        maxNJSSlider->GetComponentInChildren<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
+        maxNJSSlider->get_transform()->set_position(minNJSSlider->get_transform()->get_position());
+        auto minTimeSlider = minNJSSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        auto maxTimeSlider = maxNJSSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        maxTimeSlider->valueSize = minTimeSlider->valueSize /= 2.1f;
 
         std::function<void(float)> minNPSChange = [](float value) {
             filterOptions.minNPS = value;
@@ -339,10 +344,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto NPSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
         NPSSliderLayout->set_spacing(2);
-        auto NPSSliders = BeatSaberUI::CreateHorizontalLayoutGroup(NPSSliderLayout->get_transform());
-        NPSSliders->set_spacing(-2);
-        auto NPSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NPSSliderLayout->get_transform());
 
+        auto NPSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NPSSliderLayout->get_transform());
         auto NPSLabel = BeatSaberUI::CreateText(NPSLabels->get_transform(), "Notes/s");
         NPSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
@@ -352,8 +355,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         minNPSSlider->FormatString = minNPSFormat;
         maxNPSSlider->FormatString = maxNPSFormat;
 
-        reinterpret_cast<UnityEngine::RectTransform*>(minNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
+        reinterpret_cast<UnityEngine::RectTransform*>(minNPSSlider->get_transform()->Find("QuestUISlider"))->set_offsetMax(UnityEngine::Vector2(-20, 0));
+        reinterpret_cast<UnityEngine::RectTransform*>(maxNPSSlider->get_transform()->Find("QuestUISlider"))->set_offsetMin(UnityEngine::Vector2(-20, 0));
+        maxNPSSlider->GetComponentInChildren<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
+        maxNPSSlider->get_transform()->set_position(minNPSSlider->get_transform()->get_position());
+        auto minTimeSlider2 = minNPSSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        auto maxTimeSlider2 = maxNPSSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        maxTimeSlider2->valueSize = minTimeSlider2->valueSize /= 2.1f;
     }
     {
         auto scoreSaberOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(leftOptionsLayout->get_transform());
@@ -417,10 +425,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
         auto rankedStarLayout = BeatSaberUI::CreateHorizontalLayoutGroup(scoreSaberOptionsLayout->get_transform());
         rankedStarLayout->set_spacing(2);
-        auto rankedStarSliders = BeatSaberUI::CreateHorizontalLayoutGroup(rankedStarLayout->get_transform());
-        rankedStarSliders->set_spacing(-2);
-        auto rankedStarLabels = BeatSaberUI::CreateHorizontalLayoutGroup(rankedStarLayout->get_transform());
 
+        auto rankedStarLabels = BeatSaberUI::CreateHorizontalLayoutGroup(rankedStarLayout->get_transform());
         auto rankedStarLabel = BeatSaberUI::CreateText(rankedStarLabels->get_transform(), "Stars");
         rankedStarLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
 
@@ -429,8 +435,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         minStarSlider->FormatString = minStarFormat;
         maxStarSlider->FormatString = maxStarFormat;
 
-        reinterpret_cast<UnityEngine::RectTransform*>(minStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
+        reinterpret_cast<UnityEngine::RectTransform*>(minStarSlider->get_transform()->Find("QuestUISlider"))->set_offsetMax(UnityEngine::Vector2(-20, 0));
+        reinterpret_cast<UnityEngine::RectTransform*>(maxStarSlider->get_transform()->Find("QuestUISlider"))->set_offsetMin(UnityEngine::Vector2(-20, 0));
+        maxStarSlider->GetComponentInChildren<UnityEngine::UI::LayoutElement*>()->set_ignoreLayout(true);
+        maxStarSlider->get_transform()->set_position(minStarSlider->get_transform()->get_position());
+        auto minTimeSlider = minStarSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        auto maxTimeSlider = maxStarSlider->GetComponentInChildren<HMUI::TextSlider*>();
+        maxTimeSlider->valueSize = minTimeSlider->valueSize /= 2.1f;
     }
 
     //RightSide

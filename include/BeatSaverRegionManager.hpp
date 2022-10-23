@@ -5,7 +5,9 @@
 #include "libcurl/shared/curl.h"
 #include "libcurl/shared/easy.h"
 
-static class BeatSaverRegionManager {
+#include <future>
+
+class BeatSaverRegionManager {
     public:
         static inline const std::string mapDownloadUrlFallback = "https://cdn.beatsaver.com";
         static inline const std::string detailsDownloadUrl = "https://api.beatsaver.com/maps/id/";
@@ -178,15 +180,13 @@ static class BeatSaverRegionManager {
         );
     }
 
-    static std::string GetSongDescription(std::string key) {
-        std::string desc = "";
-        GetJSONAsync(detailsDownloadUrl + key, [&desc](long status, bool error, rapidjson::Document const& result){
+    static void GetSongDescription(std::string key, std::function<void(std::string)> finished) {
+        GetJSONAsync(detailsDownloadUrl + key, [finished](long status, bool error, rapidjson::Document const& result){
             if (status == 200) {
                 std::string description = result["description"].GetString();
-                desc = description;
+                finished(description);
             }
         });
-        return desc;
     }
 
     static void RegionLookup(bool force = false) {

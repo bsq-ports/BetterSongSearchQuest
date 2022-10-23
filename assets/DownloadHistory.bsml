@@ -1,0 +1,11 @@
+<vertical anchor-pos-x="-18" child-control-height="false" xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='- https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
+	<horizontal bg='panel-top-gradient'>
+		<text text='DOWNLOAD HISTORY' align='Center' italics='true'/>
+	</horizontal>
+	<horizontal preferred-height='72' pad-top='5' pad-bottom='2' preferred-width='80'>
+		<vertical preferred-width='70'>
+			<list id='downloadList' select-cell='SelectSong' visible-cells='9'/>
+		</vertical>
+		<vertical preferred-width='8' id='scrollBarContainer' vertical-fit='Unconstrained'/>
+	</horizontal>
+</vertical>

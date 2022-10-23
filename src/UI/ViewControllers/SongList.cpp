@@ -46,6 +46,7 @@
 #include <algorithm>
 #include <functional>
 #include <regex>
+#include <future>
 
 using namespace BetterSongSearch::UI;
 using namespace QuestUI;
@@ -425,7 +426,10 @@ inline auto SortDropdownContainer() {
             UnityEngine::Transform *, RenderContext &ctx) {
         getLogger().debug("DropDown! %s", input.c_str());
         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-        SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch, true);
+        SortMode sort = (SortMode)std::distance(sortModes.begin(), itr);
+        std::thread([sort] {
+            SortAndFilterSongs(sort, prevSearch, true);
+        }).detach();
     }, sortModes);
 
     detail::VerticalLayoutGroup layout(sortDropdown);
@@ -545,9 +549,11 @@ custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewCont
             auto& tableState = view->table.ctx->getChildDataOrCreate(view->table.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
 
             onRenderTable(view, tableState);
-            view->tablePtr->tableView->SelectCellWithIdx(0, false);
-            auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(view->tablePtr->tableView->dataSource)->descriptors;
-            view->selectedSongController.child.SetSong(songList[0].song);
+            if(view->tablePtr->tableView->numberOfCells > 0) {
+                view->tablePtr->tableView->SelectCellWithIdx(0, false);
+                auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(view->tablePtr->tableView->dataSource)->descriptors;
+                view->selectedSongController.child.SetSong(songList[0].song);
+            }
             co_return;
         }
     }
@@ -578,25 +584,22 @@ void ViewControllers::SongListViewController::Populate() {
     int loopCount = 1;
     for(auto& it: groupedDiffs) {
         if(loopCount < groupedDiffs.size())
-            characteristicsText.append(fmt::format("{}x {},", it.second, it.first));
+            characteristicsText.append(fmt::format("{}x {}, ", it.second, it.first));
         else
             characteristicsText.append(fmt::format("{}x {}", it.second, it.first));
         loopCount++;
     }
-    getLogger().info("%s", characteristicsText.c_str());
     selectedCharacteristics->set_text(characteristicsText);
     selectedSongKey->set_text(song->key.string_data);
-    selectedRating->set_text(fmt::format("{:.1f}%", song->rating));
-    selectedSongDescription->set_text("Loading...");
+    selectedRating->set_text(fmt::format("{:.1f}%", song->rating * 100));
+    selectedSongDescription->SetText("Loading...");
 
     songDetailsLoading->get_gameObject()->SetActive(true);
 
-    std::string description = BeatSaverRegionManager::GetSongDescription(std::string(song->key.string_data));
-    if(description == "")
-        selectedSongDescription->set_text("Failed to load description");
-    else
-        selectedSongDescription->set_text(description);
-    songDetailsLoading->get_gameObject()->SetActive(false);
+    BeatSaverRegionManager::GetSongDescription(std::string(song->key.string_data), [this](std::string value) {
+        selectedSongDescription->SetText(value);
+        songDetailsLoading->get_gameObject()->SetActive(false);
+    });
 }
 
 //SongListViewController
@@ -610,7 +613,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             this->rootModal->Show();
             this->Populate();
         };
-        getLogger().info("finished setting up show details button");
     }
 
     getLogger().info("Checking for local scores...");
@@ -667,10 +669,6 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                                           getLogger().debug("Input! %s", input.c_str());
                                           std::thread([input]{
                                               SortAndFilterSongs(prevSort, input, true);
-                                              /*songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(),DataHolder::filteredSongList.end());
-                                              QuestUI::MainThreadScheduler::Schedule([]() {
-                                                  songListController->table.update();
-                                              });*/
                                           }).detach();
                                       }),
                         SortDropdownContainer()

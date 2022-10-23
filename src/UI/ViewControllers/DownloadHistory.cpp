@@ -13,10 +13,8 @@ using namespace QuestUI;
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController);
 
-UnityEngine::UI::VerticalLayoutGroup* downloadHistoryLayout;
 
 void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     if (!firstActivation) return;
 
-    downloadHistoryLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_transform());
 }

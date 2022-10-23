@@ -260,6 +260,7 @@ void BetterSongSearch::UI::SelectedSongController::update() {
     playButton->interactable = downloaded;
     downloadButton->active = !downloaded;
     downloadButton->interactable = !downloaded;
+    infoButton->interactable = true;
 
     infoText.text = fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS);
     songNameText.text = song->GetName();

@@ -8,6 +8,7 @@
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableCell.hpp"
 #include "HMUI/ImageView.hpp"
+#include "HMUI/TextPageScrollView.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
@@ -19,6 +20,7 @@
 #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
 
 #include "bsml/shared/BSML/Components/ModalView.hpp"
+#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
@@ -366,7 +368,7 @@ public:
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDescription);
+    DECLARE_INSTANCE_FIELD(HMUI::TextPageScrollView*, selectedSongDescription);
 
 
 public:
