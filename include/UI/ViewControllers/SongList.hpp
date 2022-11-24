@@ -12,7 +12,7 @@
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
-
+#include "overrides/CustomSegmentedControl.hpp"
 #include "songloader/shared/API.hpp"
 
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
@@ -96,13 +96,13 @@ namespace BetterSongSearch::UI {
 
 
         auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
-            auto& segmentedControl = data.getData<QuestUI::CustomTextSegmentedControlData*>();
+            auto& segmentedControl = data.getData<QUIOverride::CustomTextSegmentedControlData*>();
 
             bool inited = static_cast<bool>(segmentedControl);
 
             if (!segmentedControl) {
                 getLogger().debug("Building segmented control");
-                segmentedControl = QuestUI::BeatSaberUI::CreateTextSegmentedControl(&ctx.parentTransform, nullptr);
+                segmentedControl = QUIOverride::CreateTextSegmentedControl(&ctx.parentTransform, nullptr);
 
                 segmentedControl->fontSize = 2;
                 segmentedControl->padding = 1.5;
