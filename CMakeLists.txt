@@ -20,6 +20,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED 20)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # compile options used
 add_compile_options(-frtti -fexceptions)
 add_compile_options(-O3)
