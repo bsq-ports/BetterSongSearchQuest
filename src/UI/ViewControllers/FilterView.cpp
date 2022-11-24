@@ -176,7 +176,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = generalOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
@@ -267,7 +267,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = mappingOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
@@ -374,7 +374,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = scoreSaberOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
@@ -462,7 +462,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = beatSaverOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
@@ -551,7 +551,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = charDiffOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
@@ -606,7 +606,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         auto bg = modsOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
         bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
         auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
+        bgImg->skew = 0.0f;
         bgImg->set_overrideSprite(nullptr);
         bgImg->set_sprite(filterBorderSprite);
         bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));

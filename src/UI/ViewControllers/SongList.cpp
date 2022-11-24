@@ -18,6 +18,7 @@
 #include "songloader/shared/API.hpp"
 
 #include "config-utils/shared/config-utils.hpp"
+#include "custom-types/shared/delegate.hpp"
 
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/Transform.hpp"
@@ -458,7 +459,7 @@ inline void onRenderTable(ViewControllers::SongListViewController* view, decltyp
             auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
             view->selectedSongController.child.SetSong(songList[row].song);
         });
-        auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
+        auto yes = custom_types::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
                 classof(System::Action_2<HMUI::TableView *, int>*), click);
 
 
@@ -632,7 +633,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             DataHolder::songsWithScores.push_back(sh);
 
         }
-        getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
+        getLogger().info("local scores checked. found %lu", DataHolder::songsWithScores.size());
     }
 
 

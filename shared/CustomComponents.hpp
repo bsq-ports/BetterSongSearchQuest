@@ -8,7 +8,6 @@
 #include "UnityEngine/RectOffset.hpp"
 
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "questui/shared/CustomTypes/Components/WeakPtrGO.hpp"
 
 #include "questui_components/shared/components/layouts/VerticalLayoutGroup.hpp"
 #include "questui_components/shared/components/layouts/HorizontalLayoutGroup.hpp"

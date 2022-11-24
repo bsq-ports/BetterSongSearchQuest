@@ -99,6 +99,8 @@ public:
 
         if(existingDLHistoryEntry) existingDLHistoryEntry->ResetIfFailed();
 
-        if()
+        if(true) {
+            
+        }
     }
 )
