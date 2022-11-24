@@ -51,3 +51,7 @@ qpm.shared.json
 *.log
 tombstone_00
 *.qmod
+mod.json
+extern.cmake
+qpm_defines.cmake
+qpm.shared.json

@@ -1,0 +1,14 @@
+{
+  "_QPVersion": "0.1.2",
+  "name": "${mod_name}",
+  "id": "${mod_id}",
+  "author": "FernTheDev, FutureMapper, and Christoffyw",
+  "version": "${version}",
+  "description": "${mod_id}, version ${version}!",
+  "packageVersion": "1.25.1",
+  "dependencies": [],
+  "modFiles": [],
+  "libraryFiles": [],
+  "fileCopies": [],
+  "copyExtensions": []
+}
