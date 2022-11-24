@@ -4,6 +4,14 @@ include(qpm_defines.cmake)
 cmake_minimum_required(VERSION 3.21)
 project(${COMPILE_ID})
 
+# Enable link time optimization
+# In my experience, this can be highly unstable but it nets a huge size optimization and likely performance
+# However, the instability was seen using Android.mk/ndk-build builds. With Ninja + CMake, this problem seems to have been solved.
+# As always, test thoroughly
+# - Fern
+# Reduces linking speed, disable in development for faster builds
+# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 # c++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
@@ -15,6 +23,8 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # compile options used
 add_compile_options(-frtti -fexceptions)
 add_compile_options(-O3)
+# Uncomment for faster builds
+# add_compile_options(-O0)
 # compile definitions used
 add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")
