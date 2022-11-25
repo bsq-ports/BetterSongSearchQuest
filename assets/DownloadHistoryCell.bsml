@@ -1,4 +1,4 @@
-<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd'>
+<bg xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'  xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/RedBrumbler/Quest-BSML-Docs/gh-pages/schema.xsd'>
 	<vertical id='bgContainer' bg='round-rect-panel' horizontal-fit='Unconstrained' preferred-height='7' vertical-fit='PreferredSize'/>
 	<vertical id='bgProgress' horizontal-fit='Unconstrained' preferred-height='1' vertical-fit='PreferredSize' background='panel-fade-gradient' anchor-pos-y='-2.875'/>
 	<vertical horizontal-fit='Unconstrained' pad='1' preferred-height='8' vertical-fit='PreferredSize'>

@@ -3,7 +3,7 @@
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView_IDataSource.hpp"
-
+#include "HMUI/TableView.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
@@ -13,7 +13,7 @@
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
-
+#include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
 
@@ -71,6 +71,7 @@ public:
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController,
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
+    DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     HMUI::TableView* downloadHistoryTable() {if(downloadList) return downloadList->tableView;}
 public:
