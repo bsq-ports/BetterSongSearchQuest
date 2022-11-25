@@ -6,12 +6,12 @@
 #include "bsml/shared/BSML.hpp"
 #include "assets.hpp"
 
+const std::string ReuseIdentifier = "REUSECustomDownloadListTableCell";
+
 namespace BetterSongSearch::UI::ViewControllers {
     class DownloadListTableData {
-        const std::string ReuseIdentifier = "REUSECustomDownloadListTableCell";
-
     public:
-        CustomDownloadListTableCell* GetCell(HMUI::TableView* tableView) {
+        static CustomDownloadListTableCell* GetCell(HMUI::TableView* tableView) {
             auto tableCell = tableView->DequeueReusableCellForIdentifier(ReuseIdentifier);
 
             if(!tableCell) {

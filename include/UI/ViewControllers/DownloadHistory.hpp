@@ -15,7 +15,13 @@
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "main.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
+#ifndef DECLARE_OVERRIDE_METHOD_MATCH
+#define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
+    DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
+#endif
+
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
@@ -67,15 +73,22 @@ public:
 
     std::function<void()> UpdateProgressHandler;
 };
-
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController,
+___DECLARE_TYPE_WRAPPER_INHERITANCE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, HMUI::ViewController, "BetterSongSearch::UI::ViewControllers", {classof(HMUI::TableView::IDataSource*)}, 0, nullptr,
+    DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
+    DECLARE_INSTANCE_FIELD(float, cellSize);
+    DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
+    DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
+    DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
+    
+
     HMUI::TableView* downloadHistoryTable() {if(downloadList) return downloadList->tableView;}
 public:
     std::vector<DownloadHistoryEntry*> downloadEntryList;
+    bool TryAddDownload(const SDC_wrapper::BeatStarSong* song);
     bool hasUnloadedDownloads() {
         bool x = false;
         for(auto entry : downloadEntryList) {
@@ -88,20 +101,6 @@ public:
         return x;
     }
     const int MAX_PARALLEL_DOWNLOADS = 2;
-
-    bool TryAddDownload(const SDC_wrapper::BeatStarSong* song) {
-        DownloadHistoryEntry* existingDLHistoryEntry = nullptr;
-        for(auto entry : downloadEntryList) {
-            if(entry->key == song->key.string_data) {
-                existingDLHistoryEntry = entry;
-                break;
-            }
-        }
-
-        if(existingDLHistoryEntry) existingDLHistoryEntry->ResetIfFailed();
-
-        if(true) {
-            
-        }
-    }
+    
+    
 )

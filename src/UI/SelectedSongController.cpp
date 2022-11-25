@@ -28,6 +28,7 @@
 #include "UnityEngine/Networking/UnityWebRequest.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "fmt/fmt/include/fmt/core.h"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 #include <iomanip>
 #include <sstream>
@@ -58,47 +59,55 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
 void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
     #ifdef SONGDOWNLOADER
-    downloadButton->interactable = false;
-    downloadButton.update();
-    std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
-        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);
 
-        if (downloadPercentage <= 100) {
-            downloadButton->text.text = fmt::format("{:.2f}%", downloadPercentage);
-            QuestUI::MainThreadScheduler::Schedule([this] {
-                downloadButton.update();
-            });
-        }
-    };
+    auto songData = this->currentSong.getData();
+    if (songData != nullptr) {
+        fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
+        downloadButton->interactable = false;
+        downloadButton.update();
+    }  else {
+        getLogger().warning("Current song is null, doing nothing");
+    }
+    
+    // std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
+    //     fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);
 
-    BeatSaver::API::GetBeatmapByHashAsync(std::string(currentSong->GetHash()),
-    [this, progressUpdate](std::optional<BeatSaver::Beatmap> beatmap)
-    {
-        if(beatmap.has_value())
-        {
-            BeatSaver::API::DownloadBeatmapAsync(beatmap.value(),
-            [this](bool error) {
-                QuestUI::MainThreadScheduler::Schedule(
-                        [error, this] {
-                            downloadButton->interactable = error;
-                            downloadButton->active = error;
+    //     if (downloadPercentage <= 100) {
+    //         downloadButton->text.text = fmt::format("{:.2f}%", downloadPercentage);
+    //         QuestUI::MainThreadScheduler::Schedule([this] {
+    //             downloadButton.update();
+    //         });
+    //     }
+    // };
 
-                            playButton->active = !error;
-                            playButton->interactable = !error;
+    // BeatSaver::API::GetBeatmapByHashAsync(std::string(currentSong->GetHash()),
+    // [this, progressUpdate](std::optional<BeatSaver::Beatmap> beatmap)
+    // {
+    //     if(beatmap.has_value())
+    //     {
+    //         BeatSaver::API::DownloadBeatmapAsync(beatmap.value(),
+    //         [this](bool error) {
+    //             QuestUI::MainThreadScheduler::Schedule(
+    //                     [error, this] {
+    //                         downloadButton->interactable = error;
+    //                         downloadButton->active = error;
 
-                            if (error) {
-                                downloadButton->text.text = "Download";
-                            } else {
-                                RuntimeSongLoader::API::RefreshSongs(false);
-                            }
+    //                         playButton->active = !error;
+    //                         playButton->interactable = !error;
 
-                            downloadButton.update();
-                            playButton.update();
-                        }
-                );
-            }, progressUpdate);
-        }
-    });
+    //                         if (error) {
+    //                             downloadButton->text.text = "Download";
+    //                         } else {
+    //                             RuntimeSongLoader::API::RefreshSongs(false);
+    //                         }
+
+    //                         downloadButton.update();
+    //                         playButton.update();
+    //                     }
+    //             );
+    //         }, progressUpdate);
+    //     }
+    // });
     #endif
 }
 
