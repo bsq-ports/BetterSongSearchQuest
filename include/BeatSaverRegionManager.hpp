@@ -95,7 +95,7 @@ class BeatSaverRegionManager {
             s->append((char*)contents, newLength);
         } catch(std::bad_alloc &e) {
             //handle memory problem
-            getLogger().critical("Failed to allocate string of size: %lu", newLength);
+            getLoggerOld().critical("Failed to allocate string of size: %lu", newLength);
             return 0;
         }
         return newLength;
@@ -158,7 +158,7 @@ class BeatSaverRegionManager {
                     auto res = curl_easy_perform(curl);
                     /* Check for errors */
                     if (res != CURLE_OK) {
-                        getLogger().critical("curl_easy_perform() failed: %u: %s", res, curl_easy_strerror(res));
+                        getLoggerOld().critical("curl_easy_perform() failed: %u: %s", res, curl_easy_strerror(res));
                     }
                     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
                     curl_easy_cleanup(curl);

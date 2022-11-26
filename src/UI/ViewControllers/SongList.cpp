@@ -336,7 +336,7 @@ bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
         hasLocalScore = true;
-    //getLogger().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
+    //getLoggerOld().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
     if (hasLocalScore) {
         if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
             return false;
@@ -405,8 +405,8 @@ void SortAndFilterSongs(SortMode sort, std::string_view const search, bool reset
 
     if(resetTable) {
         ResetTable();
-        //getLogger().info("first song ranked: %s", DataHolder::filteredSongList[0]->GetMaxStarValue() > 0 ? "true" : "false");
-        getLogger().info("table reset");
+        //getLoggerOld().info("first song ranked: %s", DataHolder::filteredSongList[0]->GetMaxStarValue() > 0 ? "true" : "false");
+        getLoggerOld().info("table reset");
     }
     //}).detach();
 }
@@ -425,7 +425,7 @@ inline auto SortDropdownContainer() {
     SongListDropDown<std::tuple_size_v<decltype(sortModes)>> sortDropdown("", "Newest", [sortModes](
             auto &, std::string const &input,
             UnityEngine::Transform *, RenderContext &ctx) {
-        getLogger().debug("DropDown! %s", input.c_str());
+        getLoggerOld().debug("DropDown! %s", input.c_str());
         auto itr = std::find(sortModes.begin(), sortModes.end(), input);
         SortMode sort = (SortMode)std::distance(sortModes.begin(), itr);
         std::thread([sort] {
@@ -444,7 +444,7 @@ inline auto SortDropdownContainer() {
 
 inline void onRenderTable(ViewControllers::SongListViewController* view, decltype(ViewControllers::SongListViewController::TableType::child)::RenderState& tableState) {
     view->tablePtr = tableState.dataSource;
-    getLogger().info("Rendering table! %p", view->tablePtr);
+    getLoggerOld().info("Rendering table! %p", view->tablePtr);
 
     if (view->table.renderedAllowed.getData()) {
         CRASH_UNLESS(tableState.dataSource);
@@ -453,7 +453,7 @@ inline void onRenderTable(ViewControllers::SongListViewController* view, decltyp
 
         //Make Lists
         auto click = std::function([view](HMUI::TableView *tableView, int row) {
-            getLogger().info("selected %i", row);
+            getLoggerOld().info("selected %i", row);
             currentSelectedSong = row;
             // Get song list actually inside the table
             auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
@@ -464,11 +464,11 @@ inline void onRenderTable(ViewControllers::SongListViewController* view, decltyp
 
 
 
-        getLogger().debug("Adding table event");
+        getLoggerOld().debug("Adding table event");
 
         view->tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
 
-        getLogger().debug("Set sibling");
+        getLoggerOld().debug("Set sibling");
         view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
 
         // queue for next frame
@@ -539,7 +539,7 @@ custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewCont
         co_yield nullptr;
 
         if (view->table.renderedAllowed.getData()) {
-            getLogger().debug("Showing table now");
+            getLoggerOld().debug("Showing table now");
 
             std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
             view->table.child.initCellDatas = std::move(filteredCells);
@@ -616,7 +616,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         };
     }
 
-    getLogger().info("Checking for local scores...");
+    INFO("Checking for local scores...");
     auto playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
     if(playerDataModel) {
         for(int i = 0; i < playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
@@ -624,7 +624,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40 || !x->levelID->StartsWith("custom_level_"))
                 continue;
             auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
-            //getLogger().info("Song hash: %s", sh.c_str());
+            //getLoggerOld().info("Song hash: %s", sh.c_str());
             auto song = SDC_wrapper::BeatStarSong::GetSong(sh);
             if(!song)
                 continue;
@@ -633,14 +633,14 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
             DataHolder::songsWithScores.push_back(sh);
 
         }
-        getLogger().info("local scores checked. found %lu", DataHolder::songsWithScores.size());
+        getLoggerOld().info("local scores checked. found %lu", DataHolder::songsWithScores.size());
     }
 
 
     table.renderedAllowed = DataHolder::loadedSDC;
     loadingIndicator.enabled = !DataHolder::loadedSDC;
 
-    //getLogger().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
+    //getLoggerOld().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
 
     // Periodically check if SDC loaded and update the view
     if (firstActivation && loadingIndicator.enabled.getData()) {
@@ -667,7 +667,7 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
                         StringSetting("Search by Song, Key, Mapper...",
                                       [](StringSetting &, std::string const &input, UnityEngine::Transform *,
                                          RenderContext &ctx) {
-                                          getLogger().debug("Input! %s", input.c_str());
+                                          getLoggerOld().debug("Input! %s", input.c_str());
                                           std::thread([input]{
                                               SortAndFilterSongs(prevSort, input, true);
                                           }).detach();
@@ -680,11 +680,11 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
         auto end = std::chrono::high_resolution_clock::now();
         auto difference = end - start;
         auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
-        getLogger().debug("QUC UI construction for SongList took %lldms", millisElapsed);
+        getLoggerOld().debug("QUC UI construction for SongList took %lldms", millisElapsed);
 
-        getLogger().debug("Rendering layout");
+        getLoggerOld().debug("Rendering layout");
         detail::renderSingle(songListControllerView, ctx);
-        getLogger().debug("Rendered layout");
+        getLoggerOld().debug("Rendered layout");
 
         BeatSaverRegionManager::RegionLookup();
     }
@@ -698,9 +698,9 @@ void ViewControllers::SongListViewController::DidActivate(bool firstActivation, 
     auto end = std::chrono::high_resolution_clock::now();
     auto difference = end - start;
     auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
-    getLogger().debug("UI rendering for SongList took %lldms", millisElapsed);
+    getLoggerOld().debug("UI rendering for SongList took %lldms", millisElapsed);
 
-    getLogger().debug("Finished song list view controller");
+    getLoggerOld().debug("Finished song list view controller");
 
     if(!firstActivation && DataHolder::loadedSDC) {
         songListController->tablePtr->tableView->ScrollToCellWithIdx(currentSelectedSong,

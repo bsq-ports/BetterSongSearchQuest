@@ -110,11 +110,11 @@ namespace BetterSongSearch::UI {
             if (renderedAllowed.readAndClear(ctx) && !renderedAllowed.getData()) {
                 // hide object
 
-                getLogger().debug("Attempting to destroy");
+                getLoggerOld().debug("Attempting to destroy");
                 auto& context = ctx.getChildDataOrCreate(Parent::child.key);
                 if (context.childContext) {
                     UnityEngine::Object::Destroy(&context.childContext->parentTransform);
-                    getLogger().debug("Destroying object");
+                    getLoggerOld().debug("Destroying object");
                 }
 
                 ctx.destroyChild(Parent::child.key);

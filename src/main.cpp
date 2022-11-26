@@ -34,10 +34,17 @@ Configuration& getConfig() {
 }
 
 // Returns a logger, useful for printing debug messages
-Logger& getLogger() {
+Logger& getLoggerOld() {
     static auto* logger = new Logger(modInfo, LoggerOptions(false, true));
     return *logger;
 }
+
+// Returns a logger, useful for printing debug messages
+Paper::ConstLoggerContext<17UL> getLogger() {
+    static auto fastContext = Paper::Logger::WithContext<MOD_ID>();
+    return fastContext;
+}
+
 
 // Called at the early stages of game loading
 extern "C" void setup(ModInfo& info) {
@@ -49,14 +56,14 @@ extern "C" void setup(ModInfo& info) {
     getPluginConfig().Init(info);
     getConfig().Reload();
     getConfig().Write();
-    getLogger().info("Completed setup!");
+    getLoggerOld().info("Completed setup!");
 
     std::thread([]{
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
         DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
         auto& filterOptions = DataHolder::filterOptions;
 
-        getLogger().info("setting config values");
+        getLoggerOld().info("setting config values");
         filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
         filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
         filterOptions.minLength = getPluginConfig().MinLength.GetValue();
@@ -75,7 +82,7 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
 
-        getLogger().info("Finished loading songs.");
+        getLoggerOld().info("Finished loading songs.");
         DataHolder::loadedSDC = true;
         SortAndFilterSongs(SortMode::Newest, "", false);
     }).detach();
@@ -103,7 +110,7 @@ extern "C" void load() {
 
     QuestUI::Init();
 
-    INSTALL_HOOK(getLogger(), ReturnToBSS);
+    INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
 
     custom_types::Register::AutoRegister();
     modInfo.id = "Better Song Search";

@@ -30,13 +30,13 @@ inline static const int RETRY_COUNT = 3;
 class DownloadHistoryEntry {
 public:
     enum DownloadStatus {
-        Downloading,
-        Preparing,
-        Extracting,
-        Queued,
-        Failed,
-        Downloaded,
-        Loaded
+        Downloading = 1,
+        Preparing = 2,
+        Extracting = 4,
+        Queued = 8,
+        Failed = 16,
+        Downloaded = 32,
+        Loaded = 64
     };
     DownloadStatus status = DownloadStatus::Queued;
     std::string statusDetails = "";
@@ -73,7 +73,9 @@ public:
 
     std::function<void()> UpdateProgressHandler;
 };
-___DECLARE_TYPE_WRAPPER_INHERITANCE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, Il2CppTypeEnum::IL2CPP_TYPE_CLASS, HMUI::ViewController, "BetterSongSearch::UI::ViewControllers", {classof(HMUI::TableView::IDataSource*)}, 0, nullptr,
+
+
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
     DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
@@ -85,8 +87,9 @@ ___DECLARE_TYPE_WRAPPER_INHERITANCE(BetterSongSearch::UI::ViewControllers, Downl
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
     
 
-    HMUI::TableView* downloadHistoryTable() {if(downloadList) return downloadList->tableView;}
+    
 public:
+    HMUI::TableView* downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
     std::vector<DownloadHistoryEntry*> downloadEntryList;
     bool TryAddDownload(const SDC_wrapper::BeatStarSong* song);
     bool hasUnloadedDownloads() {
@@ -101,6 +104,4 @@ public:
         return x;
     }
     const int MAX_PARALLEL_DOWNLOADS = 2;
-    
-    
 )

@@ -101,7 +101,7 @@ namespace BetterSongSearch::UI {
             bool inited = static_cast<bool>(segmentedControl);
 
             if (!segmentedControl) {
-                getLogger().debug("Building segmented control");
+                getLoggerOld().debug("Building segmented control");
                 segmentedControl = QUIOverride::CreateTextSegmentedControl(&ctx.parentTransform, nullptr);
 
                 segmentedControl->fontSize = 2;
@@ -174,7 +174,7 @@ namespace BetterSongSearch::UI {
         BasicCellComponent(T&& view) : view(view) {}
 
         auto cellElementsLayout() {
-            getLogger().debug("Building cell layout");
+            getLoggerOld().debug("Building cell layout");
 
 
             // top layout
@@ -262,10 +262,10 @@ namespace BetterSongSearch::UI {
                         backgroundable->background->set_color(color);
                     };
 //                    setBgColor = [self, &ctx](Sombrero::FastColor const& color) mutable {
-//                        getLogger().debug("Coloring bg");
+//                        getLoggerOld().debug("Coloring bg");
 //                        self.color = color;
 //                        QUC::detail::renderSingle(self.child, ctx);
-//                        getLogger().debug("Colored bg");
+//                        getLoggerOld().debug("Colored bg");
 //                    };
                 }
             );
@@ -299,7 +299,7 @@ namespace BetterSongSearch::UI {
 
                 //QUC::HMUITouchable touchable(fitter2);
 
-                getLogger().debug("Building cell first time");
+                getLoggerOld().debug("Building cell first time");
                 QUC::detail::renderSingle(fitter2, cellCtx);
             }
 

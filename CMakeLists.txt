@@ -30,8 +30,7 @@ add_compile_options(-O3)
 # compile definitions used
 add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")
-add_compile_definitions(DEBUGB=1) # disable debug logs
-add_compile_definitions(USE_CODEGEN_FIELDS)
+# add_compile_definitions(DEBUGB=1) # disable debug logs
 
 # recursively get all src files
 RECURSE_FILES(cpp_file_list ${SOURCE_DIR}/*.cpp)

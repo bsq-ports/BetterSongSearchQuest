@@ -60,13 +60,14 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
     #ifdef SONGDOWNLOADER
 
-    auto songData = this->currentSong.getData();
+    auto songData = *this->currentSong;
+
     if (songData != nullptr) {
         fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
         downloadButton->interactable = false;
-        downloadButton.update();
+        // downloadButton.update();
     }  else {
-        getLogger().warning("Current song is null, doing nothing");
+        WARNING("Current song is null, doing nothing");
     }
     
     // std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
@@ -164,11 +165,11 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
     if(webRequest->get_isNetworkError())
-        getLogger().info("Network error");
+        INFO("Network error");
 
     while(webRequest->GetDownloadProgress() < 1.0f);
 
-    getLogger().info("Download complete");
+    INFO("Download complete");
     UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
     finished(clip);
 }
@@ -190,11 +191,11 @@ void BetterSongSearch::UI::SelectedSongController::update() {
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
-    //getLogger().info("Gathering information...");
+    //getLoggerOld().info("Gathering information...");
     coverImage.child.sprite = defaultImage;
 
-    //getLogger().info("No Method: %s", song->hash.string_data);
-    //getLogger().info("Method: %s", song->GetHash().data());
+    //getLoggerOld().info("No Method: %s", song->hash.string_data);
+    //getLoggerOld().info("Method: %s", song->GetHash().data());
 
     if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
         std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];

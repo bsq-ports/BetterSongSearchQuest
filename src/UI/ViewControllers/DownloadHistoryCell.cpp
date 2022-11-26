@@ -11,11 +11,11 @@ namespace BetterSongSearch::UI::ViewControllers {
         entry->UpdateProgressHandler = [this]() {
             UpdateProgress();
         };
+        return this;
     }
 
     void CustomDownloadListTableCell::RefreshBgState() {
         bgContainer->set_color(UnityEngine::Color(0, 0, 0, highlighted ? 0.8f : 0.45f));
-
         RefreshBar();
     }
 
@@ -36,7 +36,6 @@ namespace BetterSongSearch::UI::ViewControllers {
 
     void CustomDownloadListTableCell::UpdateProgress() {
         statusLabel->set_text(entry->statusMessage());
-
         RefreshBar();
     }
 

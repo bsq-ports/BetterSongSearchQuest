@@ -14,7 +14,7 @@ DEFINE_TYPE(QUIOverride, CustomTextSegmentedControlData);
 
 using namespace UnityEngine;
 
-extern Logger& getLogger();
+extern Logger& getLoggerOld();
 
 namespace QUIOverride
 {

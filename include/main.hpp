@@ -2,6 +2,7 @@
 
 // Include the modloader header, which allows us to tell the modloader which mod this is, and the version etc.
 #include <fmt/core.h>
+#include "paper/shared/logger.hpp"
 #include "modloader/shared/modloader.hpp"
 
 // beatsaber-hook is a modding framework that lets us call functions and fetch field values from in the game
@@ -14,11 +15,12 @@
 
 // Define these functions here so that we can easily read configuration and log information from other files
 Configuration& getConfig();
-Logger& getLogger();
+Paper::ConstLoggerContext<17UL> getLogger();
+Logger& getLoggerOld();
 
 template<typename... TArgs>
 constexpr static void fmtLog(Logging::Level lvl, fmt::format_string<TArgs...> str, TArgs&&... args) noexcept {
-    getLogger().log(lvl, fmt::format<TArgs...>(str, std::forward<TArgs>(args)...));
+    getLoggerOld().log(lvl, fmt::format<TArgs...>(str, std::forward<TArgs>(args)...));
 }
 
 template<typename Exception = std::runtime_error, typename... TArgs>
@@ -26,3 +28,9 @@ inline static void fmtThrowError(fmt::format_string<TArgs...> str, TArgs&&... ar
     fmtLog<TArgs...>(Logging::ERROR, str, std::forward<TArgs>(args)...);
     throw Exception(fmt::format<TArgs...>(str, std::forward<TArgs>(args)...));
 }
+
+#define INFO(...) getLogger().fmtLog<Paper::LogLevel::INF>(__VA_ARGS__)
+#define ERROR(...) getLogger().fmtLog<Paper::LogLevel::ERR>(__VA_ARGS__)
+#define CRITICAL(...) getLogger().fmtLog<Paper::LogLevel::ERR>(__VA_ARGS__)
+#define DEBUG(...) getLogger().fmtLog<Paper::LogLevel::DBG>(__VA_ARGS__)
+#define WARNING(...) getLogger().fmtLog<Paper::LogLevel::WRN>(__VA_ARGS__)
