@@ -56,6 +56,11 @@ void BetterSongSearch::UI::SelectedSongController::SetSong(const SDC_wrapper::Be
     update();
 }
 
+const SDC_wrapper::BeatStarSong* BetterSongSearch::UI::SelectedSongController::GetSong()
+{
+    return currentSong.getData();
+}
+
 void BetterSongSearch::UI::SelectedSongController::DownloadSong()
 {
     #ifdef SONGDOWNLOADER
@@ -65,50 +70,10 @@ void BetterSongSearch::UI::SelectedSongController::DownloadSong()
     if (songData != nullptr) {
         fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
         downloadButton->interactable = false;
-        // downloadButton.update();
+        downloadButton.update();
     }  else {
         WARNING("Current song is null, doing nothing");
     }
-    
-    // std::function<void(float)> progressUpdate = [this](float downloadPercentage) {
-    //     fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);
-
-    //     if (downloadPercentage <= 100) {
-    //         downloadButton->text.text = fmt::format("{:.2f}%", downloadPercentage);
-    //         QuestUI::MainThreadScheduler::Schedule([this] {
-    //             downloadButton.update();
-    //         });
-    //     }
-    // };
-
-    // BeatSaver::API::GetBeatmapByHashAsync(std::string(currentSong->GetHash()),
-    // [this, progressUpdate](std::optional<BeatSaver::Beatmap> beatmap)
-    // {
-    //     if(beatmap.has_value())
-    //     {
-    //         BeatSaver::API::DownloadBeatmapAsync(beatmap.value(),
-    //         [this](bool error) {
-    //             QuestUI::MainThreadScheduler::Schedule(
-    //                     [error, this] {
-    //                         downloadButton->interactable = error;
-    //                         downloadButton->active = error;
-
-    //                         playButton->active = !error;
-    //                         playButton->interactable = !error;
-
-    //                         if (error) {
-    //                             downloadButton->text.text = "Download";
-    //                         } else {
-    //                             RuntimeSongLoader::API::RefreshSongs(false);
-    //                         }
-
-    //                         downloadButton.update();
-    //                         playButton.update();
-    //                     }
-    //             );
-    //         }, progressUpdate);
-    //     }
-    // });
     #endif
 }
 
@@ -173,6 +138,16 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
     finished(clip);
 }
+
+
+void BetterSongSearch::UI::SelectedSongController::SetIsDownloaded(bool isDownloaded,  bool downloadable){
+    playButton->active = isDownloaded;
+    playButton->interactable = isDownloaded;
+    downloadButton->active = !isDownloaded;
+    downloadButton->interactable = !isDownloaded;
+    infoButton->interactable = true;
+    updateView();
+} 
 
 void BetterSongSearch::UI::SelectedSongController::update() {
     if (!currentSong.getData()) {

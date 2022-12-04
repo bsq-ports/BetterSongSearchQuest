@@ -29,6 +29,8 @@ namespace BetterSongSearch::UI {
 
     struct SelectedSongController {
         std::function<void()> showInfo = nullptr;
+        void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
+        const SDC_wrapper::BeatStarSong* GetSong();
 
         LazyInitAndUpdate<HideObject<QUC::Button>> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
             PlaySong();

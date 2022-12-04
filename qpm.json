@@ -5,7 +5,7 @@
     "name": "BetterSongSearch",
     "id": "BetterSongSearch",
     "version": "0.1.0",
-    "url": null,
+    "url": "https://github.com/FrozenAlex/BetterSongSearchQuest",
     "additionalData": {
       "overrideSoName": "libBetterSongSearch.so"
     }
@@ -13,7 +13,7 @@
   "dependencies": [
     {
       "id": "modloader",
-      "versionRange": "=1.2.3",
+      "versionRange": "^1.2.3",
       "additionalData": {}
     },
     {
@@ -32,7 +32,7 @@
     },
     {
       "id": "questui",
-      "versionRange": "^0.17.4",
+      "versionRange": "^0.17.5",
       "additionalData": {}
     },
     {

@@ -17,6 +17,10 @@
 #include "bsml/shared/BSML.hpp"
 #include "main.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
+#include "Util/RatelimitCoroutine.hpp"
+#include "custom-types/shared/coroutine.hpp"
+#include "custom-types/shared/macros.hpp"
+
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
     DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
@@ -26,6 +30,9 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 inline static const int RETRY_COUNT = 3;
+
+
+
 
 class DownloadHistoryEntry {
 public:
@@ -40,7 +47,7 @@ public:
     };
     DownloadStatus status = DownloadStatus::Queued;
     std::string statusDetails = "";
-    std::string statusMessage() {return fmt::format("{} {}", status, statusDetails);}
+    std::string statusMessage() {return fmt::format("{} {}", StatusToString(status), statusDetails);}
     float downloadProgress = 1.0f;
     int retries = 0;
     bool isDownloading() { return status == DownloadStatus::Downloading || status == DownloadStatus::Preparing || status == DownloadStatus::Extracting;}
@@ -49,11 +56,40 @@ public:
     std::string levelAuthorName;
     std::string key;
     std::string hash;
+    
+    // Last update used to limit progress updates cause I can't code in c++
+    long long lastUpdate;
 
     int orderValue() { return ((int)status * 100) + retries; }
 
     bool IsInAnyOfStates(DownloadStatus states) {
         return (status & states) != 0;
+    }
+
+    static std::string StatusToString(DownloadStatus status){
+        if (status == DownloadStatus::Downloading) {
+            return "Downloading";
+        }
+        if (status == DownloadStatus::Preparing) {
+            return "Preparing";
+        }
+        if (status == DownloadStatus::Extracting) {
+            return "Extracting";
+        }
+        if (status == DownloadStatus::Queued) {
+            return "Queued";
+        }
+        if (status == DownloadStatus::Failed) {
+            return "Failed";
+        }
+        if (status == DownloadStatus::Downloaded) {
+            return "Downloaded";
+        }
+        if (status == DownloadStatus::Loaded) {
+            return "Loaded";
+        }
+        return "";
+
     }
 
     void ResetIfFailed() {
@@ -91,7 +127,10 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
 public:
     HMUI::TableView* downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
     std::vector<DownloadHistoryEntry*> downloadEntryList;
-    bool TryAddDownload(const SDC_wrapper::BeatStarSong* song);
+    void ProcessDownloads(bool forceTableReload = false);
+    void RefreshTable(bool fullReload = true);
+    BetterSongSearch::Util::RatelimitCoroutine* limitedFullTableReload = nullptr;
+    bool TryAddDownload(const SDC_wrapper::BeatStarSong* song, bool isBatch = false);
     bool hasUnloadedDownloads() {
         bool x = false;
         for(auto entry : downloadEntryList) {
