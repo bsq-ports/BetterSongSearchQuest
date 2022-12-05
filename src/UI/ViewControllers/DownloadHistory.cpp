@@ -47,9 +47,9 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
         downloadList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
 
-        limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-                                                                                { this->downloadHistoryTable()->ReloadData(); },
-                                                                                0.1f);
+        // limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+        //                                                                         { this->downloadHistoryTable()->ReloadData(); },
+        //                                                                         0.1f);
     }
 }
 
@@ -229,16 +229,16 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
                                     // NESTING HELLLL      
                                     // TODO: Disable button
-                                    if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                        fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(true);
-                                    }
+                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
+                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(true);
+                                    // }
                                   
                                     // TODO: Refresh cells
                                     // fcInstance->SongListViewController->tablePt.RefreshCells(false, true);
                                 } else {
-                                    if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                        fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(false);
-                                    }
+                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
+                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(false);
+                                    // }
                                 }
                             });
                     },

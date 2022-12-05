@@ -44,6 +44,10 @@ namespace IncludedAssets {
 
 	DECLARE_FILE(DownloadHistory_bsml)
 	DECLARE_FILE(DownloadHistoryCell_bsml)
+	DECLARE_FILE(DownloadListCell_bsml)
+	DECLARE_FILE(FilterView_bsml)
+	DECLARE_FILE(SongList_bsml)
+	DECLARE_FILE(SongListCell_bsml)
 	DECLARE_FILE(UploadDetails_bsml)
 
 }

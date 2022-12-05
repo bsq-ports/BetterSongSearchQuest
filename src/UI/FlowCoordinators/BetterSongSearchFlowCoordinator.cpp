@@ -15,8 +15,8 @@ DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordina
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
-    if (!SongListViewController) {
-        SongListViewController = BeatSaberUI::CreateViewController<ViewControllers::SongListViewController*>();
+    if (!SongListController) {
+        SongListController = BeatSaberUI::CreateViewController<ViewControllers::SongListController*>();
     }
     if (!FilterViewController) {
         FilterViewController = BeatSaberUI::CreateViewController<ViewControllers::FilterViewController*>();
@@ -31,7 +31,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Di
 
     SetTitle(il2cpp_utils::newcsstr("Better Song Search"), HMUI::ViewController::AnimationType::In);
     showBackButton = true;
-    ProvideInitialViewControllers(SongListViewController, FilterViewController, DownloadHistoryViewController, nullptr, nullptr);
+    ProvideInitialViewControllers(SongListController, FilterViewController, DownloadHistoryViewController, nullptr, nullptr);
 }
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::BackButtonWasPressed(HMUI::ViewController* topViewController) {

@@ -14,218 +14,214 @@
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 #include "GlobalNamespace/IPreviewBeatmapLevel.hpp"
 
-#include "questui_components/shared/components/Text.hpp"
-#include "questui_components/shared/components/LoadingIndicator.hpp"
-#include "questui_components/shared/components/Button.hpp"
-#include "questui_components/shared/components/Image.hpp"
-#include "questui_components/shared/reference_comp.hpp"
-
-#include "CustomComponents.hpp"
-#include "shared/components/list/CustomCelledList.hpp"
-
 #include <map>
 
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, SelectedSongController, Il2CppObject,
+    
+
+)
+
 namespace BetterSongSearch::UI {
+    
+//     struct SelectedSongController {
+//         std::function<void()> showInfo = nullptr;
+//         void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
+//         const SDC_wrapper::BeatStarSong* GetSong();
 
-    struct SelectedSongController {
-        std::function<void()> showInfo = nullptr;
-        void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
-        const SDC_wrapper::BeatStarSong* GetSong();
+//         LazyInitAndUpdate<HideObject<QUC::Button>> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+//             PlaySong();
+//         },"PlayButton", true, false};
 
-        LazyInitAndUpdate<HideObject<QUC::Button>> playButton{"Play",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
-            PlaySong();
-        },"PlayButton", true, false};
+//         LazyInitAndUpdate<HideObject<QUC::Button>> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
+//             DownloadSong();
+//         },"PlayButton", true, false};
 
-        LazyInitAndUpdate<HideObject<QUC::Button>> downloadButton{"Download",[this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx){
-            DownloadSong();
-        },"PlayButton", true, false};
+//         LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", [this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx) {
+//             if(showInfo)
+//                 showInfo();
+//         }, "PlayButton", true, false};
 
-        LazyInitAndUpdate<QUC::Button> infoButton{"Song Details", [this](QUC::Button& button, UnityEngine::Transform* transform, QUC::RenderContext& ctx) {
-            if(showInfo)
-                showInfo();
-        }, "PlayButton", true, false};
+//         QUC::Text authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
+//         QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};
+//         QUC::Text infoText{"details"};
+//         LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
+//         QUC::LoadingIndicator coverImageLoading{false};
+//         UnityEngine::Sprite *defaultImage = nullptr;
+//         QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
+//         QUC::RenderContext* ctx; // this is ugly, oh well
 
-        QUC::Text authorText{"Author", true, UnityEngine::Color{0.8f, 0.8f, 0.8f, 1}, 3.2f};
-        QUC::Text songNameText{"Name", true, std::nullopt, 2.7f};
-        QUC::Text infoText{"details"};
-        LazyInitAndUpdate<QUC::Image> coverImage{nullptr, UnityEngine::Vector2{28, 28}};
-        QUC::LoadingIndicator coverImageLoading{false};
-        UnityEngine::Sprite *defaultImage = nullptr;
-        QUC::RenderHeldData<SDC_wrapper::BeatStarSong const*> currentSong = nullptr;
-        QUC::RenderContext* ctx; // this is ugly, oh well
+//         std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
 
-        std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
+//         const QUC::Key key;
 
-        const QUC::Key key;
+//         SelectedSongController() = default;
+//         SelectedSongController(SDC_wrapper::BeatStarSong const *currentSong, UnityEngine::Sprite *defaultImage)
+//                 : currentSong(currentSong), coverImage(defaultImage, UnityEngine::Vector2(28, 28)),
+//                   defaultImage(defaultImage) {
+//             coverImage.child.preserveAspectRatio = true;
+//         }
 
-        SelectedSongController() = default;
-        SelectedSongController(SDC_wrapper::BeatStarSong const *currentSong, UnityEngine::Sprite *defaultImage)
-                : currentSong(currentSong), coverImage(defaultImage, UnityEngine::Vector2(28, 28)),
-                  defaultImage(defaultImage) {
-            coverImage.child.preserveAspectRatio = true;
-        }
+//         void DidActivate(bool firstActivation);
 
-        void DidActivate(bool firstActivation);
+//         void SetSong(const SDC_wrapper::BeatStarSong *);
 
-        void SetSong(const SDC_wrapper::BeatStarSong *);
+//         void DownloadSong();
 
-        void DownloadSong();
+//         void PlaySong();
 
-        void PlaySong();
+//         [[nodiscard]] constexpr auto DefaultAuthorText() {
+//             QUC::ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
+//             authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-        [[nodiscard]] constexpr auto DefaultAuthorText() {
-            QUC::ModifyContentSizeFitter authorFitter(QUC::detail::refComp(authorText));
-            authorFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            authorFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             return authorFitter;
+//         }
 
-            return authorFitter;
-        }
+//         [[nodiscard]] constexpr auto DefaultNameText() {
+//             QUC::ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText));
+//             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-        [[nodiscard]] constexpr auto DefaultNameText() {
-            QUC::ModifyContentSizeFitter nameFitter(QUC::detail::refComp(songNameText));
-            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             return nameFitter;
+//         }
 
-            return nameFitter;
-        }
+//         [[nodiscard]] auto MetaText() {
+//             // Meta
+//             QUC::detail::VerticalLayoutGroup metaLayout(
+//                     DefaultAuthorText(),
+//                     DefaultNameText()
+//             );
 
-        [[nodiscard]] auto MetaText() {
-            // Meta
-            QUC::detail::VerticalLayoutGroup metaLayout(
-                    DefaultAuthorText(),
-                    DefaultNameText()
-            );
-
-            QUC::ModifyContentSizeFitter contentSizeFitter(metaLayout);
-            contentSizeFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            contentSizeFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-
-
-            QUC::detail::VerticalLayoutGroup modifyLayout(
-                    contentSizeFitter
-            );
-
-            modifyLayout.childForceExpandHeight = true;
-            modifyLayout.padding = std::array<float, 4>{2, 2, 2, 2};
-
-            QUC::ModifyLayoutElement layoutElement(modifyLayout);
-            layoutElement.preferredWidth = 40;
-
-            return layoutElement;
-        }
-
-        [[nodiscard]] constexpr auto DefaultCoverImage() {
-            QUC::ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
-            coverElement.preferredHeight = 28;
-            coverElement.preferredWidth = 28;
-
-            QUC::ModifyLayoutElement loadingElement(QUC::detail::refComp(coverImageLoading));
-            loadingElement.ignoreLayout = true;
-
-            QUC::detail::HorizontalLayoutGroup metaLayout(
-                    coverElement,
-                    loadingElement
-            );
-
-            QUC::ModifyContentSizeFitter metaFitter(metaLayout);
-            metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            metaFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-
-            QUC::ModifyLayoutElement metaElement(metaFitter);
-
-            metaElement.preferredWidth = 28;
-            metaElement.preferredHeight = 28;
-
-            return metaElement;
-        }
-
-        [[nodiscard]] constexpr auto DefaultMinMaxDiffInfo() {
-            QUC::detail::HorizontalLayoutGroup layout(QUC::detail::refComp(infoText));
-
-            QUC::ModifyContentSizeFitter nameFitter(layout);
-            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-
-            return nameFitter;
-        }
-
-        [[nodiscard]] auto DefaultButtonLayout() {
-            QUC::detail::VerticalLayoutGroup layout(
-                    QUC::detail::refComp(downloadButton),
-                    QUC::detail::refComp(playButton),
-                    QUC::detail::refComp(infoButton)
-            );
-
-            QUC::ModifyContentSizeFitter nameFitter(layout);
-            nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-            nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
-
-            return nameFitter;
-        }
-
-        void update();
-
-        auto buildView(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
-            // render layout for buttons
-            QUC::detail::VerticalLayoutGroup buttons(
-                    MetaText(),
-                    DefaultCoverImage(),
-                    DefaultMinMaxDiffInfo(),
-                    DefaultButtonLayout()
-            );
+//             QUC::ModifyContentSizeFitter contentSizeFitter(metaLayout);
+//             contentSizeFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             contentSizeFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
 
-            buttons.childForceExpandHeight = false;
-            buttons.padding = std::array<float, 4>{2, 2, 2, 2};
-            coverImage.child.sprite = defaultImage;
+//             QUC::detail::VerticalLayoutGroup modifyLayout(
+//                     contentSizeFitter
+//             );
 
-            QUC::ModifyLayoutElement modifyLayoutElement(buttons);
-            modifyLayoutElement.preferredWidth = 40;
+//             modifyLayout.childForceExpandHeight = true;
+//             modifyLayout.padding = std::array<float, 4>{2, 2, 2, 2};
 
-            QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
+//             QUC::ModifyLayoutElement layoutElement(modifyLayout);
+//             layoutElement.preferredWidth = 40;
 
-            return bgButtons;
-        }
+//             return layoutElement;
+//         }
 
-        [[nodiscard]] constexpr auto& getView() const {
-            auto& data = ctx->getChildData(key);
-            auto& renderedView = data.getData<std::optional<std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)>>>();
+//         [[nodiscard]] constexpr auto DefaultCoverImage() {
+//             QUC::ModifyLayoutElement coverElement(QUC::detail::refComp(coverImage));
+//             coverElement.preferredHeight = 28;
+//             coverElement.preferredWidth = 28;
 
-            return renderedView;
-        }
+//             QUC::ModifyLayoutElement loadingElement(QUC::detail::refComp(coverImageLoading));
+//             loadingElement.ignoreLayout = true;
 
-        constexpr auto updateView() const {
-            auto& data = ctx->getChildData(key);
-            auto& renderedView = getView();
-            auto transform = QUC::detail::renderSingle(*renderedView, *ctx);
+//             QUC::detail::HorizontalLayoutGroup metaLayout(
+//                     coverElement,
+//                     loadingElement
+//             );
 
-            return &data.childContext->parentTransform;
-        }
+//             QUC::ModifyContentSizeFitter metaFitter(metaLayout);
+//             metaFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             metaFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
 
-        constexpr auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
-            this->ctx = &ctx;
+//             QUC::ModifyLayoutElement metaElement(metaFitter);
 
-//            std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)> view;
-//            std::invoke_result_t<decltype(&SelectedSongController::buildView), SelectedSongController*, QUC::RenderContext &, QUC::RenderContextChildData &> view;
+//             metaElement.preferredWidth = 28;
+//             metaElement.preferredHeight = 28;
 
-            // this is rather wasteful but whatever
-            auto& renderedView = getView();
-            if (!renderedView) {
-                renderedView.emplace(buildView(ctx, data));
-                auto transform = updateView();
+//             return metaElement;
+//         }
 
-                return &data.getChildContext([transform]{return transform; }).parentTransform;
-            } else {
-                // Just update the existing components
-                updateView();
-            }
+//         [[nodiscard]] constexpr auto DefaultMinMaxDiffInfo() {
+//             QUC::detail::HorizontalLayoutGroup layout(QUC::detail::refComp(infoText));
 
-            return &data.getChildContext([]{
-                SAFE_ABORT(); // not possible
-                return nullptr;
-            }).parentTransform;
-        }
-    };
+//             QUC::ModifyContentSizeFitter nameFitter(layout);
+//             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+//             return nameFitter;
+//         }
+
+//         [[nodiscard]] auto DefaultButtonLayout() {
+//             QUC::detail::VerticalLayoutGroup layout(
+//                     QUC::detail::refComp(downloadButton),
+//                     QUC::detail::refComp(playButton),
+//                     QUC::detail::refComp(infoButton)
+//             );
+
+//             QUC::ModifyContentSizeFitter nameFitter(layout);
+//             nameFitter.verticalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+//             nameFitter.horizontalFit = UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize;
+
+//             return nameFitter;
+//         }
+
+//         void update();
+
+//         auto buildView(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+//             // render layout for buttons
+//             QUC::detail::VerticalLayoutGroup buttons(
+//                     MetaText(),
+//                     DefaultCoverImage(),
+//                     DefaultMinMaxDiffInfo(),
+//                     DefaultButtonLayout()
+//             );
+
+
+//             buttons.childForceExpandHeight = false;
+//             buttons.padding = std::array<float, 4>{2, 2, 2, 2};
+//             coverImage.child.sprite = defaultImage;
+
+//             QUC::ModifyLayoutElement modifyLayoutElement(buttons);
+//             modifyLayoutElement.preferredWidth = 40;
+
+//             QUC::Backgroundable bgButtons("round-rect-panel", true, modifyLayoutElement);
+
+//             return bgButtons;
+//         }
+
+//         [[nodiscard]] constexpr auto& getView() const {
+//             auto& data = ctx->getChildData(key);
+//             auto& renderedView = data.getData<std::optional<std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)>>>();
+
+//             return renderedView;
+//         }
+
+//         constexpr auto updateView() const {
+//             auto& data = ctx->getChildData(key);
+//             auto& renderedView = getView();
+//             auto transform = QUC::detail::renderSingle(*renderedView, *ctx);
+
+//             return &data.childContext->parentTransform;
+//         }
+
+//         constexpr auto render(QUC::RenderContext &ctx, QUC::RenderContextChildData &data) {
+//             this->ctx = &ctx;
+
+// //            std::result_of_t<decltype(&SelectedSongController::buildView)(SelectedSongController, QUC::RenderContext&, QUC::RenderContextChildData &)> view;
+// //            std::invoke_result_t<decltype(&SelectedSongController::buildView), SelectedSongController*, QUC::RenderContext &, QUC::RenderContextChildData &> view;
+
+//             // this is rather wasteful but whatever
+//             auto& renderedView = getView();
+//             if (!renderedView) {
+//                 renderedView.emplace(buildView(ctx, data));
+//                 auto transform = updateView();
+
+//                 return &data.getChildContext([transform]{return transform; }).parentTransform;
+//             } else {
+//                 // Just update the existing components
+//                 updateView();
+//             }
+
+//             return &data.getChildContext([]{
+//                 SAFE_ABORT(); // not possible
+//                 return nullptr;
+//             }).parentTransform;
+//         }
+//     };
 }
 
 inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;

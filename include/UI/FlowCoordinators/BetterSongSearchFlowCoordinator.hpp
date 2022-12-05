@@ -15,7 +15,7 @@ using namespace BetterSongSearch::UI;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator, HMUI::FlowCoordinator,
-    DECLARE_INSTANCE_FIELD(ViewControllers::SongListViewController*, SongListViewController);
+    DECLARE_INSTANCE_FIELD(ViewControllers::SongListController*, SongListController);
     DECLARE_INSTANCE_FIELD(ViewControllers::FilterViewController*, FilterViewController);
     DECLARE_INSTANCE_FIELD(ViewControllers::DownloadHistoryViewController*, DownloadHistoryViewController);
 

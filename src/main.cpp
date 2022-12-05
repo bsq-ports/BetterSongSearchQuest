@@ -60,7 +60,7 @@ extern "C" void setup(ModInfo& info) {
 
     std::thread([]{
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-        DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
+        auto songList = std::unordered_set(songs.begin(), songs.end());
         auto& filterOptions = DataHolder::filterOptions;
 
         getLoggerOld().info("setting config values");
@@ -83,8 +83,7 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
 
         getLoggerOld().info("Finished loading songs.");
-        DataHolder::loadedSDC = true;
-        SortAndFilterSongs(SortMode::Newest, "", false);
+        // SortAndFilterSongs(SortMode::Newest, "", false);
     }).detach();
 }
 

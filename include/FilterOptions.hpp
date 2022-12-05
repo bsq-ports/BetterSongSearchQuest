@@ -4,9 +4,6 @@
 
 #include "main.hpp"
 
-
-#include "questui_components/shared/components/settings/DropdownSetting.hpp"
-
 class FilterOptions
 {
 public:
@@ -94,16 +91,15 @@ public:
     RequirementType modRequirement = RequirementType::Any;
 };
 
-DROPDOWN_CREATE_ENUM_CLASS(SortMode,
-                           STR_LIST("Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated"),
-                           Newest,
-                           Oldest,
-                           Latest_Ranked,
-                           Most_Stars,
-                           Least_Stars,
-                           Best_rated,
-                           Worst_rated
-                           )
+enum class SortMode {
+    Newest,
+    Oldest,
+    Latest_Ranked,
+    Most_Stars,
+    Least_Stars,
+    Best_rated,
+    Worst_rated
+};
 
 
 void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);

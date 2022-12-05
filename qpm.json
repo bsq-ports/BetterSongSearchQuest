@@ -41,11 +41,6 @@
       "additionalData": {}
     },
     {
-      "id": "questui_components",
-      "versionRange": "^2.5.3",
-      "additionalData": {}
-    },
-    {
       "id": "custom-types",
       "versionRange": "^0.15.21",
       "additionalData": {}
