@@ -2,9 +2,59 @@
 
 #include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
+#include "bsml/shared/macros.hpp"
+#include "bsml/shared/BSML.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController,
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_INSTANCE_METHOD(void, UpdateData);
+
+    // Modal related things
+    DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);
+    DECLARE_INSTANCE_METHOD(void, CloseSponsorModal);
+    DECLARE_INSTANCE_METHOD(void, OpenSponsorsLink);
+
+    // Header buttons
+    DECLARE_INSTANCE_METHOD(void, ClearFilters);
+    DECLARE_INSTANCE_METHOD(void, ShowPresets);
+
+    // Formatters
+    DECLARE_INSTANCE_METHOD(StringW, DateTimeToStr, int d);
+
+    // Options for dropdowns 
+    BSML_OPTIONS_LIST_OBJECT(downloadedFilterOptions, "Show All", "Only Downloaded", "Hide Downloaded");
+    BSML_OPTIONS_LIST_OBJECT(scoreFilterOptions, "Show All", "Hide Passed", "Only Passed");
+    BSML_OPTIONS_LIST_OBJECT(rankedFilterOptions, "Show All", "Hide Ranked", "Only Ranked");
+    BSML_OPTIONS_LIST_OBJECT(characteristics, "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless");
+    BSML_OPTIONS_LIST_OBJECT(difficulties, "Any", "Easy", "Normal", "Hard", "Expert", "Expert+");
+    BSML_OPTIONS_LIST_OBJECT(modOptions, "Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema");
+
+    // Values for dropdowns
+    DECLARE_INSTANCE_FIELD(StringW, existingSongs);
+    DECLARE_INSTANCE_FIELD(StringW, existingScore);
+    DECLARE_INSTANCE_FIELD(StringW, rankedState);
+    DECLARE_INSTANCE_FIELD(StringW, characteristic);
+    DECLARE_INSTANCE_FIELD(StringW, difficulty);
+    DECLARE_INSTANCE_FIELD(StringW, mods);
+
+    // Values for sliders
+    DECLARE_INSTANCE_FIELD(float, minimumSongLength);
+    DECLARE_INSTANCE_FIELD(float, maximumSongLength);
+    DECLARE_INSTANCE_FIELD(float, minimumNjs);
+    DECLARE_INSTANCE_FIELD(float, maximumNjs);
+    DECLARE_INSTANCE_FIELD(float, minimumNps);
+    DECLARE_INSTANCE_FIELD(float, maximumNps);
+    DECLARE_INSTANCE_FIELD(float, minimumStars);
+    DECLARE_INSTANCE_FIELD(float, maximumStars);
+    DECLARE_INSTANCE_FIELD(float, minimumRating);
+    DECLARE_INSTANCE_FIELD(float, minimumVotes);
+
+    // Values for string fields
+    DECLARE_INSTANCE_FIELD(StringW, uploadersString);
+
+
+    // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
+    // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
 )

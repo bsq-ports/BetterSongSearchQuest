@@ -6,6 +6,7 @@
 #include "HMUI/TableView.hpp"
 #include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/macros.hpp"
 #include "assets.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
@@ -105,11 +106,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     getLoggerOld().info("Song list contoller activated");
     BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
 
-    sortModeSelections = {StringW("sss")};
-    sortModeSelections->Add(StringW("Lol"));
-    sortModeSelections->Add(StringW("Cats"));
-    selectedSortMode = StringW("Cats");
-
     if (this->songList != nullptr && this->songList->m_CachedPtr.m_value != nullptr)
     {
         getLoggerOld().info("Table exists");
@@ -142,8 +138,8 @@ int ViewControllers::SongListController::NumberOfCells()
 
 void ViewControllers::SongListController::ctor()
 {
-    // sortModeSelections = new ListW<StringW>([]);
     INVOKE_CTOR();
+    selectedSortMode = StringW("Newest");
     this->cellSize = 8.05f;
 }
 

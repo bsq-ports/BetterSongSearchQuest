@@ -111,7 +111,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
     DECLARE_INSTANCE_FIELD(HMUI::TextPageScrollView*, selectedSongDescription);
-    DECLARE_INSTANCE_FIELD(List<StringW>*, sortModeSelections);
+
+    BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
+
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
     DECLARE_INSTANCE_FIELD(StringW, selectedSortMode);
 
