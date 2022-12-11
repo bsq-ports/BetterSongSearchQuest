@@ -13,7 +13,7 @@ project(${COMPILE_ID})
 # set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Hot reload (DO NOT USE IN PRODUCTION)
-add_compile_options(-DHotReload)
+# add_compile_options(-DHotReload)
 
 # c++ standard
 set(CMAKE_CXX_STANDARD 20)

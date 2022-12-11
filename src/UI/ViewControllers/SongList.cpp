@@ -102,7 +102,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 {
     if (!firstActivation)
         return;
-
+        
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/SongList.bsml";
+    #endif
     getLoggerOld().info("Song list contoller activated");
     BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
 
@@ -120,9 +123,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         //                                                                         0.1f);
     }
 
-    #ifdef HotReload
-        fileWatcher->filePath = "/sdcard/SongList.bsml";
-    #endif
+    
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)

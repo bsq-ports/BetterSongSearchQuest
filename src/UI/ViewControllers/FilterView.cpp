@@ -6,10 +6,14 @@
 #include "DateUtils.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include <fmt/chrono.h>
+#include "Util/BSMLStuff.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 
+using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
 
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
@@ -23,6 +27,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
+    coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
+
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
     #endif
@@ -31,6 +37,16 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 void ViewControllers::FilterViewController::UpdateData()
 {
     DEBUG("UPDATE DATA FIRED");
+    
+    // // Logs
+    // DEBUG("\nFilter props: \n existingSongs: {} \n existingScore: {}\n rankedState: {} \n characteristic: {}\n difficulty: {} \n Required mods: {} ",
+    //     (std::string ) this->existingSongs,
+    //     (std::string ) this->existingScore,
+    //     (std::string ) this->rankedState,
+    //     (std::string ) this->characteristic,
+    //     (std::string ) this->difficulty,
+    //     (std::string ) this->mods
+    // );
 }
 
 // Sponsors related things
