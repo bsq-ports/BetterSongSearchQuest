@@ -47,4 +47,59 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
             }
         }
     }
+
+    // TODO: Port these to fix scrollbar
+    // static GameObject scrollBar = null;
+
+	// 	public static GameObject GetScrollbarForTable(GameObject table, Transform targetContainer) {
+	// 		if(scrollBar == null)
+	// 			scrollBar = Resources.FindObjectsOfTypeAll<VerticalScrollIndicator>().FirstOrDefault(x => x.enabled)?.transform.parent?.gameObject;
+
+	// 		if(scrollBar == null)
+	// 			return null;
+
+	// 		var sw = table.GetComponentInChildren<ScrollView>();
+
+	// 		if(sw == null)
+	// 			return null;
+
+	// 		var listScrollBar = GameObject.Instantiate(scrollBar, targetContainer, false);
+	// 		listScrollBar.SetActive(true);
+	// 		var vsi = listScrollBar.GetComponentInChildren<VerticalScrollIndicator>(true);
+
+	// 		ReflectionUtil.SetField(sw, "_verticalScrollIndicator", vsi);
+
+	// 		var buttoneZ = listScrollBar.GetComponentsInChildren<NoTransitionsButton>(true).OrderByDescending(x => x.gameObject.name == "UpButton").ToArray();
+	// 		if(buttoneZ.Length == 2) {
+	// 			ReflectionUtil.SetField(sw, "_pageUpButton", (Button)buttoneZ[0]);
+	// 			ReflectionUtil.SetField(sw, "_pageDownButton", (Button)buttoneZ[1]);
+
+	// 			buttoneZ[0].onClick.AddListener(sw.PageUpButtonPressed);
+	// 			buttoneZ[1].onClick.AddListener(sw.PageDownButtonPressed);
+	// 		}
+
+	// 		// I dont know WHY I need do do this, but if I dont the scrollbar wont work with the added modal.
+	// 		foreach(Transform x in listScrollBar.transform) {
+	// 			foreach(var y in x.GetComponents<Behaviour>())
+	// 				y.enabled = true;
+	// 		}
+
+	// 		sw.Update();
+	// 		sw.gameObject.AddComponent<RefreshScrolbarOnFirstLoad>();
+
+	// 		return scrollBar;
+	// 	}
+
+	// 	class RefreshScrolbarOnFirstLoad : MonoBehaviour {
+	// 		void OnEnable() => StartCoroutine(dorefresh());
+
+	// 		IEnumerator dorefresh() {
+	// 			yield return null;
+	// 			var sv = gameObject.GetComponent<ScrollView>();
+
+	// 			if(sv == null)
+	// 				yield break;
+	// 			ReflectionUtil.GetField<VerticalScrollIndicator, ScrollView>(sv, "_verticalScrollIndicator")?.RefreshHandle();
+	// 		}
+	// 	}
 }

@@ -17,6 +17,7 @@
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/ViewController_AnimationType.hpp"
 #include "System/Action.hpp"
+#include "UI/ViewControllers/SongList.hpp"
 
 #include "PluginConfig.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
@@ -60,7 +61,7 @@ extern "C" void setup(ModInfo& info) {
 
     std::thread([]{
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-        auto songList = std::unordered_set(songs.begin(), songs.end());
+        DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
         auto& filterOptions = DataHolder::filterOptions;
 
         getLoggerOld().info("setting config values");
@@ -83,7 +84,10 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
 
         getLoggerOld().info("Finished loading songs.");
-        // SortAndFilterSongs(SortMode::Newest, "", false);
+        DataHolder::loadedSDC = true;
+        // if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
+        //     fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
+        // }
     }).detach();
 }
 

@@ -15,7 +15,7 @@
 		</vertical>
 		<vertical preferred-width='8' id='scrollBarContainer' vertical-fit='Unconstrained'/>
 		<vertical preferred-width='40' bg='round-rect-panel' pad='2' child-expand-height='false'>
-			<macro.as-host host='selectedSongView'>
+			<!-- <macro.as-host host='selectedSongView'> -->
 				<horizontal preferred-height='6'>
 					<text id="selectedSongAuthor" align='Center' font-size='3.2' overflow-mode='Ellipsis' word-wrapping='false' color='#CCC' text='Loading...' rich-text='false'/>
 				</horizontal> 
@@ -29,13 +29,13 @@
 				<horizontal horizontal-fit="Unconstrained" pad-top="2">
 					<text id="selectedSongDiffInfo" align='Center' font-size='2.5' word-wrapping='false' color='#CCC' text=''/>
 				</horizontal>
-				<vertical vertical-fit="PreferredSize" active="false" id="detailActions">
-					<primary-button id="downloadButton" on-click='Download' text='Download' horizontal-fit='Unconstrained' font-size='3.5' active='false'/>
-					<primary-button id="playButton" on-click='Play' text='Play' horizontal-fit='Unconstrained' font-size='3.5' active='false'/>
+				<vertical vertical-fit="PreferredSize" active="true" id="detailActions">
+					<primary-button id="downloadButton" on-click='Download' text='Download' horizontal-fit='Unconstrained' font-size='3.5' active='true'/>
+					<primary-button id="playButton" on-click='Play' text='Play' horizontal-fit='Unconstrained' font-size='3.5' active='true'/>
 					<button on-click='ShowSongDetails' text='Upload Details' horizontal-fit='Unconstrained' font-size='3.5'/>
 					<button on-click='FilterByUploader' text='Filter by Uploader' horizontal-fit='Unconstrained' font-size='3.2'/>
 				</vertical>
-			</macro.as-host>
+			<!-- </macro.as-host> -->
 		</vertical>
 	</horizontal>
 	

@@ -1,6 +1,11 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "main.hpp"
 
+
+#include "config-utils/shared/config-utils.hpp"
+#include "UnityEngine/Resources.hpp"
+#include "UnityEngine/Transform.hpp"
+#include "UnityEngine/Events/UnityAction.hpp"
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "HMUI/TableView.hpp"
@@ -15,7 +20,13 @@
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "GlobalNamespace/IVRPlatformHelper.hpp"
+#include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/PlayerData.hpp"
+#include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "Util/CurrentTimeMs.hpp"
+#include "System/StringComparison.hpp"
+#include "PluginConfig.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
@@ -23,8 +34,18 @@
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
+
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#include <iomanip>
+#include <sstream>
+#include <map>
+#include <chrono>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <regex>
+#include <future>
 
 //////////// Utils
 
@@ -37,6 +58,8 @@ double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
     return min;
 }
 
+
+
 const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"};
 const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
@@ -44,9 +67,159 @@ const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapp
 
 const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 
+std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
+int currentSelectedSong = 0;
 
 using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
+
+//////////////////// UTILS //////////////////////
+
+bool ViewControllers::SongListController::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
+{
+    auto const& filterOptions = DataHolder::filterOptions;
+    std::string songHash = song->hash.string_data;
+
+    /*if(filterOptions->uploaders.size() != 0) {
+		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
+		} else {
+			return false;
+		}
+	}*/
+
+    if(song->uploaded_unix_time < filterOptions.minUploadDate)
+        return false;
+
+    if(song->GetRating() < filterOptions.minRating) return false;
+    if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
+    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+    if(downloaded)
+    {
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+            return false;
+    }
+    else
+    {
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+            return false;
+    }
+
+    bool hasLocalScore = false;
+
+    if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
+        hasLocalScore = true;
+    //getLogger().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
+    if (hasLocalScore) {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
+            return false;
+    } else {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
+            return false;
+    }
+
+    bool passesDiffFilter = true;
+
+    for(auto diff : song->GetDifficultyVector())
+    {
+        if(DifficultyCheck(diff, song)) {
+            passesDiffFilter = true;
+            break;
+        }
+        else
+            passesDiffFilter = false;
+    }
+
+    if(!passesDiffFilter)
+        return false;
+
+    if(song->duration_secs < filterOptions.minLength) return false;
+    if(song->duration_secs > filterOptions.maxLength) return false;
+
+
+    return true;
+}
+
+bool ViewControllers::SongListController::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
+    auto const& currentFilter = DataHolder::filterOptions;
+
+    if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
+        if(!diff->ranked)
+            return false;
+
+    if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
+        if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
+            return false;
+
+    switch(currentFilter.difficultyFilter)
+    {
+        case FilterOptions::DifficultyFilterType::All:
+            break;
+        case FilterOptions::DifficultyFilterType::Easy:
+            if(diff->GetName() != "Easy") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Normal:
+            if(diff->GetName() != "Normal") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Hard:
+            if(diff->GetName() != "Hard") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::Expert:
+            if(diff->GetName() != "Expert") return false;
+            break;
+        case FilterOptions::DifficultyFilterType::ExpertPlus:
+            if(diff->GetName() != "ExpertPlus") return false;
+            break;
+    }
+
+    switch(currentFilter.charFilter) //"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
+    {
+        case FilterOptions::CharFilterType::All:
+            break;
+        case FilterOptions::CharFilterType::Custom:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Unknown) return false;
+            break;
+        case FilterOptions::CharFilterType::Standard:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Standard) return false;
+            break;
+        case FilterOptions::CharFilterType::OneSaber:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::OneSaber) return false;
+            break;
+        case FilterOptions::CharFilterType::NoArrows:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::NoArrows) return false;
+            break;
+        case FilterOptions::CharFilterType::NinetyDegrees:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree90) return false;
+            break;
+        case FilterOptions::CharFilterType::ThreeSixtyDegrees:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree360) return false;
+            break;
+        case FilterOptions::CharFilterType::LightShow:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lightshow) return false;
+            break;
+        case FilterOptions::CharFilterType::Lawless:
+            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lawless) return false;
+            break;
+    }
+
+    if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
+        return false;
+
+    auto requirements = diff->GetRequirementVector();
+    if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
+        if(std::find(requirements.begin(), requirements.end(), REQUIREMENTS[(int)currentFilter.modRequirement]) == requirements.end())
+            return false;
+    }
+
+    if(song->duration_secs > 0) {
+        float nps = (float)diff->notes / (float)song->duration_secs;
+
+        if(nps < currentFilter.minNPS || nps > currentFilter.maxNPS)
+            return false;
+    }
+
+    return true;
+}
+
 
 static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
         {SortMode::Newest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
@@ -92,6 +265,80 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }}
 };
 
+// this hurts
+std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter = " ") {
+    std::vector<std::string> ret{};
+    std::decay_t<decltype(std::string::npos)> pos{};
+    while ((pos = buffer.find(delimeter)) != std::string::npos) {
+        const auto match = buffer.substr(0, pos);
+        if (!match.empty()) ret.emplace_back(match);
+        buffer = buffer.substr(pos + delimeter.size());
+    }
+    if (!buffer.empty()) ret.emplace_back(buffer);
+    return ret;
+}
+
+std::string removeSpecialCharacter(std::string_view const s) {
+    std::string stringy(s);
+    for (int i = 0; i < stringy.size(); i++) {
+
+        if (stringy[i] < 'A' || stringy[i] > 'Z' &&
+                                stringy[i] < 'a' || stringy[i] > 'z')
+        {
+            stringy.erase(i, 1);
+            i--;
+        }
+    }
+    return stringy;
+}
+
+inline std::string toLower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    return s;
+}
+
+inline std::string toLower(std::string_view s) {
+    return toLower(std::string(s));
+}
+
+inline std::string toLower(char const* s) {
+    return toLower(std::string(s));
+}
+
+bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
+{
+    int words = 0;
+    int matches = 0;
+    std::string songName = removeSpecialCharacter(toLower(song->GetName()));
+    std::string songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
+    std::string songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
+    std::string levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
+    std::string songKey = toLower(song->key.string_data);
+
+    for (int i = 0; i < searchTexts.size(); i++)
+    {
+        words++;
+        std::string searchTerm = toLower(searchTexts[i]);
+        if (i == searchTexts.size() - 1)
+        {
+            searchTerm.resize(searchTerm.length()-1);
+        }
+
+
+        if (songName.find(searchTerm) != std::string::npos ||
+            songSubName.find(searchTerm) != std::string::npos ||
+            songAuthorName.find(searchTerm) != std::string::npos ||
+            levelAuthorName.find(searchTerm) != std::string::npos ||
+            songKey.find(searchTerm) != std::string::npos)
+        {
+            matches++;
+        }
+    }
+
+    return matches == words;
+}
+/////////////////////////////////////////////////
+
 ////////////
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListController);
@@ -123,22 +370,42 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         //                                                                         0.1f);
     }
 
+    // TODO: Fix scrolling and append the scrollbar
+
+
+    // Reset table the first time and load data
+    ViewControllers::SongListController::ResetTable();
+
     
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
 {
+    
     getLoggerOld().info("Cell clicked %i", id);
 }
 
 float ViewControllers::SongListController::CellSize()
 {
-    return this->cellSize;
+    // TODO: Different font sizes
+    return true ? 11.66f : 14.0f;
 }
+
+void ViewControllers::SongListController::ResetTable()
+{
+
+    if(songListTable() != nullptr)
+    {
+        DEBUG("Songs size: {}", DataHolder::filteredSongList.size());
+        DEBUG("TABLE RESET");
+        songListTable()->ReloadData();
+        songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, true);
+    }
+}
+
 int ViewControllers::SongListController::NumberOfCells()
 {
-    return filteredSongList.size();
-    return 0;
+    return DataHolder::filteredSongList.size();
 }
 
 void ViewControllers::SongListController::ctor()
@@ -150,6 +417,8 @@ void ViewControllers::SongListController::ctor()
 
 void ViewControllers::SongListController::SelectRandom() {
     DEBUG("SelectRandom");
+    // TODO: Remove. It's here for testing
+    fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
@@ -186,8 +455,67 @@ void ViewControllers::SongListController::ShowSettings () {
     DEBUG("ShowSettings");
 }
 
+// Song buttons
+void ViewControllers::SongListController::Download () {
+    DEBUG("Download");
+}
+
+void ViewControllers::SongListController::Play () {
+    DEBUG("Play");
+}
+
+void ViewControllers::SongListController::ShowSongDetails () {  
+    DEBUG("ShowSongDetails");
+}
+
+void ViewControllers::SongListController::FilterByUploader () {
+  
+    DEBUG("FilterByUploader");
+}
+
 // BSML::CustomCellInfo
 HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView *tableView, int idx)
 {
-    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(filteredSongList[idx]);
+    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(DataHolder::filteredSongList[idx]);
 }
+
+
+void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable) {
+    DEBUG("SortAndFilterSongs");
+    if(songListTable() != nullptr)
+    {
+        songListTable()->ClearSelection();
+        songListTable()->ClearHighlights();
+        this->searchInProgress->get_gameObject()->set_active(false);
+    }
+    prevSort = sort;
+    prevSearch = search;
+    // std::thread([&]{
+        bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+        DataHolder::filteredSongList.clear();
+        for(auto song : DataHolder::songList)
+        {
+            bool meetsFilter = MeetsFilter(song);
+            if (meetsFilter) {
+                bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+                if (songMeetsSearch) {
+                    DataHolder::filteredSongList.emplace_back(song);
+                }     
+            }
+        }
+
+        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
+                        sortFunctionMap.at(sort)
+        );
+
+        INFO("Songs size: {}", DataHolder::filteredSongList.size());
+        if(resetTable) {
+            QuestUI::MainThreadScheduler::Schedule([this] {
+                this->ResetTable();
+                INFO("table reset");
+            });
+        }
+    // }).detach();
+}
+
+

@@ -100,7 +100,3 @@ enum class SortMode {
     Best_rated,
     Worst_rated
 };
-
-
-void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);
-void ResetTable();

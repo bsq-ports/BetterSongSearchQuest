@@ -32,6 +32,8 @@
 #include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 #include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
 #include "UI/SelectedSongController.hpp"
+#include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
+
 
 #include "FilterOptions.hpp"
 #include <fmt/chrono.h>
@@ -48,6 +50,7 @@ namespace BetterSongSearch::UI {
     struct DataHolder {
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
+        inline static std::vector<const SDC_wrapper::BeatStarSong*> searchedSongList;
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
         inline static FilterOptions filterOptions;
@@ -93,6 +96,8 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
 
+    
+
     DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
@@ -118,6 +123,13 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ShowPlaylistCreation);
     DECLARE_INSTANCE_METHOD(void, ShowSettings);
 
+    // Play/DL
+    DECLARE_INSTANCE_METHOD(void, Download);
+    DECLARE_INSTANCE_METHOD(void, Play);
+    DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
+    DECLARE_INSTANCE_METHOD(void, FilterByUploader);
+
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, downloadCancelConfirmModal);
@@ -125,6 +137,8 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
+    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, searchInProgress);
+    
     DECLARE_INSTANCE_FIELD(HMUI::TextPageScrollView*, selectedSongDescription);
 
     BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
@@ -139,10 +153,15 @@ public:
         if(songList) {return songList->tableView;} else return nullptr;
     }
         
-    std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
     std::vector<std::string> songsWithScores;
     FilterOptions filterOptions;
 
+    bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
+    bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
+
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;
+
+    void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);
+    void ResetTable();
 )
