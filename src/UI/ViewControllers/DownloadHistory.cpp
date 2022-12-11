@@ -51,6 +51,9 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         //                                                                         { this->downloadHistoryTable()->ReloadData(); },
         //                                                                         0.1f);
     }
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/DownloadHistory.bsml";
+    #endif
 }
 
 void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView *table, int id)

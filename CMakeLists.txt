@@ -12,6 +12,9 @@ project(${COMPILE_ID})
 # Reduces linking speed, disable in development for faster builds
 # set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
+# Hot reload (DO NOT USE IN PRODUCTION)
+add_compile_options(-DHotReload)
+
 # c++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED 20)
@@ -24,9 +27,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # compile options used
 add_compile_options(-frtti -fexceptions)
-add_compile_options(-O3)
+# add_compile_options(-O3)
 # Uncomment for faster builds
-# add_compile_options(-O0)
+add_compile_options(-O0)
 # compile definitions used
 add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")

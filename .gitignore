@@ -55,3 +55,4 @@ mod.json
 extern.cmake
 qpm_defines.cmake
 qpm.shared.json
+node_modules

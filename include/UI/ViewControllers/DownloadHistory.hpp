@@ -12,6 +12,7 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -110,8 +111,11 @@ public:
     std::function<void()> UpdateProgressHandler;
 };
 
-
+#ifdef HotReload
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
+#else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
+#endif
     DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);

@@ -87,7 +87,12 @@ namespace BetterSongSearch::UI {
 
 }
 
+#ifdef HotReload
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
+#else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
+#endif
+
     DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
@@ -103,9 +108,19 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     
     DECLARE_INSTANCE_METHOD(void, SelectRandom);
     DECLARE_INSTANCE_METHOD(void, ShowMoreModal);
+    DECLARE_INSTANCE_METHOD(void, HideMoreModal);
     DECLARE_INSTANCE_METHOD(void, UpdateDataAndFilters);
 
+    // Forced close modal methods
+    DECLARE_INSTANCE_METHOD(void, ForcedUIClose);
+    DECLARE_INSTANCE_METHOD(void, ForcedUICloseCancel);
+
+    DECLARE_INSTANCE_METHOD(void, ShowPlaylistCreation);
+    DECLARE_INSTANCE_METHOD(void, ShowSettings);
+
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
+    DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);
+    DECLARE_INSTANCE_FIELD(HMUI::ModalView*, downloadCancelConfirmModal);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);

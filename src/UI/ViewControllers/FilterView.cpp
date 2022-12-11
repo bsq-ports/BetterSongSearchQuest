@@ -23,6 +23,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/FilterView.bsml";
+    #endif
 }
 
 void ViewControllers::FilterViewController::UpdateData()

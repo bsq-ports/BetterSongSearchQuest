@@ -119,6 +119,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         //                                                                              },
         //                                                                         0.1f);
     }
+
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/SongList.bsml";
+    #endif
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -148,12 +152,37 @@ void ViewControllers::SongListController::SelectRandom() {
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
+    this->moreModal->Show(false, false, nullptr);
     DEBUG("ShowMoreModal");
+};
+void ViewControllers::SongListController::HideMoreModal() {
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("HideMoreModal");
 };
 
 
 void ViewControllers::SongListController::UpdateDataAndFilters () {
     DEBUG("UpdateDataAndFilters");
+}
+
+void ViewControllers::SongListController::ForcedUIClose() {
+    DEBUG("ForcedUIClose");
+};
+
+void ViewControllers::SongListController::ForcedUICloseCancel () {
+    DEBUG("ForcedUICloseCancel");
+}
+
+void ViewControllers::SongListController::ShowPlaylistCreation() {
+    // Hide modal cause bsml does not support automagic hiding of it
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("ShowPlaylistCreation");
+};
+
+void ViewControllers::SongListController::ShowSettings () {
+    // Hide modal cause bsml does not support automagic hiding of it
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("ShowSettings");
 }
 
 // BSML::CustomCellInfo
