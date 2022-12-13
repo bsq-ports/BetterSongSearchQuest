@@ -1,10 +1,44 @@
 #include "Util/BSMLStuff.hpp"
 #include "main.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
+#include "HMUI/ScrollView.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
+#include "HMUI/EventSystemListener.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/RectTransform.hpp"
 #include "HMUI/CustomFormatRangeValuesSlider.hpp"
 #include "UnityEngine/UI/LayoutElement.hpp"
+#include "HMUI/VerticalScrollIndicator.hpp"
+#include "UnityEngine/Resources.hpp"
+#include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/UI/Button_ButtonClickedEvent.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
+#include "UnityEngine/Coroutine.hpp"
+#include "UnityEngine/MonoBehaviour.hpp"
+#include "UnityEngine/WaitForSeconds.hpp"
+#include "custom-types/shared/coroutine.hpp"
+
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
+DEFINE_TYPE(BetterSongSearch::UI::Util::BSMLStuff, RefreshScrolbarOnFirstLoad);
+
+namespace BetterSongSearch::UI::Util::BSMLStuff {
+	void RefreshScrolbarOnFirstLoad::OnEnable() {
+		coro(dorefresh());
+	};
+	custom_types::Helpers::Coroutine RefreshScrolbarOnFirstLoad::dorefresh(){
+		co_yield nullptr;
+		auto sv = get_gameObject()->GetComponent<HMUI::ScrollView*>();
+
+		if (sv == nullptr) {
+			co_return;
+		} else {
+			sv->verticalScrollIndicator->RefreshHandle();
+		}
+	};
+}
+
 
 namespace BetterSongSearch::UI::Util::BSMLStuff
 {
@@ -48,6 +82,59 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
         }
     }
 
+	inline static GameObject* scrollBar = nullptr;
+
+	GameObject* GetScrollbarForTable(GameObject* table, Transform* targetContainer) {
+		if (scrollBar == nullptr) {
+			scrollBar = get_scrollIndicatorTemplate()->get_gameObject();
+		}
+
+		if (scrollBar == nullptr) return nullptr;
+
+		auto sw = table->GetComponentInChildren<HMUI::ScrollView*>();
+
+		if (sw== nullptr) {
+			return nullptr;
+		};
+
+		auto listScrollbar = UnityEngine::GameObject::Instantiate(scrollBar, targetContainer, false);
+
+		listScrollbar->set_active(true);
+
+		auto vsi = listScrollbar->GetComponentInChildren<HMUI::VerticalScrollIndicator*>(true);
+
+		sw->verticalScrollIndicator = vsi;
+
+		auto buttoneZ = listScrollbar->GetComponentsInChildren<HMUI::NoTransitionsButton*>(true);
+		
+		if (buttoneZ.Length() == 2) {
+			for (auto button: buttoneZ) {
+				auto buttonName = button->get_gameObject()->get_name();
+				if (buttonName == "UpButton") {
+					sw->pageUpButton = button;
+
+					auto actionUp = BSML::MakeUnityAction(table, il2cpp_functions::class_get_method_from_name(reinterpret_cast<const Il2CppClass * >(sw), "PageUpButtonPressed", 0));
+					button->get_onClick()->AddListener(actionUp);
+					
+				}
+				if (buttonName == "DownButton") {
+					sw->pageDownButton = button;
+					auto actionDown = BSML::MakeUnityAction(table, il2cpp_functions::class_get_method_from_name(reinterpret_cast<const Il2CppClass * >(sw), "PageDownButtonPressed", 0));
+					button->get_onClick()->AddListener(actionDown);
+				}
+			}
+		}
+		
+
+		// I dont know WHY I need do do this, but if I dont the scrollbar wont work with the added modal.
+		for (auto x: listScrollbar->GetComponentsInChildren<Behaviour*>()) {
+			x->set_enabled(true);
+		}
+		
+		sw->Update();
+		sw->get_gameObject()->AddComponent<RefreshScrolbarOnFirstLoad*>();
+		return scrollBar;
+	}
     // TODO: Port these to fix scrollbar
     // static GameObject scrollBar = null;
 
@@ -102,4 +189,27 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
 	// 			ReflectionUtil.GetField<VerticalScrollIndicator, ScrollView>(sv, "_verticalScrollIndicator")?.RefreshHandle();
 	// 		}
 	// 	}
-}
+	HMUI::VerticalScrollIndicator* get_scrollIndicatorTemplate() {
+        static SafePtrUnity<HMUI::VerticalScrollIndicator> scrollIndicatorTemplate;
+        if (!scrollIndicatorTemplate)
+        {
+            scrollIndicatorTemplate = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::VerticalScrollIndicator* >().FirstOrDefault();
+        }
+        return scrollIndicatorTemplate.ptr();
+    }
+};
+	// 	class RefreshScrolbarOnFirstLoad : MonoBehaviour {
+	// 		void OnEnable() => StartCoroutine(dorefresh());
+
+	// 		IEnumerator dorefresh() {
+	// 			yield return null;
+	// 			var sv = gameObject.GetComponent<ScrollView>();
+
+	// 			if(sv == null)
+	// 				yield break;
+	// 			ReflectionUtil.GetField<VerticalScrollIndicator, ScrollView>(sv, "_verticalScrollIndicator")?.RefreshHandle();
+	// 		}
+	// 	}
+
+
+

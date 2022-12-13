@@ -50,6 +50,7 @@ namespace BetterSongSearch::UI {
     struct DataHolder {
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
+        inline static std::vector<const SDC_wrapper::BeatStarSong*> tempSongList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> searchedSongList;
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
@@ -129,6 +130,8 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
 
+    
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, searchBoxContainer);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);

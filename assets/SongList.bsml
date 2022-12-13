@@ -1,7 +1,7 @@
 ﻿<vertical preferred-width='120' anchor-pos-x="2" xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/RedBrumbler/Quest-BSML-Docs/gh-pages/schema.xsd'>
 	<horizontal id='filterContainer' preferred-height='10' child-control-width='false' child-expand-width='false' pad-left='1'>
-		<button on-click='SelectRandom' text='Random' preferred-height='8'/>
-		<button on-click='ShowMoreModal' text='More' preferred-height='8'/>
+		<button on-click='SelectRandom' text='Random' preferred-height='8' pref-width="14"/>
+		<button on-click='ShowMoreModal' text='More' preferred-height='8' pref-width="14"/>
 		<vertical id='searchBoxContainer' preferred-width='44' pad-left='2'/>
 		<loading id="searchInProgress" preserve-aspect="true" ignore-layout='true' size-delta-x='6' anchor-min-x='0.33' anchor-max-x='0.33'/>
 
@@ -10,10 +10,10 @@
 		</vertical>
 	</horizontal>
 	<horizontal preferred-height='75' pad-top='3' pad-bottom='2' preferred-width='80'>
-		<vertical preferred-width='70'>
-			<list id='songList' select-cell='SelectSong'/>
+		<vertical preferred-width='72'>
+			<list id='songList' select-cell='SelectSong' show-scrollbar='true'/>
 		</vertical>
-		<vertical preferred-width='8' id='scrollBarContainer' vertical-fit='Unconstrained'/>
+		<vertical preferred-width='6' id='scrollBarContainer' vertical-fit='Unconstrained'/>
 		<vertical preferred-width='40' bg='round-rect-panel' pad='2' child-expand-height='false'>
 			<!-- <macro.as-host host='selectedSongView'> -->
 				<horizontal preferred-height='6'>

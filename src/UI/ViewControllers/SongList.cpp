@@ -8,6 +8,10 @@
 #include "UnityEngine/Events/UnityAction.hpp"
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
+#include "HMUI/InputFieldView.hpp"
+#include "HMUI/InputFieldViewChangeBinder.hpp"
+#include "HMUI/InputFieldView_InputFieldChanged.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView.hpp"
 #include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -30,6 +34,11 @@
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
+#include "HMUI/ScrollView.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
+#include "Util/BSMLStuff.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
+
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
@@ -46,7 +55,7 @@ using namespace BetterSongSearch::Util;
 #include <functional>
 #include <regex>
 #include <future>
-
+#include "Util/CurrentTimeMs.hpp"
 //////////// Utils
 
 double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
@@ -309,6 +318,7 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 {
     int words = 0;
     int matches = 0;
+
     std::string songName = removeSpecialCharacter(toLower(song->GetName()));
     std::string songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
     std::string songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
@@ -336,6 +346,7 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
     }
 
     return matches == words;
+    // return true;
 }
 /////////////////////////////////////////////////
 
@@ -370,8 +381,36 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         //                                                                         0.1f);
     }
 
-    // TODO: Fix scrolling and append the scrollbar
+    // Steal search box from the base game
+    static SafePtrUnity<HMUI::InputFieldView> searchBox;
+    if (!searchBox) {
+        searchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>().First(
+        [](HMUI::InputFieldView *x) {
+            return x->get_name() == "SearchInputField";
+        });
+    }
 
+    if (searchBox) {
+        auto newSearchBox = Instantiate(searchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
+        auto songSearchInput = newSearchBox->GetComponent<HMUI::InputFieldView *>();
+        auto songSearchPlaceholder = newSearchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
+
+        songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
+
+        std::function<void(HMUI::InputFieldView * view)> onClick = [this](HMUI::InputFieldView * view) {
+            DEBUG("Input is: {}", (std::string) view->get_text());
+            // colorPickerModal->Show();
+        };
+        
+        songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onClick));
+    }
+    
+    auto ivrhelper = BSML::Helpers::GetIVRPlatformHelper();
+    for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
+        x->platformHelper=ivrhelper;
+    }
+
+    // Util::BSMLStuff::GetScrollbarForTable(songListTable()->get_gameObject(),  scrollBarContainer->get_transform());
 
     // Reset table the first time and load data
     ViewControllers::SongListController::ResetTable();
@@ -382,7 +421,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
 {
     
-    getLoggerOld().info("Cell clicked %i", id);
+    DEBUG("Cell clicked {}", id);
 }
 
 float ViewControllers::SongListController::CellSize()
@@ -399,7 +438,7 @@ void ViewControllers::SongListController::ResetTable()
         DEBUG("Songs size: {}", DataHolder::filteredSongList.size());
         DEBUG("TABLE RESET");
         songListTable()->ReloadData();
-        songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, true);
+        songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, false);
     }
 }
 
@@ -492,30 +531,125 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     prevSearch = search;
     // std::thread([&]{
         bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
-        DataHolder::filteredSongList.clear();
+        
+
+        long long before = 0;
+        long long after = 0;
+
+    // /// Original
+    // before = CurrentTimeMs();
+    // DataHolder::filteredSongList.clear();
+    // for(auto song : DataHolder::songList)
+    // {
+    //     bool meetsFilter = MeetsFilter(song);
+    //     bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+    //     if (meetsFilter) {
+            
+    //         if (songMeetsSearch) {
+    //             DataHolder::filteredSongList.emplace_back(song);
+    //         }     
+    //     }
+    // }
+    // after = CurrentTimeMs();
+    // DEBUG("Time before: {}", after-before);
+
+    // // Time the sort
+    // before = CurrentTimeMs();
+    // std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
+    //     sortFunctionMap.at(sort)
+    // );
+    // after = CurrentTimeMs();
+    // DEBUG("Time sorting: {}", after-before);
+
+    // /// Barely optimized
+    // before = CurrentTimeMs();
+    // DataHolder::filteredSongList.clear();
+    // for(auto song : DataHolder::songList)
+    // {
+    //     bool meetsFilter = MeetsFilter(song);
+    //     if (meetsFilter) {
+    //         bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+    //         if (songMeetsSearch) {
+    //             DataHolder::filteredSongList.emplace_back(song);
+    //         }     
+    //     }
+    // }
+    // after = CurrentTimeMs();
+    // DEBUG("Time new: {}", after-before);
+
+
+    // before = CurrentTimeMs();
+    // DataHolder::filteredSongList.clear();
+    // for(auto song : DataHolder::songList)
+    // {
+    //     bool meetsFilter = MeetsFilter(song);
+    //     if (meetsFilter) {
+    //         // bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+    //         // if (songMeetsSearch) {
+    //         //     DataHolder::filteredSongList.emplace_back(song);
+    //         // }     
+    //         DataHolder::filteredSongList.emplace_back(song);
+    //     }
+    // }
+    // after = CurrentTimeMs();
+    // DEBUG("Time filter: {}", after-before);
+
+
+    // before = CurrentTimeMs();
+    // DataHolder::filteredSongList.clear();
+    // for(auto song : DataHolder::songList)
+    // {
+    //     bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+    //     if (songMeetsSearch) {
+    //         DataHolder::filteredSongList.emplace_back(song);
+    //     }     
+    // }
+    // after = CurrentTimeMs();
+    // DEBUG("Time search: {}", after-before);
+
+
+    auto searchQuery = split(search, " ");
+    std::thread([this, searchQuery, sort]{
+        long long before = 0;
+        long long after = 0;
+        before = CurrentTimeMs();
+        DataHolder::tempSongList.clear();
         for(auto song : DataHolder::songList)
         {
             bool meetsFilter = MeetsFilter(song);
             if (meetsFilter) {
-                bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
+                bool songMeetsSearch = SongMeetsSearch(song, searchQuery);
                 if (songMeetsSearch) {
-                    DataHolder::filteredSongList.emplace_back(song);
-                }     
+                    DataHolder::tempSongList.emplace_back(song);
+                }
             }
         }
 
-        std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-                        sortFunctionMap.at(sort)
+        std::stable_sort(DataHolder::tempSongList.begin(), DataHolder::tempSongList.end(),
+            sortFunctionMap.at(sort)
         );
 
-        INFO("Songs size: {}", DataHolder::filteredSongList.size());
-        if(resetTable) {
-            QuestUI::MainThreadScheduler::Schedule([this] {
-                this->ResetTable();
-                INFO("table reset");
-            });
-        }
-    // }).detach();
+        after = CurrentTimeMs();
+        DEBUG("Time searchOffthread: {}", after-before);
+        QuestUI::MainThreadScheduler::Schedule([this]{
+            long long before = 0;
+            long long after = 0;
+            before = CurrentTimeMs();
+
+            DataHolder::filteredSongList  = DataHolder::tempSongList;
+            this->ResetTable();
+
+
+
+            after = CurrentTimeMs();
+            INFO("table reset in {}ms",  after-before);
+        });
+    }).detach();
 }
 
-
+// Old bench results in ms
+// Time before: 3526
+// Time sorting: 251
+// Time new: 3449
+// Time filter: 2659
+// Time search: 797

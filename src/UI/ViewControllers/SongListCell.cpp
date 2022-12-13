@@ -49,10 +49,12 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     void  CustomSongListTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType) {
+        DEBUG("Selection change");
         RefreshBgState();
     }
 
     void  CustomSongListTableCell::HighlightDidChange(HMUI::SelectableCell::TransitionType transitionType) {
+        DEBUG("Highlight change");
         RefreshBgState();
     }
 
