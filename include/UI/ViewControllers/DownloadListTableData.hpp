@@ -22,6 +22,9 @@ namespace BetterSongSearch::UI::ViewControllers
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(ReuseIdentifier);
                 BSML::parse_and_construct(IncludedAssets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);
+                
+                // Weird hack cause HMUI touchable is not there for some reason
+                tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
             }
 
             return reinterpret_cast<CustomDownloadListTableCell *>(tableCell);

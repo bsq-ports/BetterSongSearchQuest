@@ -23,6 +23,9 @@ namespace BetterSongSearch::UI::ViewControllers
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(CustomSongListTableCellReuseIdentifier);
                 BSML::parse_and_construct(IncludedAssets::SongListCell_bsml, tableCell->get_transform(), tableCell);
+
+                // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
+                tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
             }
 
             return reinterpret_cast<CustomSongListTableCell *>(tableCell);
