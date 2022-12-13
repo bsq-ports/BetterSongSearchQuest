@@ -38,6 +38,7 @@
 #include "bsml/shared/Helpers/getters.hpp"
 #include "Util/BSMLStuff.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
+#include "HMUI/TableViewSelectionType.hpp"
 
 
 using namespace QuestUI;
@@ -399,16 +400,24 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         std::function<void(HMUI::InputFieldView * view)> onClick = [this](HMUI::InputFieldView * view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
+            fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, (std::string) view->get_text() , true);
             // colorPickerModal->Show();
         };
         
         songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onClick));
     }
+
     
     auto ivrhelper = BSML::Helpers::GetIVRPlatformHelper();
     for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
         x->platformHelper=ivrhelper;
     }
+
+
+    std::function<void(HMUI::TableView *table, int id)> ss = [this](HMUI::TableView *table, int id) {
+        DEBUG("EVENT FIRED, YAY {}", id);
+    };
+    songListTable()->add_didSelectCellWithIdxEvent(BSML::MakeSystemAction(ss));
 
     // Util::BSMLStuff::GetScrollbarForTable(songListTable()->get_gameObject(),  scrollBarContainer->get_transform());
 
@@ -642,6 +651,13 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
 
 
             after = CurrentTimeMs();
+            // Three dls to test selection
+            if (DataHolder::filteredSongList.size() > 22) {
+                // Add 20 songs to test the other table
+                for (int i= 0; i<20;i++ ) {
+                    fcInstance->DownloadHistoryViewController->TryAddDownload(DataHolder::filteredSongList[i]);
+                }
+            }   
             INFO("table reset in {}ms",  after-before);
         });
     }).detach();

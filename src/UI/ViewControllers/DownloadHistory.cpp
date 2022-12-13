@@ -58,7 +58,7 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
 void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView *table, int id)
 {
-    getLoggerOld().info("Cell clicked %i", id);
+    DEBUG("Cell is clicked");
 }
 
 float ViewControllers::DownloadHistoryViewController::CellSize()
@@ -165,91 +165,91 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         return;
     }
 
-    // We have the entry, now we need to download
-    if (firstEntry->status == DownloadHistoryEntry::DownloadStatus::Failed)
-        firstEntry->retries++;
-    firstEntry->downloadProgress = 0.0f;
-    firstEntry->status = DownloadHistoryEntry::DownloadStatus::Preparing;
-    // RefreshTable(true);
-    firstEntry->lastUpdate = CurrentTimeMs();
-    std::function<void(float)> progressUpdate = [this,  firstEntry](float downloadPercentage)
-    {
+    // // We have the entry, now we need to download
+    // if (firstEntry->status == DownloadHistoryEntry::DownloadStatus::Failed)
+    //     firstEntry->retries++;
+    // firstEntry->downloadProgress = 0.0f;
+    // firstEntry->status = DownloadHistoryEntry::DownloadStatus::Preparing;
+    // // RefreshTable(true);
+    // firstEntry->lastUpdate = CurrentTimeMs();
+    // std::function<void(float)> progressUpdate = [this,  firstEntry](float downloadPercentage)
+    // {
 
-        auto now = CurrentTimeMs();
-        if (now - firstEntry->lastUpdate < 50) {
-            return;
-        }
+    //     auto now = CurrentTimeMs();
+    //     if (now - firstEntry->lastUpdate < 50) {
+    //         return;
+    //     }
         
-        firstEntry->statusDetails = fmt::format("({}{})", downloadPercentage, firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
-        firstEntry->lastUpdate = now;
+    //     firstEntry->statusDetails = fmt::format("({}{})", downloadPercentage, firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
+    //     firstEntry->lastUpdate = now;
 
-        firstEntry->downloadProgress = downloadPercentage / 100.0f;
-        if(firstEntry->UpdateProgressHandler != nullptr) {
-            QuestUI::MainThreadScheduler::Schedule([firstEntry]{
-                firstEntry->UpdateProgressHandler();
-            });
-        }
-        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);     
-    };
-    DEBUG("Hash {}", firstEntry->hash);
+    //     firstEntry->downloadProgress = downloadPercentage / 100.0f;
+    //     if(firstEntry->UpdateProgressHandler != nullptr) {
+    //         QuestUI::MainThreadScheduler::Schedule([firstEntry]{
+    //             firstEntry->UpdateProgressHandler();
+    //         });
+    //     }
+    //     fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);     
+    // };
+    // DEBUG("Hash {}", firstEntry->hash);
 
-    firstEntry->downloadProgress = 0.0f;
-    firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloading;
+    // firstEntry->downloadProgress = 0.0f;
+    // firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloading;
 
-    RefreshTable(true);
+    // RefreshTable(true);
 
-    BeatSaver::API::GetBeatmapByHashAsync(std::string(firstEntry->hash),
-        [this, progressUpdate, firstEntry, forceTableReload](std::optional<BeatSaver::Beatmap> beatmap)
-        {
-            if (beatmap.has_value())
-            {
-                DEBUG("Beatmap name: {}", beatmap->GetName());
-                auto value = beatmap.value();
+    // BeatSaver::API::GetBeatmapByHashAsync(std::string(firstEntry->hash),
+    //     [this, progressUpdate, firstEntry, forceTableReload](std::optional<BeatSaver::Beatmap> beatmap)
+    //     {
+    //         if (beatmap.has_value())
+    //         {
+    //             DEBUG("Beatmap name: {}", beatmap->GetName());
+    //             auto value = beatmap.value();
                 
                 
-                DEBUG("1 {}", value.GetName());
-                BeatSaver::API::DownloadBeatmapAsync(
-                    beatmap.value(),
-                    [this,firstEntry, forceTableReload](bool error)
-                    {
+    //             DEBUG("1 {}", value.GetName());
+    //             BeatSaver::API::DownloadBeatmapAsync(
+    //                 beatmap.value(),
+    //                 [this,firstEntry, forceTableReload](bool error)
+    //                 {
 
-                        QuestUI::MainThreadScheduler::Schedule(
-                            [error, this, firstEntry, forceTableReload]
-                            {
-                                if (error) {
-                                    DEBUG("ERROR DOWNLOADING SONG");
-                                    errored("Error" ,firstEntry);
-                                    RefreshTable(true);
-                                    this->ProcessDownloads(forceTableReload);
-                                } else {
-                                    firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
-                                    firstEntry->statusDetails = "";
-                                    DEBUG("Success downloading the song");
-                                    RefreshTable(true);
-                                    RuntimeSongLoader::API::RefreshSongs(false);
-                                    this->ProcessDownloads(forceTableReload);
-                                }
-                                if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
-                                    // NESTING HELLLL      
-                                    // TODO: Disable button
-                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(true);
-                                    // }
+    //                     QuestUI::MainThreadScheduler::Schedule(
+    //                         [error, this, firstEntry, forceTableReload]
+    //                         {
+    //                             if (error) {
+    //                                 DEBUG("ERROR DOWNLOADING SONG");
+    //                                 errored("Error" ,firstEntry);
+    //                                 RefreshTable(true);
+    //                                 this->ProcessDownloads(forceTableReload);
+    //                             } else {
+    //                                 firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
+    //                                 firstEntry->statusDetails = "";
+    //                                 DEBUG("Success downloading the song");
+    //                                 RefreshTable(true);
+    //                                 RuntimeSongLoader::API::RefreshSongs(false);
+    //                                 this->ProcessDownloads(forceTableReload);
+    //                             }
+    //                             if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+    //                                 // NESTING HELLLL      
+    //                                 // TODO: Disable button
+    //                                 // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
+    //                                 //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(true);
+    //                                 // }
                                   
-                                    // TODO: Refresh cells
-                                    // fcInstance->SongListViewController->tablePt.RefreshCells(false, true);
-                                } else {
-                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(false);
-                                    // }
-                                }
-                            });
-                    },
-                    progressUpdate);
-            }else {
-            }
-        });
-    this->ProcessDownloads(forceTableReload);
+    //                                 // TODO: Refresh cells
+    //                                 // fcInstance->SongListViewController->tablePt.RefreshCells(false, true);
+    //                             } else {
+    //                                 // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
+    //                                 //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(false);
+    //                                 // }
+    //                             }
+    //                         });
+    //                 },
+    //                 progressUpdate);
+    //         }else {
+    //         }
+    //     });
+    // this->ProcessDownloads(forceTableReload);
 }
 
 void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReload)
