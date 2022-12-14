@@ -23,6 +23,29 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         return;
 
     getLoggerOld().info("Filter View contoller activated");
+
+    // Get settings and set stuff
+    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
+    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
+    this->minimumSongLength=DataHolder::filterOptions.minLength;
+    this->maximumSongLength=DataHolder::filterOptions.maxLength;
+    this->minimumNjs = DataHolder::filterOptions.minNJS;
+    this->maximumNjs = DataHolder::filterOptions.maxNJS;
+    this->minimumNps = DataHolder::filterOptions.minNPS;
+    this->maximumNps = DataHolder::filterOptions.maxNPS;
+    this->minimumStars = DataHolder::filterOptions.minStars;
+    this->maximumStars = DataHolder::filterOptions.maxStars;
+    this->minimumRating = DataHolder::filterOptions.minRating;
+    this->minimumVotes = DataHolder::filterOptions.minVotes;
+    
+    // TODO: fix uploaders
+    // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
+    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
+    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
+    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
+    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
+
+    // Create bsml view
     BSML::parse_and_construct(IncludedAssets::FilterView_bsml, this->get_transform(), this);
 
     auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);

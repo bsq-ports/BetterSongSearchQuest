@@ -85,9 +85,9 @@ extern "C" void setup(ModInfo& info) {
 
         getLoggerOld().info("Finished loading songs.");
         DataHolder::loadedSDC = true;
-        // if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
-        //     fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
-        // }
+        if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
+            fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
+        }
     }).detach();
 }
 

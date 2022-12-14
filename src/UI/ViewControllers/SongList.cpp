@@ -39,12 +39,13 @@
 #include "Util/BSMLStuff.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "HMUI/TableViewSelectionType.hpp"
-
+#include "Util/Random.hpp"
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 
+DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 #include <iomanip>
@@ -353,8 +354,6 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 
 ////////////
 
-DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListController);
-
 
 
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
@@ -374,7 +373,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
 
-        
         // limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
         //                                                                         { 
         //                                                                             // this->downloadHistoryTable()->ReloadData();
@@ -407,24 +405,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onClick));
     }
 
-    
-    auto ivrhelper = BSML::Helpers::GetIVRPlatformHelper();
-    for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
-        x->platformHelper=ivrhelper;
-    }
-
-
-    std::function<void(HMUI::TableView *table, int id)> ss = [this](HMUI::TableView *table, int id) {
-        DEBUG("EVENT FIRED, YAY {}", id);
-    };
-    songListTable()->add_didSelectCellWithIdxEvent(BSML::MakeSystemAction(ss));
-
-    // Util::BSMLStuff::GetScrollbarForTable(songListTable()->get_gameObject(),  scrollBarContainer->get_transform());
-
     // Reset table the first time and load data
-    ViewControllers::SongListController::ResetTable();
-
-    
+    if (DataHolder::loadedSDC == true) {
+        ViewControllers::SongListController::SortAndFilterSongs(SortMode::Newest, "", true);
+    }
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -465,8 +449,13 @@ void ViewControllers::SongListController::ctor()
 
 void ViewControllers::SongListController::SelectRandom() {
     DEBUG("SelectRandom");
-    // TODO: Remove. It's here for testing
-    fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
+    auto cellsNumber = this->NumberOfCells();
+    if (cellsNumber < 2) {
+        return;
+    }
+    auto id = BetterSongSearch::Util::random(0, cellsNumber - 1);
+    songListTable()->SelectCellWithIdx(id, true);
+    songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, true);
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
@@ -529,6 +518,11 @@ HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView
 
 
 void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable) {
+    // Skip if not active 
+    if (get_isActiveAndEnabled() == false) {
+        return;
+    }
+
     DEBUG("SortAndFilterSongs");
     if(songListTable() != nullptr)
     {
@@ -538,84 +532,8 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     }
     prevSort = sort;
     prevSearch = search;
-    // std::thread([&]{
-        bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
-        
 
-        long long before = 0;
-        long long after = 0;
-
-    // /// Original
-    // before = CurrentTimeMs();
-    // DataHolder::filteredSongList.clear();
-    // for(auto song : DataHolder::songList)
-    // {
-    //     bool meetsFilter = MeetsFilter(song);
-    //     bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
-    //     if (meetsFilter) {
-            
-    //         if (songMeetsSearch) {
-    //             DataHolder::filteredSongList.emplace_back(song);
-    //         }     
-    //     }
-    // }
-    // after = CurrentTimeMs();
-    // DEBUG("Time before: {}", after-before);
-
-    // // Time the sort
-    // before = CurrentTimeMs();
-    // std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-    //     sortFunctionMap.at(sort)
-    // );
-    // after = CurrentTimeMs();
-    // DEBUG("Time sorting: {}", after-before);
-
-    // /// Barely optimized
-    // before = CurrentTimeMs();
-    // DataHolder::filteredSongList.clear();
-    // for(auto song : DataHolder::songList)
-    // {
-    //     bool meetsFilter = MeetsFilter(song);
-    //     if (meetsFilter) {
-    //         bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
-    //         if (songMeetsSearch) {
-    //             DataHolder::filteredSongList.emplace_back(song);
-    //         }     
-    //     }
-    // }
-    // after = CurrentTimeMs();
-    // DEBUG("Time new: {}", after-before);
-
-
-    // before = CurrentTimeMs();
-    // DataHolder::filteredSongList.clear();
-    // for(auto song : DataHolder::songList)
-    // {
-    //     bool meetsFilter = MeetsFilter(song);
-    //     if (meetsFilter) {
-    //         // bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
-    //         // if (songMeetsSearch) {
-    //         //     DataHolder::filteredSongList.emplace_back(song);
-    //         // }     
-    //         DataHolder::filteredSongList.emplace_back(song);
-    //     }
-    // }
-    // after = CurrentTimeMs();
-    // DEBUG("Time filter: {}", after-before);
-
-
-    // before = CurrentTimeMs();
-    // DataHolder::filteredSongList.clear();
-    // for(auto song : DataHolder::songList)
-    // {
-    //     bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
-    //     if (songMeetsSearch) {
-    //         DataHolder::filteredSongList.emplace_back(song);
-    //     }     
-    // }
-    // after = CurrentTimeMs();
-    // DEBUG("Time search: {}", after-before);
-
+    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
 
     auto searchQuery = split(search, " ");
     std::thread([this, searchQuery, sort]{
@@ -651,13 +569,6 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
 
 
             after = CurrentTimeMs();
-            // Three dls to test selection
-            if (DataHolder::filteredSongList.size() > 22) {
-                // Add 20 songs to test the other table
-                for (int i= 0; i<20;i++ ) {
-                    fcInstance->DownloadHistoryViewController->TryAddDownload(DataHolder::filteredSongList[i]);
-                }
-            }   
             INFO("table reset in {}ms",  after-before);
         });
     }).detach();

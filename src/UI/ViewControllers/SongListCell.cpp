@@ -9,13 +9,11 @@
 #include "BeatSaverRegionManager.hpp"
 #include "songloader/shared/API.hpp"
 
-DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell)
+DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
 
 namespace BetterSongSearch::UI::ViewControllers {
-
     CustomSongListTableCell* CustomSongListTableCell::PopulateWithSongData(const SDC_wrapper::BeatStarSong* entry) {
-        DEBUG("INIT CELL");
         this->levelAuthorName->set_text(entry->GetAuthor());
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->duration_secs), entry->upvotes, entry->downvotes));
         this->uploadDateFormatted->set_text(fmt::format("{:%d. %b %Y}", fmt::localtime(entry->uploaded_unix_time)));
@@ -40,26 +38,23 @@ namespace BetterSongSearch::UI::ViewControllers {
         this->entry = entry;
     
         SetFontSizes();
-
         return this;
     }
 
     void  CustomSongListTableCell::RefreshBgState() {
-        bgContainer->set_color(UnityEngine::Color(0, 0, 0, highlighted ? 0.8f : 0.45f));
+        bgContainer->set_color(UnityEngine::Color(0, 0, 0, selected || highlighted ? 0.8f : 0.45f));
     }
 
     void  CustomSongListTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType) {
-        DEBUG("Selection change");
         RefreshBgState();
     }
 
     void  CustomSongListTableCell::HighlightDidChange(HMUI::SelectableCell::TransitionType transitionType) {
-        DEBUG("Highlight change");
         RefreshBgState();
     }
 
     void CustomSongListTableCell::WasPreparedForReuse() {
-       entry = nullptr;
+        entry = nullptr;
     }
 
     void  CustomSongListTableCell::SetFontSizes(){
