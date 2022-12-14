@@ -15,11 +15,4 @@ using namespace UnityEngine;
 
 namespace BetterSongSearch::UI::Util::BSMLStuff {
     custom_types::Helpers::Coroutine MergeSliders(GameObject* container, bool constrictValuesMinMax = true);
-    GameObject* GetScrollbarForTable(GameObject* table, Transform* targetContainer);
-    HMUI::VerticalScrollIndicator* get_scrollIndicatorTemplate();
 }
-
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Util::BSMLStuff, RefreshScrolbarOnFirstLoad, MonoBehaviour,
-    DECLARE_INSTANCE_METHOD(void, OnEnable);
-    custom_types::Helpers::Coroutine dorefresh();
-)

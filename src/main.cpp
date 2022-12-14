@@ -60,10 +60,7 @@ extern "C" void setup(ModInfo& info) {
     getLoggerOld().info("Completed setup!");
 
     std::thread([]{
-        auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-        DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
         auto& filterOptions = DataHolder::filterOptions;
-
         getLoggerOld().info("setting config values");
         filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
         filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
@@ -83,6 +80,10 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
 
+
+        auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
+        DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
+        
         getLoggerOld().info("Finished loading songs.");
         DataHolder::loadedSDC = true;
         if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
