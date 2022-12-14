@@ -1,5 +1,6 @@
 #include "UI/ViewControllers/FilterView.hpp"
 #include "main.hpp"
+#include "PluginConfig.hpp"
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "FilterOptions.hpp"
@@ -8,6 +9,28 @@
 #include <fmt/chrono.h>
 #include "Util/BSMLStuff.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
+#define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
+    if (value != nullptr) { \
+        int index = get_##options()->IndexOf(value); \
+        if (index < 0 ) { \
+            ERROR("WE HAVE A BUG WITH SAVING VALUE {}", (std::string) value); \
+        } else { \
+            if (index != getPluginConfig().configName.GetValue()) { \
+                filtersChanged = true; \
+                getPluginConfig().configName.SetValue(index); \
+                DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) index; \
+            } \
+        }\
+    }
+
+#define SAVE_NUMBER_CONFIG(value, configName, filterProperty) \
+    if (value != getPluginConfig().configName.GetValue()) { \
+        filtersChanged = true; \
+        getPluginConfig().configName.SetValue(value); \
+        DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) value; \
+    } \
+
 
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
@@ -22,7 +45,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     if (!firstActivation)
         return;
 
-    getLoggerOld().info("Filter View contoller activated");
+    INFO("Filter View contoller activated");
 
     // Get settings and set stuff
     this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
@@ -38,7 +61,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     this->minimumRating = DataHolder::filterOptions.minRating;
     this->minimumVotes = DataHolder::filterOptions.minVotes;
     
-    // TODO: fix uploaders
+    // TODO: fix uploaders field loading
     // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
     this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
     this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
@@ -59,17 +82,34 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
 void ViewControllers::FilterViewController::UpdateData()
 {
-    DEBUG("UPDATE DATA FIRED");
+    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
+    bool filtersChanged = false;
+
+    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
+    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
+
+    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType, charFilter);
+    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
+    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
+    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
     
-    // // Logs
-    // DEBUG("\nFilter props: \n existingSongs: {} \n existingScore: {}\n rankedState: {} \n characteristic: {}\n difficulty: {} \n Required mods: {} ",
-    //     (std::string ) this->existingSongs,
-    //     (std::string ) this->existingScore,
-    //     (std::string ) this->rankedState,
-    //     (std::string ) this->characteristic,
-    //     (std::string ) this->difficulty,
-    //     (std::string ) this->mods
-    // );
+    SAVE_NUMBER_CONFIG(this->minimumSongLength,MinLength ,minLength);
+    SAVE_NUMBER_CONFIG(this->maximumSongLength, MaxLength,maxLength);
+    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
+    SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
+    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
+    SAVE_NUMBER_CONFIG(this->maximumNps,MaxNPS,  maxNPS);
+    SAVE_NUMBER_CONFIG(this->minimumStars,MinStars, minStars);
+    SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
+    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
+    SAVE_NUMBER_CONFIG(this->minimumVotes,MinVotes, minVotes);
+
+    if (filtersChanged) {
+        DEBUG("Filters changed");
+    } else {
+        DEBUG("Filters did not change");
+    }
+
 }
 
 // Sponsors related things
