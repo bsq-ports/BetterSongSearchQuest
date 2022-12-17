@@ -32,8 +32,8 @@
 				<vertical vertical-fit="PreferredSize" active="true" id="detailActions">
 					<primary-button id="downloadButton" on-click='Download' text='Download' horizontal-fit='Unconstrained' font-size='3.5' active='true'/>
 					<primary-button id="playButton" on-click='Play' text='Play' horizontal-fit='Unconstrained' font-size='3.5' active='true'/>
-					<button on-click='ShowSongDetails' text='Upload Details' horizontal-fit='Unconstrained' font-size='3.5'/>
-					<button on-click='FilterByUploader' text='Filter by Uploader' horizontal-fit='Unconstrained' font-size='3.2'/>
+					<button id="infoButton" on-click='ShowSongDetails' text='Upload Details' horizontal-fit='Unconstrained' font-size='3.5'/>
+					<!-- <button on-click='FilterByUploader' text='Filter by Uploader' horizontal-fit='Unconstrained' font-size='3.2'/> -->
 				</vertical>
 			<!-- </macro.as-host> -->
 		</vertical>

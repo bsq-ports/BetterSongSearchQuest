@@ -17,14 +17,14 @@
 					<list-setting text='Downloaded' value="existingSongs" choices='downloadedFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateData"/>
 					<list-setting text='Local score' value="existingScore" choices='scoreFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateData"/>
 					<slider-setting text='Length' value="minimumSongLength" bind-value="true" apply-on-change="true" max='10' increment='0.25' formatter='FormatSongLengthLimitFloat' on-change="UpdateData"/>
-					<slider-setting text='MERGE_TO_PREV' value="maximumSongLength" bind-value="true" apply-on-change="true" max='~SONG_LENGTH_FILTER_MAX' increment='0.25' formatter='FormatSongLengthLimitFloat' on-change="UpdateData"/>
+					<slider-setting text='MERGE_TO_PREV' value="maximumSongLength" bind-value="true" apply-on-change="true" max='15' increment='0.25' formatter='FormatSongLengthLimitFloat' on-change="UpdateData"/>
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>Mapping' align='Center' underlined='true' bold='true'  font-size='3.5' color='#69B' size-delta-y='5'/>
-					<slider-setting text='NJS' value="minimumNjs" bind-value="true" apply-on-change="true" max='~NJS_FILTER_MAX' increment='0.5' formatter='FormatShortFloat' on-change="UpdateData"/>
-					<slider-setting text='MERGE_TO_PREV' value="maximumNjs" bind-value="true" apply-on-change="true" max='~NJS_FILTER_MAX' increment='0.5' formatter='FormatMaxNjs' on-change="UpdateData"/>
-					<slider-setting text='Notes/s' value="minimumNps" bind-value="true" apply-on-change="true" max='15' increment='0.5' formatter='FormatShortFloat' on-change="UpdateData"/>
-					<slider-setting text='MERGE_TO_PREV' value="maximumNps" bind-value="true" apply-on-change="true" max='~NPS_FILTER_MAX' increment='0.5' formatter='FormatMaxNps' on-change="UpdateData"/>
+					<slider-setting text='NJS' value="minimumNjs" bind-value="true" apply-on-change="true" max='25' increment='0.5' formatter='FormatShortFloat' on-change="UpdateData"/>
+					<slider-setting text='MERGE_TO_PREV' value="maximumNjs" bind-value="true" apply-on-change="true" max='25' increment='0.5' formatter='FormatMaxNjs' on-change="UpdateData"/>
+					<slider-setting text='Notes/s' value="minimumNps" bind-value="true" apply-on-change="true" max='12' increment='0.5' formatter='FormatShortFloat' on-change="UpdateData"/>
+					<slider-setting text='MERGE_TO_PREV' value="maximumNps" bind-value="true" apply-on-change="true" max='12' increment='0.5' formatter='FormatMaxNps' on-change="UpdateData"/>
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>ScoreSaber' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>

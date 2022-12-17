@@ -46,6 +46,11 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 namespace BetterSongSearch::UI {
+    inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
+    inline bool inBSS;
+
+
+
     // Global variables
     struct DataHolder {
         inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
@@ -152,13 +157,15 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, playButton);
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, infoButton);
+    
 
     BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
 
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
     DECLARE_INSTANCE_FIELD(StringW, selectedSortMode);
 
-
+    
 
 public:
     HMUI::TableView* songListTable() {
@@ -178,4 +185,8 @@ public:
 
     void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
+    const SDC_wrapper::BeatStarSong* currentSong = nullptr;
+    void UpdateDetails();
+    std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
 )
+

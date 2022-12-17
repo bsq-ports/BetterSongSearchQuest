@@ -77,11 +77,11 @@ inline std::string toLower(char const* s) {
 //     #endif
 // }
 
-UnityEngine::GameObject* backButton = nullptr;
-UnityEngine::GameObject* soloButton = nullptr;
-GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
-GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
-GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
+// UnityEngine::GameObject* backButton = nullptr;
+// UnityEngine::GameObject* soloButton = nullptr;
+// GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
+// GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
+// GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
 
 // void BetterSongSearch::UI::SelectedSongController::DidActivate(bool firstActivation) {
 //     songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
@@ -93,17 +93,17 @@ GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = 
 //             });
 // }
 
-custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
-    backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
-    co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
-    soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-    soloButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
-    GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
-    if(levelCollectionNavigationController) {
-        co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
-        levelCollectionNavigationController->SelectLevel(level);
-    }
-}
+// custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
+//     backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
+//     co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
+//     soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+//     soloButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
+//     GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
+//     if(levelCollectionNavigationController) {
+//         co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
+//         levelCollectionNavigationController->SelectLevel(level);
+//     }
+// }
 
 // void BetterSongSearch::UI::SelectedSongController::PlaySong()
 // {

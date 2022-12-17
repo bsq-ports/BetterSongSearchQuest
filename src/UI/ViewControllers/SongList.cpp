@@ -1,7 +1,17 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "main.hpp"
 
-
+#include "UnityEngine/WaitForSeconds.hpp"
+#include "UnityEngine/AudioClip.hpp"
+#include "UnityEngine/AudioType.hpp"
+#include "UnityEngine/Networking/DownloadHandlerAudioClip.hpp"
+#include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
+#include "UnityEngine/Networking/UnityWebRequest.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "config-utils/shared/config-utils.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/Transform.hpp"
@@ -40,10 +50,24 @@
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "HMUI/TableViewSelectionType.hpp"
 #include "Util/Random.hpp"
+#include "fmt/fmt/include/fmt/core.h"
+
+#include <iomanip>
+#include <sstream>
+#include <map>
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
+
+#define SONGDOWNLOADER
+
+
+UnityEngine::GameObject* backButton = nullptr;
+UnityEngine::GameObject* soloButton = nullptr;
+GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
+GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
+GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
 
 DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
@@ -409,11 +433,27 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (DataHolder::loadedSDC == true) {
         ViewControllers::SongListController::SortAndFilterSongs(SortMode::Newest, "", true);
     }
+
+
+    // Get song preview player 
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
+    beatmapLevelsModel = QuestUI::ArrayUtil::First(
+        UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
+        [](GlobalNamespace::BeatmapLevelsModel *x) {
+            return x->customLevelPackCollection != nullptr;
+        });
+
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
-{
-    
+{   
+    if (DataHolder::filteredSongList.size() < id) {
+        // Return if the id is invalid
+        return;
+    }
+    auto song  = DataHolder::filteredSongList[id];
+    this->SetSelectedSong(song);
     DEBUG("Cell clicked {}", id);
 }
 
@@ -456,6 +496,7 @@ void ViewControllers::SongListController::SelectRandom() {
     auto id = BetterSongSearch::Util::random(0, cellsNumber - 1);
     songListTable()->SelectCellWithIdx(id, true);
     songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, true);
+    
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
@@ -494,15 +535,163 @@ void ViewControllers::SongListController::ShowSettings () {
 
 // Song buttons
 void ViewControllers::SongListController::Download () {
-    DEBUG("Download");
+    #ifdef SONGDOWNLOADER
+
+    auto songData = this->currentSong;
+
+    if (songData != nullptr) {
+        fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
+        downloadButton->set_interactable(false);
+        // downloadButton->upda;
+    }  else {
+        WARNING("Current song is null, doing nothing");
+    }
+    #endif
 }
 
+void GetByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
+    BeatSaverRegionManager::GetAsync(url,
+           [finished](long httpCode, std::string data) {
+               std::vector<uint8_t> bytes(data.begin(), data.end());
+               finished(bytes);
+           }, [](float progress){}
+    );
+}
+
+custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip*)> finished) {
+    auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
+    if(webRequest->get_isNetworkError())
+        INFO("Network error");
+
+    while(webRequest->GetDownloadProgress() < 1.0f);
+
+    INFO("Download complete");
+    UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+    finished(clip);
+}
+
+custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
+    backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
+    co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
+    auto soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+    soloButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
+    GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
+    if(levelCollectionNavigationController) {
+        co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
+        levelCollectionNavigationController->SelectLevel(level);
+    }
+}
+
+
+
 void ViewControllers::SongListController::Play () {
+    backButton = UnityEngine::GameObject::Find("BackButton");
+    auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(currentSong->GetHash()));
+    if(level.has_value())
+    {
+        currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+    }
+    GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
+
     DEBUG("Play");
 }
 
 void ViewControllers::SongListController::ShowSongDetails () {  
     DEBUG("ShowSongDetails");
+}
+
+void ViewControllers::SongListController::UpdateDetails () {  
+    if (currentSong == nullptr) {
+        // updateView();
+        return;
+    }
+    // if same song, don't modify
+    // if (!currentSong.readAndClear(*ctx)) {
+    //     updateView();
+    //     return;
+    // }
+    auto song = *currentSong;
+    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song.GetHash()));
+    bool downloaded = beatmap.has_value();
+    #ifdef SONGDOWNLOADER
+    //getLoggerOld().info("Gathering information...");
+    // coverImage.child.sprite = defaultImage;
+
+    //getLoggerOld().info("No Method: %s", song->hash.string_data);
+    //getLoggerOld().info("Method: %s", song->GetHash().data());
+
+    if(this->imageCoverCache.contains(std::string(song.GetHash()))) {
+        std::vector<uint8_t> data = this->imageCoverCache[std::string(song.GetHash())];
+        Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
+        this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
+        // this->coverImage->sizethis->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
+        // this->coverImage.update();
+    }
+    else {
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song.GetHash()));
+        coverLoading->set_enabled(true);
+        GetByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
+            QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
+                std::vector<uint8_t> data = bytes;
+
+                if (song.GetHash() != this->currentSong->GetHash()) return;
+                this->imageCoverCache[std::string(song.GetHash())] = {data.begin(), data.end()};
+                Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
+                this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
+              
+                coverLoading->set_enabled(false);
+                this->UpdateDetails();
+            });
+        });
+    }
+    if(downloaded) {
+        //Get preview from beatmap
+        if(!beatmapLevelsModel)
+            return;
+        if(!levelCollectionViewController)
+            return;
+
+        auto preview = beatmapLevelsModel->GetLevelPreviewForLevelId(beatmap.value()->levelID);
+        if(preview)
+            levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(preview);
+    }
+    else {
+        if(!songPreviewPlayer)
+            return;
+
+        auto ssp = songPreviewPlayer;
+
+        std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song.GetHash()));
+
+        GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(GetPreview(newUrl, [ssp](UnityEngine::AudioClip* clip) {
+            ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
+        })));
+    }
+
+    #endif
+
+    float minNPS = 500000, maxNPS = 0;
+    float minNJS = 500000, maxNJS = 0;
+    for (auto diff: song.GetDifficultyVector()) {
+        float nps = (float) diff->notes / (float) song.duration_secs;
+        float njs = diff->njs;
+        minNPS = std::min(nps, minNPS);
+        maxNPS = std::max(nps, maxNPS);
+
+        minNJS = std::min(njs, minNJS);
+        maxNJS = std::max(njs, maxNJS);
+    }
+
+    // downloadButton.set.text = "Download";
+    playButton->set_enabled(downloaded);
+    playButton->set_interactable(downloaded);
+    downloadButton->set_enabled(!downloaded);
+    downloadButton->set_interactable(!downloaded);
+    infoButton->set_interactable(true);
+    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongName->set_text(song.GetName());
+    selectedSongAuthor->set_text(song.GetSongAuthor());
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
@@ -574,9 +763,22 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     }).detach();
 }
 
-void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong*) {
+void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong* song) {
     // TODO: Fill all fields, download image, activate buttons
+    if (currentSong != nullptr && currentSong->GetHash() == song->GetHash()) {
+        return;
+    }
+    currentSong = song;
+    this->UpdateDetails();
 }
+
+// CURRENT SONG RELATED THINGS//
+
+
+
+////////////////////////////////
+
+
 // Old bench results in ms
 // Time before: 3526
 // Time sorting: 251
