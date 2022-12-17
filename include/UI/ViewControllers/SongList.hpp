@@ -141,8 +141,17 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, searchInProgress);
-    
-    DECLARE_INSTANCE_FIELD(HMUI::TextPageScrollView*, selectedSongDescription);
+
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongAuthor);
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongName);
+
+    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
+    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverLoading);
+
+    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDiffInfo);
+
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, playButton);
 
     BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
 
@@ -161,6 +170,8 @@ public:
 
     bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
     bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
+
+    void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
 
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;

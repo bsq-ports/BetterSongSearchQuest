@@ -574,6 +574,9 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     }).detach();
 }
 
+void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong*) {
+    // TODO: Fill all fields, download image, activate buttons
+}
 // Old bench results in ms
 // Time before: 3526
 // Time sorting: 251
