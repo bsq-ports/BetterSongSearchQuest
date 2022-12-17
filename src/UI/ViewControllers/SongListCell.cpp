@@ -21,19 +21,16 @@ namespace BetterSongSearch::UI::ViewControllers {
         auto ranked = entry->GetMaxStarValue() > 0;
         bool downloaded = RuntimeSongLoader::API::GetLevelByHash(entry->hash.string_data).has_value();
 
-        // Sombrero::FastColor songColor = Sombrero::FastColor::white();
-
-        // these double assignments wil be optimized out, don't worry about it!
-        // if (downloaded) {
-        //     songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
-        // }
-
-        // if (ranked) {
-        //     songColor = UnityEngine::Color(1, 0.647f, 0, 1);
-        // }
+        Sombrero::FastColor songColor = Sombrero::FastColor::white();
+        if (downloaded) {
+            songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
+        }
+        if (ranked) {
+            songColor = UnityEngine::Color(1, 0.647f, 0, 1);
+        }
 
         this->fullFormattedSongName->set_text(fmt::format("{} - {}", entry->GetName(), entry->GetSongAuthor()));
-        // this->fullFormattedSongName->set_color(songColor);
+        this->fullFormattedSongName->set_color(songColor);
         
         this->entry = entry;
     
