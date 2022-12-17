@@ -188,5 +188,6 @@ public:
     const SDC_wrapper::BeatStarSong* currentSong = nullptr;
     void UpdateDetails();
     std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
+    void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 )
 

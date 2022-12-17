@@ -684,11 +684,8 @@ void ViewControllers::SongListController::UpdateDetails () {
     }
 
     // downloadButton.set.text = "Download";
-    playButton->set_enabled(downloaded);
-    playButton->set_interactable(downloaded);
-    downloadButton->set_enabled(!downloaded);
-    downloadButton->set_interactable(!downloaded);
-    infoButton->set_interactable(true);
+    SetIsDownloaded(downloaded);
+
     selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
     selectedSongName->set_text(song.GetName());
     selectedSongAuthor->set_text(song.GetSongAuthor());
@@ -712,13 +709,15 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
         return;
     }
 
+    this->searchInProgress->get_gameObject()->set_active(true);
+
     DEBUG("SortAndFilterSongs");
     if(songListTable() != nullptr)
     {
         songListTable()->ClearSelection();
         songListTable()->ClearHighlights();
-        this->searchInProgress->get_gameObject()->set_active(false);
     }
+
     prevSort = sort;
     prevSearch = search;
 
@@ -759,6 +758,7 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
 
             after = CurrentTimeMs();
             INFO("table reset in {}ms",  after-before);
+            this->searchInProgress->get_gameObject()->set_active(false);
         });
     }).detach();
 }
@@ -772,11 +772,13 @@ void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::Bea
     this->UpdateDetails();
 }
 
-// CURRENT SONG RELATED THINGS//
-
-
-
-////////////////////////////////
+void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded,  bool downloadable) {
+    playButton->get_gameObject()->set_active(isDownloaded);
+    playButton->set_interactable(isDownloaded);
+    downloadButton->get_gameObject()->set_active(!isDownloaded);
+    downloadButton->set_interactable(!isDownloaded);
+    infoButton->set_interactable(true);
+}
 
 
 // Old bench results in ms

@@ -229,19 +229,18 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                     RuntimeSongLoader::API::RefreshSongs(false);
                                     this->ProcessDownloads(forceTableReload);
                                 }
-                                if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
-                                    // NESTING HELLLL      
-                                    // TODO: Disable button
-                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(true);
-                                    // }
-                                  
-                                    // TODO: Refresh cells
-                                    // fcInstance->SongListViewController->tablePt.RefreshCells(false, true);
-                                } else {
-                                    // if (fcInstance->SongListViewController->selectedSongController.child.GetSong()->key.string_data == firstEntry->key) {
-                                    //     fcInstance->SongListViewController->selectedSongController.child.SetIsDownloaded(false);
-                                    // }
+                                if (fcInstance->SongListController->currentSong != nullptr) {
+                                    if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+                                        // NESTING HELLLL      
+                                        if (fcInstance->SongListController->currentSong->GetHash() == firstEntry->hash) {
+                                            fcInstance->SongListController->SetIsDownloaded(true);
+                                        }
+                                        fcInstance->SongListController->songListTable()->RefreshCells(false, true);
+                                    } else {
+                                        if (fcInstance->SongListController->currentSong->GetHash() == firstEntry->hash) {
+                                            fcInstance->SongListController->SetIsDownloaded(false);
+                                        }
+                                    }
                                 }
                             });
                     },

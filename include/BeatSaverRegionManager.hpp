@@ -19,7 +19,7 @@ class BeatSaverRegionManager {
         static inline bool didTheThing = false;
 
     #define TIMEOUT 10
-    #define USER_AGENT std::string(MOD_ID "/" VERSION " (BeatSaber/1.24.0) (Oculus)").c_str()
+    #define USER_AGENT std::string(MOD_ID "/" VERSION " (BeatSaber/1.25.1) (Oculus)").c_str()
     #define X_BSSB "X-BSSB: ✔"
 
     static std::string query_encode(std::string s)
