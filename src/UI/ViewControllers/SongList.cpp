@@ -1,6 +1,6 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "main.hpp"
-
+#include <algorithm>
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/AudioType.hpp"
@@ -55,6 +55,7 @@
 #include <iomanip>
 #include <sstream>
 #include <map>
+#include <iterator>
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
@@ -110,7 +111,7 @@ using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wr
 
 //////////////////// UTILS //////////////////////
 
-bool ViewControllers::SongListController::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
+bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
     auto const& filterOptions = DataHolder::filterOptions;
     std::string songHash = song->hash.string_data;
@@ -174,7 +175,7 @@ bool ViewControllers::SongListController::MeetsFilter(const SDC_wrapper::BeatSta
     return true;
 }
 
-bool ViewControllers::SongListController::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
+bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
     auto const& currentFilter = DataHolder::filterOptions;
 
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
@@ -729,23 +730,74 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
         long long after = 0;
         before = CurrentTimeMs();
         DataHolder::tempSongList.clear();
-        for(auto song : DataHolder::songList)
-        {
-            bool meetsFilter = MeetsFilter(song);
-            if (meetsFilter) {
-                bool songMeetsSearch = SongMeetsSearch(song, searchQuery);
-                if (songMeetsSearch) {
-                    DataHolder::tempSongList.emplace_back(song);
-                }
+
+        // Multithread hello
+        const int num_threads = 4;
+        std::thread t[num_threads];
+        std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
+
+        int totalSongs = DataHolder::songList.size();
+        
+        int songsPerThread = totalSongs/num_threads;
+        int extras = totalSongs % num_threads; // last extra
+
+        int startIndex, endIndex = 0;
+
+        //Launch a group of threads
+        for (int i = 0; i < num_threads; ++i) {
+            startIndex = endIndex;
+            if(i < (num_threads-extras)) {
+                endIndex = std::min(startIndex + songsPerThread, totalSongs);
+            }else{
+                endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
             }
+
+            t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
+                for (int i = startIndex; i<endIndex; i++){
+                    auto item = DataHolder::songList[i];
+                    bool meetsFilter = MeetsFilter(item);
+                    
+                    if (meetsFilter) {
+                        bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
+                        if (songMeetsSearch) {
+                            results[threadId].push_back(item);
+                        }
+                    }
+                }
+            }, i, startIndex, endIndex, searchQuery);
         }
+
+
+        //Join the threads with the main thread
+        for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+
+        // Merge
+        for (auto& result: results) {
+            DataHolder::tempSongList.insert(
+                DataHolder::tempSongList.end(),
+                std::move_iterator(result.begin()),
+                std::move_iterator(result.end())
+            );
+        }
+
+        // Original
+        // for(auto song : DataHolder::tempSongList)
+        // {
+        //     bool meetsFilter = MeetsFilter(song);
+        //     if (meetsFilter) {
+        //         bool songMeetsSearch = SongMeetsSearch(song, searchQuery);
+        //         if (songMeetsSearch) {
+        //             DataHolder::tempSongList.emplace_back(song);
+        //         }
+        //     }
+        // }
 
         std::stable_sort(DataHolder::tempSongList.begin(), DataHolder::tempSongList.end(),
             sortFunctionMap.at(sort)
         );
 
         after = CurrentTimeMs();
-        DEBUG("Time searchOffthread: {}", after-before);
+        DEBUG("Time searchMultithread: {}", after-before);
         QuestUI::MainThreadScheduler::Schedule([this]{
             long long before = 0;
             long long after = 0;

@@ -82,7 +82,7 @@ extern "C" void setup(ModInfo& info) {
 
 
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-        DataHolder::songList = std::unordered_set(songs.begin(), songs.end());
+        DataHolder::songList = songs;
         
         getLoggerOld().info("Finished loading songs.");
         DataHolder::loadedSDC = true;

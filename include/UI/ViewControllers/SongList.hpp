@@ -48,12 +48,12 @@
 namespace BetterSongSearch::UI {
     inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
     inline bool inBSS;
-
-
+    bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
+    bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
 
     // Global variables
     struct DataHolder {
-        inline static std::unordered_set<const SDC_wrapper::BeatStarSong*> songList;
+        inline static std::vector<const SDC_wrapper::BeatStarSong*> songList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> tempSongList;
         inline static std::vector<const SDC_wrapper::BeatStarSong*> searchedSongList;
@@ -175,8 +175,8 @@ public:
     std::vector<std::string> songsWithScores;
     FilterOptions filterOptions;
 
-    bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
-    bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
+
+    
 
     void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
 
