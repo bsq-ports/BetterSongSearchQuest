@@ -9,6 +9,7 @@
 #include <fmt/chrono.h>
 #include "Util/BSMLStuff.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 #define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
     if (value != nullptr) { \
@@ -31,6 +32,54 @@
         DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) value; \
     } \
 
+// TODO: Fix saving last saved
+#define SAVE_INTEGER_CONFIG(value, configName, filterProperty) \
+    int newValue = static_cast<int>(value); \
+    if (newValue != getPluginConfig().configName.GetValue()) { \
+        filtersChanged = true; \
+        getPluginConfig().configName.SetValue(newValue); \
+        DataHolder::filterOptions.filterProperty = newValue; \
+    } \
+
+
+
+custom_types::Helpers::Coroutine ViewControllers::FilterViewController::UpdateFilterSettings() {
+    // Wait for next frame
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+
+    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
+    bool filtersChanged = false;
+
+    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
+    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
+
+    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType, charFilter);
+    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
+    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
+    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
+    
+    SAVE_NUMBER_CONFIG(this->minimumSongLength,MinLength ,minLength);
+    SAVE_NUMBER_CONFIG(this->maximumSongLength, MaxLength,maxLength);
+    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
+    SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
+    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
+    SAVE_NUMBER_CONFIG(this->maximumNps,MaxNPS,  maxNPS);
+    SAVE_NUMBER_CONFIG(this->minimumStars,MinStars, minStars);
+    SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
+    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
+    SAVE_INTEGER_CONFIG(this->minimumVotes,MinVotes, minVotes);
+
+    if (filtersChanged) {
+        DEBUG("Filters changed");
+        auto controller = fcInstance->SongListController;
+        controller->filterChanged = true;
+        controller->SortAndFilterSongs(controller->prevSort, controller->prevSearch, true);
+    } else {
+        DEBUG("Filters did not change");
+    }
+
+
+}
 
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
@@ -82,33 +131,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
 void ViewControllers::FilterViewController::UpdateData()
 {
-    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
-    bool filtersChanged = false;
-
-    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
-    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
-
-    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType, charFilter);
-    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
-    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
-    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
-    
-    SAVE_NUMBER_CONFIG(this->minimumSongLength,MinLength ,minLength);
-    SAVE_NUMBER_CONFIG(this->maximumSongLength, MaxLength,maxLength);
-    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
-    SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
-    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
-    SAVE_NUMBER_CONFIG(this->maximumNps,MaxNPS,  maxNPS);
-    SAVE_NUMBER_CONFIG(this->minimumStars,MinStars, minStars);
-    SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
-    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
-    SAVE_NUMBER_CONFIG(this->minimumVotes,MinVotes, minVotes);
-
-    if (filtersChanged) {
-        DEBUG("Filters changed");
-    } else {
-        DEBUG("Filters did not change");
-    }
+    // We need to wait 1 frame for all the properties to get applied and then save the values?
+    coro(UpdateFilterSettings());
 
 }
 

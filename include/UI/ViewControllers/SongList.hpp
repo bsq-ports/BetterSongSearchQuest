@@ -53,10 +53,15 @@ namespace BetterSongSearch::UI {
 
     // Global variables
     struct DataHolder {
+        // Source songs
         inline static std::vector<const SDC_wrapper::BeatStarSong*> songList;
+        // Filtered songs
         inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
-        inline static std::vector<const SDC_wrapper::BeatStarSong*> tempSongList;
+        // Searched songs
         inline static std::vector<const SDC_wrapper::BeatStarSong*> searchedSongList;
+        // Sorted songs (actually displayed)
+        inline static std::vector<const SDC_wrapper::BeatStarSong*> sortedSongList;
+        
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
         inline static FilterOptions filterOptions;
@@ -189,5 +194,12 @@ public:
     void UpdateDetails();
     std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
+
+    std::string prevSearch;
+    SortMode prevSort = (SortMode) 0;
+    bool filterChanged = true;
+    int currentSelectedSong = 0;
+    void UpdateSearch();
+    custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 )
 

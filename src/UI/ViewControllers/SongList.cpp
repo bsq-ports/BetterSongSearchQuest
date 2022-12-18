@@ -103,6 +103,7 @@ const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapp
 
 const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 
+
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 int currentSelectedSong = 0;
@@ -390,6 +391,13 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         fileWatcher->filePath = "/sdcard/SongList.bsml";
     #endif
     getLoggerOld().info("Song list contoller activated");
+
+    // Get sort setting from config
+    auto sortMode = getPluginConfig().SortMode.GetValue();
+    if (sortMode < get_sortModeSelections()->size ) {
+        selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
+    }
+
     BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
 
     if (this->songList != nullptr && this->songList->m_CachedPtr.m_value != nullptr)
@@ -449,13 +457,15 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
 {   
-    if (DataHolder::filteredSongList.size() < id) {
+    DEBUG("Cell clicked {}", id);
+    if (DataHolder::sortedSongList.size() < id) {
         // Return if the id is invalid
         return;
     }
-    auto song  = DataHolder::filteredSongList[id];
+    auto song  = DataHolder::sortedSongList[id];
+    DEBUG("Selecting song {}", id);
     this->SetSelectedSong(song);
-    DEBUG("Cell clicked {}", id);
+    
 }
 
 float ViewControllers::SongListController::CellSize()
@@ -469,7 +479,7 @@ void ViewControllers::SongListController::ResetTable()
 
     if(songListTable() != nullptr)
     {
-        DEBUG("Songs size: {}", DataHolder::filteredSongList.size());
+        DEBUG("Songs size: {}", DataHolder::sortedSongList.size());
         DEBUG("TABLE RESET");
         songListTable()->ReloadData();
         songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, false);
@@ -478,7 +488,7 @@ void ViewControllers::SongListController::ResetTable()
 
 int ViewControllers::SongListController::NumberOfCells()
 {
-    return DataHolder::filteredSongList.size();
+    return DataHolder::sortedSongList.size();
 }
 
 void ViewControllers::SongListController::ctor()
@@ -509,8 +519,36 @@ void ViewControllers::SongListController::HideMoreModal() {
     DEBUG("HideMoreModal");
 };
 
+custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateDataAndFiltersCoro() {
+    // Wait
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+
+    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
+    bool filtersChanged = false;
+    
+
+    SortMode sort = prevSort;
+    if (selectedSortMode != nullptr) {
+        int index = get_sortModeSelections()->IndexOf(selectedSortMode);
+        if (index < 0 ) {} else {
+            if (index != getPluginConfig().SortMode.GetValue()) {
+                filtersChanged = true;
+                getPluginConfig().SortMode.SetValue(index);
+                sort = (SortMode)index;
+            }
+        }
+    }
+
+    if (filtersChanged) {
+        DEBUG("Sort changed");
+        this->SortAndFilterSongs(sort, this->prevSearch, true);
+    } else {
+        DEBUG("Sort did not change");
+    }
+}
 
 void ViewControllers::SongListController::UpdateDataAndFilters () {
+    coro(UpdateDataAndFiltersCoro());
     DEBUG("UpdateDataAndFilters");
 }
 
@@ -612,8 +650,9 @@ void ViewControllers::SongListController::UpdateDetails () {
     //     updateView();
     //     return;
     // }
-    auto song = *currentSong;
-    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song.GetHash()));
+    
+    auto song = currentSong;
+    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
     //getLoggerOld().info("Gathering information...");
@@ -621,23 +660,23 @@ void ViewControllers::SongListController::UpdateDetails () {
 
     //getLoggerOld().info("No Method: %s", song->hash.string_data);
     //getLoggerOld().info("Method: %s", song->GetHash().data());
-
-    if(this->imageCoverCache.contains(std::string(song.GetHash()))) {
-        std::vector<uint8_t> data = this->imageCoverCache[std::string(song.GetHash())];
+    if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
+        std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];
         Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
         this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
         // this->coverImage->sizethis->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
         // this->coverImage.update();
     }
     else {
-        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song.GetHash()));
+
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
         coverLoading->set_enabled(true);
         GetByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
             QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
                 std::vector<uint8_t> data = bytes;
 
-                if (song.GetHash() != this->currentSong->GetHash()) return;
-                this->imageCoverCache[std::string(song.GetHash())] = {data.begin(), data.end()};
+                if (song->GetHash() != this->currentSong->GetHash()) return;
+                this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
                 Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
                 this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
               
@@ -663,7 +702,7 @@ void ViewControllers::SongListController::UpdateDetails () {
 
         auto ssp = songPreviewPlayer;
 
-        std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song.GetHash()));
+        std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
 
         GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(GetPreview(newUrl, [ssp](UnityEngine::AudioClip* clip) {
             ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
@@ -671,11 +710,10 @@ void ViewControllers::SongListController::UpdateDetails () {
     }
 
     #endif
-
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
-    for (auto diff: song.GetDifficultyVector()) {
-        float nps = (float) diff->notes / (float) song.duration_secs;
+    for (auto diff: song->GetDifficultyVector()) {
+        float nps = (float) diff->notes / (float) song->duration_secs;
         float njs = diff->njs;
         minNPS = std::min(nps, minNPS);
         maxNPS = std::max(nps, maxNPS);
@@ -686,10 +724,9 @@ void ViewControllers::SongListController::UpdateDetails () {
 
     // downloadButton.set.text = "Download";
     SetIsDownloaded(downloaded);
-
     selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
-    selectedSongName->set_text(song.GetName());
-    selectedSongAuthor->set_text(song.GetSongAuthor());
+    selectedSongName->set_text(song->GetName());
+    selectedSongAuthor->set_text(song->GetSongAuthor());
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
@@ -700,9 +737,12 @@ void ViewControllers::SongListController::FilterByUploader () {
 // BSML::CustomCellInfo
 HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView *tableView, int idx)
 {
-    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(DataHolder::filteredSongList[idx]);
+    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(DataHolder::sortedSongList[idx]);
 }
 
+void ViewControllers::SongListController::UpdateSearch() {
+    
+}
 
 void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable) {
     // Skip if not active 
@@ -719,22 +759,28 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
         songListTable()->ClearHighlights();
     }
 
+    // Detect changes
+    bool currentFilterChanged = this->filterChanged;
+    bool currentSortChanged = prevSort != sort;
+    bool currentSearchChanged = prevSearch != search;
+
+    // Reset values
     prevSort = sort;
     prevSearch = search;
+    this->filterChanged = false;
 
     bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
 
     auto searchQuery = split(search, " ");
-    std::thread([this, searchQuery, sort]{
+    std::thread([this, searchQuery, sort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
         long long before = 0;
         long long after = 0;
         before = CurrentTimeMs();
-        DataHolder::tempSongList.clear();
 
-        // Multithread hello
-        const int num_threads = 4;
+        // Prolly need 4 but gotta go fast
+        const int num_threads = 5;
         std::thread t[num_threads];
-        std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
+        
 
         int totalSongs = DataHolder::songList.size();
         
@@ -742,74 +788,117 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
         int extras = totalSongs % num_threads; // last extra
 
         int startIndex, endIndex = 0;
+        
+        // Filter songs if needed
+        if (currentFilterChanged) {
+            DataHolder::filteredSongList.clear();
+            std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
+            // Set up variables for threads
+            int totalSongs = DataHolder::songList.size();
+            int songsPerThread = totalSongs/num_threads;
+            int extras = totalSongs % num_threads; // last extra
+            int startIndex, endIndex = 0;
 
-        //Launch a group of threads
-        for (int i = 0; i < num_threads; ++i) {
-            startIndex = endIndex;
-            if(i < (num_threads-extras)) {
-                endIndex = std::min(startIndex + songsPerThread, totalSongs);
-            }else{
-                endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                startIndex = endIndex;
+                if(i < (num_threads-extras)) {
+                    endIndex = std::min(startIndex + songsPerThread, totalSongs);
+                }else{
+                    endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
+                }
+
+                t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
+                    for (int i = startIndex; i<endIndex; i++){
+                        auto item = DataHolder::songList[i];
+                        bool meetsFilter = MeetsFilter(item);
+                        if (meetsFilter) {
+                            results[threadId].push_back(item);
+                        }
+                    }
+                }, i, startIndex, endIndex, searchQuery);
             }
 
-            t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
-                for (int i = startIndex; i<endIndex; i++){
-                    auto item = DataHolder::songList[i];
-                    bool meetsFilter = MeetsFilter(item);
-                    
-                    if (meetsFilter) {
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+
+            // Merge
+            // Should I allocate beforehand?
+            for (auto& result: results) {
+                DataHolder::filteredSongList.insert(
+                    DataHolder::filteredSongList.end(),
+                    std::move_iterator(result.begin()),
+                    std::move_iterator(result.end())
+                );
+            }
+
+        }
+
+
+        if (currentFilterChanged || currentSearchChanged) {
+            DataHolder::searchedSongList.clear();
+            std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
+            // Set up variables for threads
+            int totalSongs = DataHolder::filteredSongList.size();
+            int songsPerThread = totalSongs/num_threads;
+            int extras = totalSongs % num_threads; // last extra
+            int startIndex, endIndex = 0;
+
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                startIndex = endIndex;
+                if(i < (num_threads-extras)) {
+                    endIndex = std::min(startIndex + songsPerThread, totalSongs);
+                }else{
+                    endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
+                }
+
+                t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
+                    for (int i = startIndex; i<endIndex; i++){
+                        auto item = DataHolder::filteredSongList[i];
                         bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
                         if (songMeetsSearch) {
                             results[threadId].push_back(item);
                         }
                     }
-                }
-            }, i, startIndex, endIndex, searchQuery);
+                }, i, startIndex, endIndex, searchQuery);
+            }
+
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+
+            // Merge
+            for (auto& result: results) {
+                DataHolder::searchedSongList.insert(
+                    DataHolder::searchedSongList.end(),
+                    std::move_iterator(result.begin()),
+                    std::move_iterator(result.end())
+                );
+            }
         }
 
-
-        //Join the threads with the main thread
-        for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-
-        // Merge
-        for (auto& result: results) {
-            DataHolder::tempSongList.insert(
-                DataHolder::tempSongList.end(),
-                std::move_iterator(result.begin()),
-                std::move_iterator(result.end())
+        // Sort has to change?
+        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
+            std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
+                sortFunctionMap.at(sort)
             );
         }
 
-        // Original
-        // for(auto song : DataHolder::tempSongList)
-        // {
-        //     bool meetsFilter = MeetsFilter(song);
-        //     if (meetsFilter) {
-        //         bool songMeetsSearch = SongMeetsSearch(song, searchQuery);
-        //         if (songMeetsSearch) {
-        //             DataHolder::tempSongList.emplace_back(song);
-        //         }
-        //     }
-        // }
-
-        std::stable_sort(DataHolder::tempSongList.begin(), DataHolder::tempSongList.end(),
-            sortFunctionMap.at(sort)
-        );
-
         after = CurrentTimeMs();
-        DEBUG("Time searchMultithread: {}", after-before);
+        DEBUG("Search time: {}ms", after-before);
         QuestUI::MainThreadScheduler::Schedule([this]{
             long long before = 0;
             long long after = 0;
             before = CurrentTimeMs();
 
-            DataHolder::filteredSongList  = DataHolder::tempSongList;
+            // Copy the list to the displayed one
+            DataHolder::sortedSongList = DataHolder::searchedSongList;
             this->ResetTable();
 
-
-
             after = CurrentTimeMs();
-            INFO("table reset in {}ms",  after-before);
+            INFO("table reset in {} ms",  after-before);
             this->searchInProgress->get_gameObject()->set_active(false);
         });
     }).detach();
@@ -821,6 +910,8 @@ void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::Bea
         return;
     }
     currentSong = song;
+    
+    DEBUG("Updating details");
     this->UpdateDetails();
 }
 
@@ -831,11 +922,3 @@ void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded,  bo
     downloadButton->set_interactable(!isDownloaded);
     infoButton->set_interactable(true);
 }
-
-
-// Old bench results in ms
-// Time before: 3526
-// Time sorting: 251
-// Time new: 3449
-// Time filter: 2659
-// Time search: 797
