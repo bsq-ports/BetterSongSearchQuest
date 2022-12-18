@@ -3,7 +3,7 @@
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView_IDataSource.hpp"
-
+#include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
@@ -30,7 +30,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTable
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, levelAuthorName);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, songLengthAndRating);
     DECLARE_INSTANCE_FIELD(ArrayW<TMPro::TextMeshProUGUI*>, diffs);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, diffsContainer);
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, diffsContainer);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView *, bgContainer);
 
 

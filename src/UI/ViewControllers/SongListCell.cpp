@@ -34,6 +34,26 @@ namespace BetterSongSearch::UI::ViewControllers {
         
         this->entry = entry;
     
+        auto sortedDiffs = entry->GetDifficultyVector();
+        int diffsLeft = entry->GetDifficultyVector().size();
+
+        for(int i = 0; i < diffs.size(); i++) {
+            bool isActive = diffsLeft != 0;
+
+            diffs[i]->get_gameObject()->set_active(isActive);
+
+            if(!isActive)
+                continue;
+
+            if(diffsLeft != 1 && i == diffs.size() - 1) {
+                diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
+            } else {
+                diffs[i]->SetText(sortedDiffs[i]->GetName());
+                diffsLeft--;
+            }
+        }
+
+
         SetFontSizes();
         return this;
     }
@@ -55,8 +75,9 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     void  CustomSongListTableCell::SetFontSizes(){
-        // foreach(var d in diffs)
-        // d.fontSize = PluginConfig.Instance.smallerFontSize ? 2.5f : 2.9f;
+        for(auto d : diffs){
+             d->set_fontSize( true ? 2.5f : 2.9f);
+        }
 
         // TODO: Different font sizes
         if(true) {

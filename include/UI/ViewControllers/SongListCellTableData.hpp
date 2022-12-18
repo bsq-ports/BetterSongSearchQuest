@@ -6,6 +6,8 @@
 #include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "assets.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
+#include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 
 const StringW CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";
 
@@ -26,6 +28,9 @@ namespace BetterSongSearch::UI::ViewControllers
 
                 // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
                 tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
+
+                auto cell = reinterpret_cast<CustomSongListTableCell *>(tableCell);
+                cell->diffs = cell->diffsContainer->GetComponentsInChildren<TMPro::TextMeshProUGUI*>();
             }
 
             return reinterpret_cast<CustomSongListTableCell *>(tableCell);
