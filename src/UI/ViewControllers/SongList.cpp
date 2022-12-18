@@ -793,11 +793,11 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
             int totalSongs = DataHolder::songList.size();
 
             std::mutex valuesMutex;
-            std::atomic_int index = 0;
+            std::atomic_int index = -1;
 
             //Launch a group of threads
             for (int i = 0; i < num_threads; ++i) {
-                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](){
                     int i = index++;
                     while(i < totalSongs) {
                         auto item = DataHolder::songList[i];
@@ -808,7 +808,7 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
                         }
                         i = index++;
                     }
-                }, searchQuery);
+                });
             }
 
 
@@ -823,7 +823,7 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
             int totalSongs = DataHolder::filteredSongList.size();
             
             std::mutex valuesMutex;
-            std::atomic_int index = 0;
+            std::atomic_int index = -1;
 
             //Launch a group of threads
             for (int i = 0; i < num_threads; ++i) {
