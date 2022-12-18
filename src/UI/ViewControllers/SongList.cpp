@@ -778,105 +778,68 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
         before = CurrentTimeMs();
 
         // Prolly need 4 but gotta go fast
-        const int num_threads = 5;
+        const int num_threads = 8;
         std::thread t[num_threads];
         
-
         int totalSongs = DataHolder::songList.size();
-        
-        int songsPerThread = totalSongs/num_threads;
-        int extras = totalSongs % num_threads; // last extra
-
-        int startIndex, endIndex = 0;
-        
+    
         // Filter songs if needed
         if (currentFilterChanged) {
             DataHolder::filteredSongList.clear();
-            std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
             // Set up variables for threads
             int totalSongs = DataHolder::songList.size();
-            int songsPerThread = totalSongs/num_threads;
-            int extras = totalSongs % num_threads; // last extra
-            int startIndex, endIndex = 0;
+
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
 
             //Launch a group of threads
             for (int i = 0; i < num_threads; ++i) {
-                startIndex = endIndex;
-                if(i < (num_threads-extras)) {
-                    endIndex = std::min(startIndex + songsPerThread, totalSongs);
-                }else{
-                    endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
-                }
-
-                t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
-                    for (int i = startIndex; i<endIndex; i++){
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
+                    int i = index++;
+                    while(i < totalSongs) {
                         auto item = DataHolder::songList[i];
                         bool meetsFilter = MeetsFilter(item);
                         if (meetsFilter) {
-                            results[threadId].push_back(item);
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::filteredSongList.push_back(item);
                         }
+                        i = index++;
                     }
-                }, i, startIndex, endIndex, searchQuery);
+                }, searchQuery);
             }
 
 
             //Join the threads with the main thread
             for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-
-            // Merge
-            // Should I allocate beforehand?
-            for (auto& result: results) {
-                DataHolder::filteredSongList.insert(
-                    DataHolder::filteredSongList.end(),
-                    std::move_iterator(result.begin()),
-                    std::move_iterator(result.end())
-                );
-            }
-
         }
 
 
         if (currentFilterChanged || currentSearchChanged) {
             DataHolder::searchedSongList.clear();
-            std::vector<const SDC_wrapper::BeatStarSong *> results [num_threads];
             // Set up variables for threads
             int totalSongs = DataHolder::filteredSongList.size();
-            int songsPerThread = totalSongs/num_threads;
-            int extras = totalSongs % num_threads; // last extra
-            int startIndex, endIndex = 0;
+            
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
 
             //Launch a group of threads
             for (int i = 0; i < num_threads; ++i) {
-                startIndex = endIndex;
-                if(i < (num_threads-extras)) {
-                    endIndex = std::min(startIndex + songsPerThread, totalSongs);
-                }else{
-                    endIndex = std::min(startIndex + songsPerThread + 1, totalSongs);
-                }
-
-                t[i] = std::thread([&results](int threadId, int startIndex, int endIndex, std::vector<std::string> searchQuery){
-                    for (int i = startIndex; i<endIndex; i++){
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
+                    int i = index++;
+                    while(i < totalSongs) {
                         auto item = DataHolder::filteredSongList[i];
                         bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
                         if (songMeetsSearch) {
-                            results[threadId].push_back(item);
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::searchedSongList.push_back(item);
                         }
+                        i = index++;
                     }
-                }, i, startIndex, endIndex, searchQuery);
+                }, searchQuery);
             }
-
 
             //Join the threads with the main thread
             for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-
-            // Merge
-            for (auto& result: results) {
-                DataHolder::searchedSongList.insert(
-                    DataHolder::searchedSongList.end(),
-                    std::move_iterator(result.begin()),
-                    std::move_iterator(result.end())
-                );
-            }
         }
 
         // Sort has to change?
