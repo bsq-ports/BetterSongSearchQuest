@@ -73,7 +73,7 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.rankedType = (FilterOptions::RankedFilterType) getPluginConfig().RankedType.GetValue();
         filterOptions.minStars = getPluginConfig().MinStars.GetValue();
         filterOptions.maxStars = getPluginConfig().MaxStars.GetValue();
-        filterOptions.minUploadDate = getPluginConfig().MinUploadDate.GetValue();
+        filterOptions.minUploadDate = getPluginConfig().MinUploadDateInMonths.GetValue();
         filterOptions.minRating = getPluginConfig().MinRating.GetValue();
         filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
         filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();

@@ -57,7 +57,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(float, minimumStars);
     DECLARE_INSTANCE_FIELD(float, maximumStars);
     DECLARE_INSTANCE_FIELD(float, minimumRating);
-    DECLARE_INSTANCE_FIELD(float, minimumVotes);
+    DECLARE_INSTANCE_FIELD(int, minimumVotes);
+    DECLARE_INSTANCE_FIELD(int, hideOlderThan);
 
     // Sliders that need to be formatted
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, hideOlderThanSlider);

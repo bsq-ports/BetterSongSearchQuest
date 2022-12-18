@@ -34,11 +34,10 @@
 
 // TODO: Fix saving last saved
 #define SAVE_INTEGER_CONFIG(value, configName, filterProperty) \
-    int newValue = static_cast<int>(value); \
-    if (newValue != getPluginConfig().configName.GetValue()) { \
+    if (static_cast<int>(value) != getPluginConfig().configName.GetValue()) { \
         filtersChanged = true; \
-        getPluginConfig().configName.SetValue(newValue); \
-        DataHolder::filterOptions.filterProperty = newValue; \
+        getPluginConfig().configName.SetValue(static_cast<int>(value)); \
+        DataHolder::filterOptions.filterProperty = static_cast<int>(value); \
     } \
 
 
@@ -68,6 +67,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::UpdateFi
     SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
     SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
     SAVE_INTEGER_CONFIG(this->minimumVotes,MinVotes, minVotes);
+    SAVE_INTEGER_CONFIG(this->hideOlderThan, MinUploadDateInMonths, minUploadDate);
 
     if (filtersChanged) {
         DEBUG("Filters changed");
@@ -110,6 +110,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     this->maximumStars = DataHolder::filterOptions.maxStars;
     this->minimumRating = DataHolder::filterOptions.minRating;
     this->minimumVotes = DataHolder::filterOptions.minVotes;
+    this->hideOlderThan = DataHolder::filterOptions.minUploadDate;
     
     // TODO: fix uploaders field loading
     // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
@@ -129,8 +130,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
     std::function<StringW(float monthsSinceFirstUpload)>   DateTimeToStr = [](float monthsSinceFirstUpload)
-    { 
-        DEBUG("DateTimeToStr FIRED");
+    {
         auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
         return fmt::format("{:%b:%Y}", fmt::localtime(val));
     };
