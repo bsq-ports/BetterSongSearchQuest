@@ -84,6 +84,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::UpdateFi
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
 
+
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -124,6 +125,26 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
 
+
+
+    // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
+    std::function<StringW(float monthsSinceFirstUpload)>   DateTimeToStr = [](float monthsSinceFirstUpload)
+    { 
+        DEBUG("DateTimeToStr FIRED");
+        auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
+        return fmt::format("{:%b:%Y}", fmt::localtime(val));
+    };
+
+    // Update the value and set the formatter
+    hideOlderThanSlider->formatter = DateTimeToStr;
+    hideOlderThanSlider->slider->set_maxValue(maxUploadDate);
+    hideOlderThanSlider->slider->set_numberOfSteps(maxUploadDate);
+    int steps = (hideOlderThanSlider->slider->get_maxValue() - hideOlderThanSlider->slider->get_minValue()) / hideOlderThanSlider->increments;
+    hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
+    hideOlderThanSlider->ReceiveValue();
+    
+
+
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
     #endif
@@ -162,10 +183,6 @@ void ViewControllers::FilterViewController::ShowPresets()
 }
 
 
-StringW ViewControllers::FilterViewController::DateTimeToStr(int monthsSinceFirstUpload) {
-    auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
-    return fmt::format("{:%b:%Y}", fmt::localtime(val));
-} 
 
 // StringW ViewControllers::FilterViewController::DateTimeToStr(int d) {
 //     // FilterView.hideOlderThanOptions[d].ToString("MMM yyyy", CultureInfo.InvariantCulture);

@@ -4,6 +4,7 @@
 #include "HMUI/ViewController.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
@@ -29,8 +30,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, ClearFilters);
     DECLARE_INSTANCE_METHOD(void, ShowPresets);
 
-    // Formatters
-    DECLARE_INSTANCE_METHOD(StringW, DateTimeToStr, int d);
 
     // Options for dropdowns 
     BSML_OPTIONS_LIST_OBJECT(downloadedFilterOptions, "Show All", "Only Downloaded", "Hide Downloaded");
@@ -59,6 +58,18 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(float, maximumStars);
     DECLARE_INSTANCE_FIELD(float, minimumRating);
     DECLARE_INSTANCE_FIELD(float, minimumVotes);
+
+    // Sliders that need to be formatted
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, hideOlderThanSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumRatingSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minStarsSetting);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maxStarsSetting);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumNjsSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumNjsSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumNpsSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumNpsSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumSongLengthSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumSongLengthSlider);
 
     // Values for string fields
     DECLARE_INSTANCE_FIELD(StringW, uploadersString);
