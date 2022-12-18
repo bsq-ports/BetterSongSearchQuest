@@ -114,7 +114,7 @@ using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wr
 
 bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
-    auto const& filterOptions = DataHolder::filterOptions;
+    auto const& filterOptions = DataHolder::filterOptionsCache;
     std::string songHash = song->hash.string_data;
 
     /*if(filterOptions->uploaders.size() != 0) {
@@ -177,7 +177,7 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 }
 
 bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
-    auto const& currentFilter = DataHolder::filterOptions;
+    auto const& currentFilter = DataHolder::filterOptionsCache;
 
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
         if(!diff->ranked)
@@ -381,7 +381,164 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 ////////////
 
 
+void ViewControllers::SongListController::_UpdateSearchedSongsList() {
+    DEBUG("_UpdateSearchedSongsList");
+    // Skip if not active 
+    if (get_isActiveAndEnabled() == false || IsSearching) {
+        return;
+    }
+    
+    // Skip if we have no songs
+    int totalSongs = DataHolder::songList.size();
+    if (totalSongs == 0) {
+        return;
+    }
 
+
+    IsSearching = true;
+    // Take a snapshot of current filter options
+    DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
+
+    this->searchInProgress->get_gameObject()->set_active(true);
+    
+    
+
+
+
+    DEBUG("SortAndFilterSongs");
+    if(songListTable() != nullptr)
+    {
+        songListTable()->ClearSelection();
+        songListTable()->ClearHighlights();
+    }
+    DEBUG("SortAndFilterSongs");
+    // Detect changes
+    bool currentFilterChanged = this->filterChanged;
+    bool currentSortChanged = prevSort != sort;
+    bool currentSearchChanged = prevSearch != search;
+
+    auto currentSort = sort;
+    auto currentSearch = search;
+
+    // Reset values
+    prevSort = sort;
+    prevSearch = search;
+    this->filterChanged = false;
+
+    auto searchQuery = split(search, " ");
+
+    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+
+    DEBUG("SortAndFilterSongs");
+    std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
+        long long before = 0;
+        long long after = 0;
+        before = CurrentTimeMs();
+
+        // Prolly need 4 but gotta go fast
+        const int num_threads = 8;
+        std::thread t[num_threads];
+        
+      
+        // Filter songs if needed
+        if (currentFilterChanged) {
+            DataHolder::filteredSongList.clear();
+            // Set up variables for threads
+            int totalSongs = DataHolder::songList.size();
+
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
+
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](){
+                    int i = index++;
+                    while(i < totalSongs) {
+                        auto item = DataHolder::songList[i];
+                        bool meetsFilter = MeetsFilter(item);
+                        if (meetsFilter) {
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::filteredSongList.push_back(item);
+                        }
+                        i = index++;
+                    }
+                });
+            }
+
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+        }
+
+
+        if (currentFilterChanged || currentSearchChanged) {
+            DataHolder::searchedSongList.clear();
+            // Set up variables for threads
+            int totalSongs = DataHolder::filteredSongList.size();
+            
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
+
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
+                    int i = index++;
+                    while(i < totalSongs) {
+                        auto item = DataHolder::filteredSongList[i];
+                        bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
+                        if (songMeetsSearch) {
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::searchedSongList.push_back(item);
+                        }
+                        i = index++;
+                    }
+                }, searchQuery);
+            }
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+        }
+
+        // Sort has to change?
+        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
+            std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
+                sortFunctionMap.at(currentSort)
+            );
+        }
+
+        after = CurrentTimeMs();
+        DEBUG("Search time: {}ms", after-before);
+        QuestUI::MainThreadScheduler::Schedule([this]{
+            long long before = 0;
+            long long after = 0;
+            before = CurrentTimeMs();
+            
+            // Copy the list to the displayed one
+            DataHolder::sortedSongList = DataHolder::searchedSongList;
+            this->ResetTable();
+
+            after = CurrentTimeMs();
+            INFO("table reset in {} ms",  after-before);
+            this->searchInProgress->get_gameObject()->set_active(false);
+            
+
+            // Run search again if something wants to
+            bool currentSortChanged = prevSort != sort;
+            bool currentSearchChanged = prevSearch != search;
+            bool currentFilterChanged = this->filterChanged;
+
+            IsSearching = false;
+
+            // Queue another search at the end of this one
+            if (currentSearchChanged || currentSortChanged || currentFilterChanged) {    
+                this->UpdateSearchedSongsList();
+            }
+        });
+    }).detach();
+}
+void ViewControllers::SongListController::UpdateSearchedSongsList() {
+    coro(limitedUpdateSearchedSongsList->CallNextFrame());
+}
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
     fromBSS = false;
@@ -389,7 +546,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
     if (!firstActivation)
         return;
-        
+
+    IsSearching = false;
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/SongList.bsml";
     #endif
@@ -409,11 +567,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
 
-        // limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-        //                                                                         { 
-        //                                                                             // this->downloadHistoryTable()->ReloadData();
-        //                                                                              },
-        //                                                                         0.1f);
+        
     }
 
     // Steal search box from the base game
@@ -456,6 +610,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
             return x->customLevelPackCollection != nullptr;
         });
 
+    limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+        { 
+            this->_UpdateSearchedSongsList();
+        }, 0.1f);
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -752,122 +910,10 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     if (get_isActiveAndEnabled() == false) {
         return;
     }
+    this->sort = sort;
+    this->search = search;
 
-    this->searchInProgress->get_gameObject()->set_active(true);
-
-    DEBUG("SortAndFilterSongs");
-    if(songListTable() != nullptr)
-    {
-        songListTable()->ClearSelection();
-        songListTable()->ClearHighlights();
-    }
-
-    // Detect changes
-    bool currentFilterChanged = this->filterChanged;
-    bool currentSortChanged = prevSort != sort;
-    bool currentSearchChanged = prevSearch != search;
-
-    // Reset values
-    prevSort = sort;
-    prevSearch = search;
-    this->filterChanged = false;
-
-    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
-
-    auto searchQuery = split(search, " ");
-    std::thread([this, searchQuery, sort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
-        long long before = 0;
-        long long after = 0;
-        before = CurrentTimeMs();
-
-        // Prolly need 4 but gotta go fast
-        const int num_threads = 8;
-        std::thread t[num_threads];
-        
-        int totalSongs = DataHolder::songList.size();
-    
-        // Filter songs if needed
-        if (currentFilterChanged) {
-            DataHolder::filteredSongList.clear();
-            // Set up variables for threads
-            int totalSongs = DataHolder::songList.size();
-
-            std::mutex valuesMutex;
-            std::atomic_int index = -1;
-
-            //Launch a group of threads
-            for (int i = 0; i < num_threads; ++i) {
-                t[i] = std::thread([&index, &valuesMutex, totalSongs](){
-                    int i = index++;
-                    while(i < totalSongs) {
-                        auto item = DataHolder::songList[i];
-                        bool meetsFilter = MeetsFilter(item);
-                        if (meetsFilter) {
-                            std::lock_guard<std::mutex> lock(valuesMutex);
-                            DataHolder::filteredSongList.push_back(item);
-                        }
-                        i = index++;
-                    }
-                });
-            }
-
-
-            //Join the threads with the main thread
-            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-        }
-
-
-        if (currentFilterChanged || currentSearchChanged) {
-            DataHolder::searchedSongList.clear();
-            // Set up variables for threads
-            int totalSongs = DataHolder::filteredSongList.size();
-            
-            std::mutex valuesMutex;
-            std::atomic_int index = -1;
-
-            //Launch a group of threads
-            for (int i = 0; i < num_threads; ++i) {
-                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
-                    int i = index++;
-                    while(i < totalSongs) {
-                        auto item = DataHolder::filteredSongList[i];
-                        bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
-                        if (songMeetsSearch) {
-                            std::lock_guard<std::mutex> lock(valuesMutex);
-                            DataHolder::searchedSongList.push_back(item);
-                        }
-                        i = index++;
-                    }
-                }, searchQuery);
-            }
-
-            //Join the threads with the main thread
-            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-        }
-
-        // Sort has to change?
-        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
-            std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
-                sortFunctionMap.at(sort)
-            );
-        }
-
-        after = CurrentTimeMs();
-        DEBUG("Search time: {}ms", after-before);
-        QuestUI::MainThreadScheduler::Schedule([this]{
-            long long before = 0;
-            long long after = 0;
-            before = CurrentTimeMs();
-
-            // Copy the list to the displayed one
-            DataHolder::sortedSongList = DataHolder::searchedSongList;
-            this->ResetTable();
-
-            after = CurrentTimeMs();
-            INFO("table reset in {} ms",  after-before);
-            this->searchInProgress->get_gameObject()->set_active(false);
-        });
-    }).detach();
+    this->UpdateSearchedSongsList();
 }
 
 void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong* song) {

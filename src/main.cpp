@@ -84,7 +84,7 @@ extern "C" void setup(ModInfo& info) {
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
         DataHolder::songList = songs;
         
-        getLoggerOld().info("Finished loading songs.");
+        INFO("Finished loading songs.");
         DataHolder::loadedSDC = true;
         if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
             fcInstance->SongListController->filterChanged = true;

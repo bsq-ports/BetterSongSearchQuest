@@ -65,6 +65,7 @@ namespace BetterSongSearch::UI {
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
         inline static FilterOptions filterOptions;
+        inline static FilterOptionsCache filterOptionsCache;
     };
 
 #define PROP_GET(jsonName, varName)                                \
@@ -139,7 +140,10 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, Play);
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
+    DECLARE_INSTANCE_METHOD(void, UpdateSearchedSongsList);
+    DECLARE_INSTANCE_METHOD(void, _UpdateSearchedSongsList);
 
+    DECLARE_INSTANCE_FIELD(bool, IsSearching);
     
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, searchBoxContainer);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
@@ -195,6 +199,11 @@ public:
     std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
+    // Temp values
+    std::string search;
+    SortMode sort = (SortMode) 0;
+
+    // Prev values
     std::string prevSearch;
     SortMode prevSort = (SortMode) 0;
     bool filterChanged = true;

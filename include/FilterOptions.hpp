@@ -7,8 +7,8 @@
 class FilterOptions
 {
 public:
-    FilterOptions(FilterOptions const&) = delete; // no accidental copying
-    FilterOptions() = default;
+    // FilterOptions(FilterOptions const&) = delete; // no accidental copying
+    // FilterOptions() = default;
 
     enum class DownloadFilterType
     {
@@ -99,4 +99,60 @@ enum class SortMode {
     Least_Stars,
     Best_rated,
     Worst_rated
+};
+
+
+class FilterOptionsCache
+{
+public:
+    FilterOptionsCache(FilterOptionsCache const&) = delete; // no accidental copying
+    FilterOptionsCache() = default;
+   
+    void cache(FilterOptions s){
+        downloadType=s.downloadType;
+        localScoreType=s.localScoreType;
+        minLength=s.minLength;
+        maxLength=s.maxLength;
+        minNJS=s.minNJS;
+        maxNJS=s.maxNJS;
+        minNPS=s.minNPS;
+        maxNPS=s.maxNPS;
+        rankedType=s.rankedType;
+        minStars=s.minStars;
+        maxStars=s.maxStars;
+        minUploadDate=s.minUploadDate;
+        minRating=s.minRating;
+        minVotes=s.minVotes;
+        uploaders=s.uploaders;
+        difficultyFilter=s.difficultyFilter;
+        charFilter=s.charFilter;
+        modRequirement=s.modRequirement;
+    }
+        
+
+    //General
+    FilterOptions::DownloadFilterType downloadType = FilterOptions::DownloadFilterType::All;
+    FilterOptions::LocalScoreFilterType localScoreType = FilterOptions::LocalScoreFilterType::All;
+    float minLength = 0, maxLength = 900;
+
+    //Mapping
+    float minNJS = 0, maxNJS = 25;
+    float minNPS = 0, maxNPS = 12;
+
+    //ScoreSaber
+    FilterOptions::RankedFilterType rankedType = FilterOptions::RankedFilterType::All;
+    float minStars = 0, maxStars = 14;
+
+    //BeatSaver
+    int minUploadDate = FilterOptions::BEATSAVER_EPOCH;
+    float minRating = 0;
+    int minVotes = 0;
+    std::vector<std::string> uploaders;
+
+    //Difficulty
+    FilterOptions::DifficultyFilterType difficultyFilter = FilterOptions::DifficultyFilterType::All;
+    FilterOptions::CharFilterType charFilter = FilterOptions::CharFilterType::All;
+
+    //Mods
+    FilterOptions::RequirementType modRequirement = FilterOptions::RequirementType::Any;
 };

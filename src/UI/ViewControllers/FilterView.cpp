@@ -11,6 +11,14 @@
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
+
+using namespace BetterSongSearch::Util;
+using namespace BetterSongSearch::UI;
+
+static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
+DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
+
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 #define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
     if (value != nullptr) { \
         int index = get_##options()->IndexOf(value); \
@@ -42,7 +50,7 @@
 
 
 
-custom_types::Helpers::Coroutine ViewControllers::FilterViewController::UpdateFilterSettings() {
+custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateFilterSettings() {
     // Wait for next frame
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
 
@@ -81,14 +89,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::UpdateFi
 
 }
 
-using namespace BetterSongSearch::Util;
-using namespace BetterSongSearch::UI;
 
-
-static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-
-DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
@@ -143,18 +144,20 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
     hideOlderThanSlider->ReceiveValue();
     
-
+    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+        { 
+            coro(this->_UpdateFilterSettings());
+        }, 0.2f);
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
     #endif
 }
 
-void ViewControllers::FilterViewController::UpdateData()
+void ViewControllers::FilterViewController::UpdateFilterSettings()
 {
     // We need to wait 1 frame for all the properties to get applied and then save the values?
-    coro(UpdateFilterSettings());
-
+    coro(limitedUpdateFilterSettings->CallNextFrame());
 }
 
 // Sponsors related things

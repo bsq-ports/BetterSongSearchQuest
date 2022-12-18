@@ -8,6 +8,7 @@
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
+#include "Util/RatelimitCoroutine.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
@@ -19,7 +20,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
 
 
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
-    DECLARE_INSTANCE_METHOD(void, UpdateData);
 
     // Modal related things
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);
@@ -60,6 +60,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(int, minimumVotes);
     DECLARE_INSTANCE_FIELD(int, hideOlderThan);
 
+    DECLARE_INSTANCE_METHOD(void, UpdateFilterSettings);
+
     // Sliders that need to be formatted
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, hideOlderThanSlider);
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumRatingSlider);
@@ -79,5 +81,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:
-        custom_types::Helpers::Coroutine UpdateFilterSettings();
+        custom_types::Helpers::Coroutine _UpdateFilterSettings();
+        BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateFilterSettings = nullptr;
 )
