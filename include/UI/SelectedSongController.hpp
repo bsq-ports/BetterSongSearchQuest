@@ -225,4 +225,3 @@ namespace BetterSongSearch::UI {
 }
 
 inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
-inline bool inBSS;

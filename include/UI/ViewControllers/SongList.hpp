@@ -47,7 +47,7 @@
 
 namespace BetterSongSearch::UI {
     inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
-    inline bool inBSS;
+    inline bool fromBSS = false;
     bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
     bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
 

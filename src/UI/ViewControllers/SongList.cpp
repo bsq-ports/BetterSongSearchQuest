@@ -384,6 +384,9 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
+    fromBSS = false;
+
+
     if (!firstActivation)
         return;
         
@@ -632,7 +635,7 @@ void ViewControllers::SongListController::Play () {
         currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
     }
     GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
-
+    fromBSS = true;
     DEBUG("Play");
 }
 
