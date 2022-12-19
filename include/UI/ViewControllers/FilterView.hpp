@@ -1,6 +1,5 @@
 #pragma once
 
-#include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -8,6 +7,7 @@
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
+
 #include "Util/RatelimitCoroutine.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()

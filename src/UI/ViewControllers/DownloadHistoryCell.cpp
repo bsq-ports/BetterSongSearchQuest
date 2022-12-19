@@ -1,4 +1,5 @@
 #include "UI/ViewControllers/DownloadHistoryCell.hpp"
+
 #include "UnityEngine/RectTransform.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell)

@@ -3,8 +3,6 @@
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView_IDataSource.hpp"
-#include "HMUI/TableView.hpp"
-#include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableCell.hpp"
@@ -12,15 +10,16 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "sdc-wrapper/shared/BeatStarSong.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "main.hpp"
+#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
-#include "Util/RatelimitCoroutine.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
+
+#include "main.hpp"
+#include "Util/RatelimitCoroutine.hpp"
 
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \

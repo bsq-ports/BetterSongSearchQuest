@@ -1,9 +1,11 @@
 #pragma once
 
-#include "main.hpp"
+
 #include "UI/ViewControllers/DownloadHistoryCell.hpp"
 #include "HMUI/Touchable.hpp"
 #include "bsml/shared/BSML.hpp"
+
+#include "main.hpp"
 #include "assets.hpp"
 
 const StringW ReuseIdentifier = "REUSECustomDownloadListTableCell";

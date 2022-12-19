@@ -1,12 +1,12 @@
 #include "main.hpp"
 
 #include "questui/shared/QuestUI.hpp"
-
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "songloader/shared/API.hpp"
-
-#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-
+#include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
+#include "HMUI/FlowCoordinator.hpp"
+#include "HMUI/ViewController_AnimationType.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
@@ -14,13 +14,10 @@
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/BeatmapDifficulty.hpp"
-#include "HMUI/FlowCoordinator.hpp"
-#include "HMUI/ViewController_AnimationType.hpp"
-#include "System/Action.hpp"
-#include "UI/ViewControllers/SongList.hpp"
 
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/ViewControllers/SongList.hpp"
 #include "PluginConfig.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 #include <regex>
 

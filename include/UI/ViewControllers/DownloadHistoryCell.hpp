@@ -3,11 +3,10 @@
 #include "DownloadHistory.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "HMUI/TableView_IDataSource.hpp"
-
 #include "custom-types/shared/macros.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
+#include "HMUI/TableView_IDataSource.hpp"
 #include "HMUI/TableCell.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"

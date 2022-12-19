@@ -1,13 +1,12 @@
 #pragma once
 
-#include "main.hpp"
+#include "config-utils/shared/config-utils.hpp"
 
 #include <string>
 #include <unordered_map>
 
-//#include "beatsaber-hook/shared/config/config-utils.hpp"
-#include "config-utils/shared/config-utils.hpp"
 #include "FilterOptions.hpp"
+#include "main.hpp"
 
 DECLARE_CONFIG(PluginConfig,
 

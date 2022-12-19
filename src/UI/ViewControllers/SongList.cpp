@@ -1,36 +1,26 @@
 #include "UI/ViewControllers/SongList.hpp"
-#include "main.hpp"
-#include <algorithm>
+
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/AudioType.hpp"
 #include "UnityEngine/Networking/DownloadHandlerAudioClip.hpp"
 #include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
 #include "UnityEngine/Networking/UnityWebRequest.hpp"
-#include "HMUI/NoTransitionsButton.hpp"
-#include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
-#include "GlobalNamespace/LevelCollectionViewController.hpp"
-#include "GlobalNamespace/SongPreviewPlayer.hpp"
-#include "config-utils/shared/config-utils.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/Transform.hpp"
 #include "UnityEngine/Events/UnityAction.hpp"
-#include "questui/shared/QuestUI.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
+#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
+#include "config-utils/shared/config-utils.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/InputFieldView.hpp"
 #include "HMUI/InputFieldViewChangeBinder.hpp"
 #include "HMUI/InputFieldView_InputFieldChanged.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView.hpp"
-#include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
-#include "bsml/shared/BSML.hpp"
-#include "bsml/shared/macros.hpp"
-#include "assets.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
 #include "HMUI/TableView_ScrollPositionType.hpp"
-#include "BeatSaverRegionManager.hpp"
+#include "HMUI/TableViewSelectionType.hpp"
+#include "HMUI/ScrollView.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
@@ -38,24 +28,45 @@
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
-#include "Util/CurrentTimeMs.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "System/StringComparison.hpp"
-#include "PluginConfig.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
-#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-#include "UI/ViewControllers/SongListCell.hpp"
-#include "HMUI/ScrollView.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
-#include "Util/BSMLStuff.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
-#include "HMUI/TableViewSelectionType.hpp"
-#include "Util/Random.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "bsml/shared/macros.hpp"
+#include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
+#include "questui/shared/QuestUI.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
 
 #include <iomanip>
+#include <iterator>
+#include <iomanip>
 #include <sstream>
 #include <map>
-#include <iterator>
+#include <chrono>
+#include <string>
+#include <algorithm>
+#include <functional>
+#include <regex>
+#include <future>
+
+#include "PluginConfig.hpp"
+#include "assets.hpp"
+#include "main.hpp"
+#include "BeatSaverRegionManager.hpp"
+#include "Util/BSMLStuff.hpp"
+#include "Util/CurrentTimeMs.hpp"
+#include "Util/Random.hpp"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/ViewControllers/SongListCell.hpp"
+
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
@@ -72,17 +83,7 @@ GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = 
 
 DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-#include <iomanip>
-#include <sstream>
-#include <map>
-#include <chrono>
-#include <string>
-#include <algorithm>
-#include <functional>
-#include <regex>
-#include <future>
-#include "Util/CurrentTimeMs.hpp"
+
 //////////// Utils
 
 double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
@@ -145,7 +146,6 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
         hasLocalScore = true;
-    //getLogger().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
     if (hasLocalScore) {
         if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
             return false;
@@ -374,11 +374,7 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
     }
 
     return matches == words;
-    // return true;
 }
-/////////////////////////////////////////////////
-
-////////////
 
 
 void ViewControllers::SongListController::_UpdateSearchedSongsList() {
@@ -400,18 +396,13 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
 
     this->searchInProgress->get_gameObject()->set_active(true);
-    
-    
 
-
-
-    DEBUG("SortAndFilterSongs");
+    DEBUG("SortAndFilterSongs runs");
     if(songListTable() != nullptr)
     {
         songListTable()->ClearSelection();
         songListTable()->ClearHighlights();
     }
-    DEBUG("SortAndFilterSongs");
     // Detect changes
     bool currentFilterChanged = this->filterChanged;
     bool currentSortChanged = prevSort != sort;
@@ -429,7 +420,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
 
-    DEBUG("SortAndFilterSongs");
     std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
         long long before = 0;
         long long after = 0;
@@ -803,30 +793,19 @@ void ViewControllers::SongListController::ShowSongDetails () {
 
 void ViewControllers::SongListController::UpdateDetails () {  
     if (currentSong == nullptr) {
-        // updateView();
         return;
     }
-    // if same song, don't modify
-    // if (!currentSong.readAndClear(*ctx)) {
-    //     updateView();
-    //     return;
-    // }
     
     auto song = currentSong;
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
-    //getLoggerOld().info("Gathering information...");
-    // coverImage.child.sprite = defaultImage;
-
-    //getLoggerOld().info("No Method: %s", song->hash.string_data);
-    //getLoggerOld().info("Method: %s", song->GetHash().data());
+    
     if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
         std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];
         Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
         this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
         // this->coverImage->sizethis->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
-        // this->coverImage.update();
     }
     else {
 
@@ -891,7 +870,6 @@ void ViewControllers::SongListController::UpdateDetails () {
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
-  
     DEBUG("FilterByUploader");
 }
 

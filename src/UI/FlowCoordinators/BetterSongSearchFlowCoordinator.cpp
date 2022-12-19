@@ -1,14 +1,14 @@
-#include "main.hpp"
-
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 #include "System/Action.hpp"
 #include "System/Action_1.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
 #include "HMUI/ViewController_AnimationType.hpp"
-
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/QuestUI.hpp"
+
+#include "main.hpp"
+
 using namespace QuestUI;
 
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);

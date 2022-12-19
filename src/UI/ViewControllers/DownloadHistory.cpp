@@ -3,20 +3,21 @@
 
 #include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
-#include "HMUI/TableView.hpp"
 #include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
-#include "UI/ViewControllers/DownloadListTableData.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include "HMUI/TableView.hpp"
+#include "HMUI/TableView_ScrollPositionType.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "assets.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
-#include "BeatSaverRegionManager.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
+#include "assets.hpp"
+#include "BeatSaverRegionManager.hpp"
 #include "Util/CurrentTimeMs.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 using namespace QuestUI;

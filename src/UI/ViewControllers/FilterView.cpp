@@ -1,14 +1,18 @@
 #include "UI/ViewControllers/FilterView.hpp"
+
+#include "bsml/shared/BSML.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
 #include "main.hpp"
 #include "PluginConfig.hpp"
 #include "assets.hpp"
-#include "bsml/shared/BSML.hpp"
+
+#include <fmt/chrono.h>
+
 #include "FilterOptions.hpp"
 #include "DateUtils.hpp"
 #include "UI/ViewControllers/SongList.hpp"
-#include <fmt/chrono.h>
 #include "Util/BSMLStuff.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 

@@ -1,13 +1,15 @@
 #pragma once
 
-#include "main.hpp"
+
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "HMUI/Touchable.hpp"
 #include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "assets.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
+
+#include "main.hpp"
+#include "assets.hpp"
 
 const StringW CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";
 
