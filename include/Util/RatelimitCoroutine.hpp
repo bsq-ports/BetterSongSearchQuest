@@ -6,6 +6,7 @@
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/Coroutine.hpp"
+#include "main.hpp"
 
 namespace BetterSongSearch::Util {
 	class RatelimitCoroutine {
@@ -28,11 +29,13 @@ namespace BetterSongSearch::Util {
 			} else {
 				queuedFallingEdge = true;
 			}
+			co_return;
 		}
 
 		custom_types::Helpers::Coroutine CallNextFrame() {
 			co_yield nullptr;
 			co_yield custom_types::Helpers::new_coro(Call());
+			co_return;
 		}
 
 		custom_types::Helpers::Coroutine CallNow() {
@@ -46,6 +49,7 @@ namespace BetterSongSearch::Util {
 			} else {
 				wasRecentlyExecuted = false;
 			}
+			co_return;
 		}
 	};
 };
