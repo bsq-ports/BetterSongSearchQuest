@@ -1,21 +1,15 @@
 #include "UI/ViewControllers/DownloadHistory.hpp"
 #include "main.hpp"
 
-#include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableView_ScrollPositionType.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 
 #include "assets.hpp"
-#include "BeatSaverRegionManager.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
@@ -48,10 +42,13 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
         downloadList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
 
-        // limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-        //                                                                         { this->downloadHistoryTable()->ReloadData(); },
-        //                                                                         0.1f);
+
     }
+
+    // limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){ this->downloadHistoryTable()->ReloadData(); }, 0.1f);
+
+
+
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/DownloadHistory.bsml";
     #endif
@@ -225,6 +222,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 } else {
                                     firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
                                     firstEntry->statusDetails = "";
+                                    firstEntry->downloadProgress = 1.0f;
                                     DEBUG("Success downloading the song");
                                     RefreshTable(true);
                                     RuntimeSongLoader::API::RefreshSongs(false);

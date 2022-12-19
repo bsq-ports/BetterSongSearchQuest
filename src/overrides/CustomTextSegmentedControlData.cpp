@@ -3,9 +3,7 @@
 #include <utility>
 
 #include "UnityEngine/Object.hpp"
-#include "UnityEngine/Transform.hpp"
 #include "UnityEngine/Vector2.hpp"
-#include "UnityEngine/Vector3.hpp"
 #include "UnityEngine/Quaternion.hpp"
 #include "UnityEngine/RectTransform.hpp"
 #include "HMUI/TextSegmentedControlCell.hpp"

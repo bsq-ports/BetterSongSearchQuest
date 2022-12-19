@@ -1,6 +1,5 @@
 #include "overrides/CustomSegmentedControl.hpp"
 
-#include "main.hpp"
 #include "string"
 
 using namespace UnityEngine;

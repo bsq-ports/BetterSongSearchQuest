@@ -1,8 +1,6 @@
 #include "main.hpp"
 
 #include "questui/shared/QuestUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
-#include "songloader/shared/API.hpp"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
 #include "HMUI/FlowCoordinator.hpp"
@@ -13,7 +11,6 @@
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
-#include "GlobalNamespace/BeatmapDifficulty.hpp"
 
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongList.hpp"

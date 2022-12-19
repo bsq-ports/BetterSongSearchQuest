@@ -10,7 +10,7 @@ project(${COMPILE_ID})
 # As always, test thoroughly
 # - Fern
 # Reduces linking speed, disable in development for faster builds
-# set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 # Hot reload (DO NOT USE IN PRODUCTION)
 # add_compile_options(-DHotReload)

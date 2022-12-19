@@ -7,10 +7,6 @@
 #include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
 #include "UnityEngine/Networking/UnityWebRequest.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "UnityEngine/Transform.hpp"
-#include "UnityEngine/Events/UnityAction.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "config-utils/shared/config-utils.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/InputFieldView.hpp"
 #include "HMUI/InputFieldViewChangeBinder.hpp"
@@ -18,13 +14,8 @@
 #include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableView_ScrollPositionType.hpp"
-#include "HMUI/TableViewSelectionType.hpp"
-#include "HMUI/ScrollView.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
 #include "songloader/shared/API.hpp"
-#include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
-#include "GlobalNamespace/IVRPlatformHelper.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
@@ -36,18 +27,11 @@
 #include "bsml/shared/Helpers/getters.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "bsml/shared/macros.hpp"
-#include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
-#include "questui/shared/QuestUI.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
 
-#include <iomanip>
 #include <iterator>
-#include <iomanip>
-#include <sstream>
-#include <map>
 #include <chrono>
 #include <string>
 #include <algorithm>

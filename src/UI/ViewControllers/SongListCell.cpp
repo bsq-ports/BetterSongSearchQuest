@@ -1,13 +1,10 @@
 #include "UI/ViewControllers/SongListCell.hpp"
 
-#include "UnityEngine/RectTransform.hpp"
 #include "UnityEngine/Color.hpp"
 #include "sombrero/shared/FastColor.hpp"
 #include "songloader/shared/API.hpp"
 
-#include "BeatSaverRegionManager.hpp"
 #include "PluginConfig.hpp"
-#include "main.hpp"
 
 #include <fmt/chrono.h>
 #include <fmt/core.h>
