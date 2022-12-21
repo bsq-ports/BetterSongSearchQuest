@@ -1,6 +1,5 @@
 #pragma once
-
-#include "HMUI/ViewController.hpp"
+#include "main.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "HMUI/ModalView.hpp"
@@ -10,22 +9,23 @@
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
+#include "Util/RatelimitCoroutine.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, MultiDL, UnityEngine::MonoBehaviour,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoBehaviour,
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
     
-    DECLARE_INSTANCE_METHOD(void, StartMultiDownload);
     DECLARE_INSTANCE_METHOD(void, CloseModal);
     DECLARE_INSTANCE_METHOD(void, OpenModal);
 
     DECLARE_INSTANCE_FIELD(bool, initialized);
-    DECLARE_INSTANCE_FIELD(StringW, existingSongs);
-    DECLARE_INSTANCE_FIELD(int, songsToDownload);
-    DECLARE_INSTANCE_FIELD(BSML::ModalView*, modal);
 
-    // Sliders that need to be formatted
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, multiDlCountSlider);
+    DECLARE_BSML_PROPERTY(bool, returnToBssFromSolo);
+    DECLARE_BSML_PROPERTY(bool, loadSongPreviews);
+    DECLARE_BSML_PROPERTY(bool, smallerFontSize);
+
+    DECLARE_INSTANCE_FIELD(BSML::ModalView*, settingsModal);
+    // DECLARE_INSTANCE_FIELD(BSML::ModalView*, chinaModal);
 )

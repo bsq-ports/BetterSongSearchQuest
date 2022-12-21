@@ -32,6 +32,8 @@
 #include "main.hpp"
 #include "FilterOptions.hpp"
 #include "Util/RatelimitCoroutine.hpp"
+#include "UI/Modals/MultiDL.hpp"
+#include "UI/Modals/Settings.hpp"
 
 #include <fmt/chrono.h>
 
@@ -130,6 +132,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ForcedUIClose);
     DECLARE_INSTANCE_METHOD(void, ForcedUICloseCancel);
 
+    DECLARE_INSTANCE_METHOD(void, ShowBatchDownload);
     DECLARE_INSTANCE_METHOD(void, ShowPlaylistCreation);
     DECLARE_INSTANCE_METHOD(void, ShowSettings);
 
@@ -160,6 +163,10 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverLoading);
 
+    // Modals
+    DECLARE_INSTANCE_FIELD(Modals::MultiDL*, multiDlModal);
+    DECLARE_INSTANCE_FIELD(Modals::Settings*, settingsModal);
+    
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDiffInfo);
 
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);

@@ -11,6 +11,8 @@
 DECLARE_CONFIG(PluginConfig,
 
 CONFIG_VALUE(ReturnToBSS, bool, "Return to BSS from Solo", true);
+CONFIG_VALUE(LoadSongPreviews, bool, "Load song previews", true);
+CONFIG_VALUE(SmallerFontSize, bool, "Smaller font size", true);
 CONFIG_VALUE(SortMode, int, "Sort Mode", 0);
 CONFIG_VALUE(DownloadType, int, "Download Type", 0);
 CONFIG_VALUE(LocalScoreType, int, "Local Score Type", 0);
@@ -32,6 +34,8 @@ CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
 CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
     CONFIG_INIT_FUNCTION(
         CONFIG_INIT_VALUE(ReturnToBSS);
+        CONFIG_INIT_VALUE(LoadSongPreviews);
+        CONFIG_INIT_VALUE(SmallerFontSize);
         CONFIG_INIT_VALUE(SortMode);
         CONFIG_INIT_VALUE(DownloadType);
         CONFIG_INIT_VALUE(LocalScoreType);

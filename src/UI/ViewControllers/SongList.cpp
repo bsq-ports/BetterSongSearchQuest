@@ -592,6 +592,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
 
     multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
+    settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -706,6 +707,8 @@ void ViewControllers::SongListController::ShowPlaylistCreation() {
 };
 
 void ViewControllers::SongListController::ShowSettings () {
+    
+    this->settingsModal->OpenModal();
     // Hide modal cause bsml does not support automagic hiding of it
     this->moreModal->Hide(false, nullptr);
     DEBUG("ShowSettings");
