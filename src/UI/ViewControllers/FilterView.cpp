@@ -68,9 +68,6 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
     SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
     SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
     SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
-    
-    SAVE_NUMBER_CONFIG(this->minimumSongLength,MinLength ,minLength);
-    SAVE_NUMBER_CONFIG(this->maximumSongLength, MaxLength,maxLength);
     SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
     SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
     SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
@@ -89,6 +86,24 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         DataHolder::filterOptions.minUploadDate = sec;
         getPluginConfig().MinUploadDate.SetValue(sec);
         getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
+    }
+
+    // Special case for min song length
+    if (this->minimumSongLength * 60 != getPluginConfig().MinLength.GetValue()) {
+        int seconds = minimumSongLength * 60;
+
+        filtersChanged = true;
+        DataHolder::filterOptions.minLength = seconds;
+        getPluginConfig().MinLength.SetValue(seconds);
+    }
+
+    // Special case for max song length
+    if (this->maximumSongLength * 60 != getPluginConfig().MaxLength.GetValue()) {
+        int seconds = maximumSongLength * 60;
+
+        filtersChanged = true;
+        DataHolder::filterOptions.maxLength = seconds;
+        getPluginConfig().MaxLength.SetValue(seconds);
     }
 
     if (filtersChanged) {
@@ -122,8 +137,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     // Get settings and set stuff
     this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
     this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
-    this->minimumSongLength=DataHolder::filterOptions.minLength;
-    this->maximumSongLength=DataHolder::filterOptions.maxLength;
+    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
+    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
     this->minimumNjs = DataHolder::filterOptions.minNJS;
     this->maximumNjs = DataHolder::filterOptions.maxNJS;
     this->minimumNps = DataHolder::filterOptions.minNPS;
