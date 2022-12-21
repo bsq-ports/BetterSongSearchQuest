@@ -34,6 +34,7 @@
 #include "Util/RatelimitCoroutine.hpp"
 #include "UI/Modals/MultiDL.hpp"
 #include "UI/Modals/Settings.hpp"
+#include "UI/Modals/UploadDetails.hpp"
 
 #include <fmt/chrono.h>
 
@@ -166,6 +167,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     // Modals
     DECLARE_INSTANCE_FIELD(Modals::MultiDL*, multiDlModal);
     DECLARE_INSTANCE_FIELD(Modals::Settings*, settingsModal);
+    DECLARE_INSTANCE_FIELD(Modals::UploadDetails*, uploadDetailsModal);
     
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDiffInfo);
 

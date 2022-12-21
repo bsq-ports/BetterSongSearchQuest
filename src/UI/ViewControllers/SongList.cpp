@@ -593,6 +593,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
     multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
     settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
+    uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -784,8 +785,10 @@ void ViewControllers::SongListController::ShowBatchDownload () {
     this->HideMoreModal();
 }
 
-void ViewControllers::SongListController::ShowSongDetails () {  
-    DEBUG("ShowSongDetails");
+void ViewControllers::SongListController::ShowSongDetails () {
+    if (this->currentSong) {
+        uploadDetailsModal->OpenModal(this->currentSong);
+    }
 }
 
 void ViewControllers::SongListController::UpdateDetails () {  
