@@ -80,8 +80,10 @@ void Modals::UploadDetails::OpenModal(const SDC_wrapper::BeatStarSong* song)
     songDetailsLoading->get_gameObject()->SetActive(true);
 
     BeatSaverRegionManager::GetSongDescription(std::string(song->key.string_data), [this](std::string value) {
-        selectedSongDescription->SetText(value);
-        songDetailsLoading->get_gameObject()->SetActive(false);
+        QuestUI::MainThreadScheduler::Schedule([this, value]{
+            selectedSongDescription->SetText(value);
+            songDetailsLoading->get_gameObject()->SetActive(false);
+        });
     });
 
     this->rootModal->Show();
