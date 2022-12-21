@@ -821,7 +821,6 @@ void ViewControllers::SongListController::UpdateDetails () {
                 this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
               
                 coverLoading->set_enabled(false);
-                this->UpdateDetails();
             });
         });
     }
