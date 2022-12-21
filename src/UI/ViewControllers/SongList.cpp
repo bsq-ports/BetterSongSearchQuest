@@ -521,6 +521,12 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (!firstActivation)
         return;
 
+    
+    limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+        { 
+            this->_UpdateSearchedSongsList();
+        }, 0.1f);
+
     IsSearching = false;
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/SongList.bsml";
@@ -584,10 +590,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
             return x->customLevelPackCollection != nullptr;
         });
 
-    limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-        { 
-            this->_UpdateSearchedSongsList();
-        }, 0.1f);
+
+    multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
@@ -769,6 +773,12 @@ void ViewControllers::SongListController::Play () {
     GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
     fromBSS = true;
     DEBUG("Play");
+}
+
+
+void ViewControllers::SongListController::ShowBatchDownload () {
+    this->multiDlModal->OpenModal();
+    this->HideMoreModal();
 }
 
 void ViewControllers::SongListController::ShowSongDetails () {  
