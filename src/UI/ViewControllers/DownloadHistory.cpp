@@ -8,6 +8,7 @@
 #include "bsml/shared/BSML.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
@@ -45,7 +46,9 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
     }
 
-    // limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){ this->downloadHistoryTable()->ReloadData(); }, 0.1f);
+    limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
+        this->downloadHistoryTable()->ReloadData();
+    }, 0.1f);
 
 
 
@@ -168,8 +171,9 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         firstEntry->retries++;
     firstEntry->downloadProgress = 0.0f;
     firstEntry->status = DownloadHistoryEntry::DownloadStatus::Preparing;
-    // RefreshTable(true);
     firstEntry->lastUpdate = CurrentTimeMs();
+    RefreshTable(true);
+    
     std::function<void(float)> progressUpdate = [this,  firstEntry](float downloadPercentage)
     {
 
@@ -252,12 +256,16 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
 
 void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReload)
 {
-    // downloadListSorted = downloadList.OrderBy(x => x.orderValue).ToArray();
     QuestUI::MainThreadScheduler::Schedule(
     [this]
     {
-        this->downloadHistoryTable()->ReloadData();
-        // coro(this->limitedFullTableReload->Call());
+        // Sort entry list
+        std::stable_sort(downloadEntryList.begin(), downloadEntryList.end(),
+            [] (DownloadHistoryEntry* entry1, DownloadHistoryEntry* entry2)
+            {
+                return (entry1->orderValue() < entry2->orderValue());
+            }
+        );
+        coro(this->limitedFullTableReload->Call());
     });
-
 }
