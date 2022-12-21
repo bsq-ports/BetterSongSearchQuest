@@ -768,6 +768,7 @@ custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel
 
 
 void ViewControllers::SongListController::Play () {
+    if (!currentSong) return;
     backButton = UnityEngine::GameObject::Find("BackButton");
     auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(currentSong->GetHash()));
     if(level.has_value())
@@ -776,7 +777,6 @@ void ViewControllers::SongListController::Play () {
     }
     GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
     fromBSS = true;
-    DEBUG("Play");
 }
 
 
