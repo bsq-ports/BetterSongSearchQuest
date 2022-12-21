@@ -48,6 +48,7 @@
 #include "Util/Random.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
+#include "UI/Manager.hpp"
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -756,8 +757,7 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
     backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
     co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
-    auto soloButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-    soloButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
+    manager.GoToSongSelect();
     GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
     if(levelCollectionNavigationController) {
         co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));

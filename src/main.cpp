@@ -5,16 +5,21 @@
 #include "custom-types/shared/register.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/ViewController_AnimationType.hpp"
+#include "HMUI/SelectableCell.hpp"
 #include "HMUI/ViewController_AnimationDirection.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
+#include "UnityEngine/GameObject.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
-
+#include "GlobalNamespace/GameplaySetupViewController.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "PluginConfig.hpp"
+#include "UI/Manager.hpp"
+#include "HMUI/TextSegmentedControlCell.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
 
 #include <regex>
 
@@ -107,6 +112,51 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
     
 }
 
+MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::GameplaySetupViewController::RefreshContent, void, GlobalNamespace::GameplaySetupViewController* self)
+{
+    GameplaySetupViewController_RefreshContent(self);
+
+    // FIXME: This button does not get recreated in the multiplayer menu for some reason, find a way to detect button dying
+    // Button instance
+    static GameObject* button = nullptr;
+
+    bool multiplayer = self->showMultiplayer;
+
+    if(!button || !button->m_CachedPtr.m_value) {
+        DEBUG("Button not found, creating");
+        auto x = self->get_transform()->Find("BSMLBackground/BSMLTabSelector");
+        if (x==nullptr) {
+            x = self->get_transform()->Find("TextSegmentedControl");
+        }
+        if (x == nullptr) {
+            return;
+        }
+
+        button = UnityEngine::GameObject::Instantiate(x->get_transform()->GetChild(x->get_transform()->GetChildCount()-1), x)->get_gameObject();
+
+        auto t = button->GetComponent<HMUI::TextSegmentedControlCell*>();
+
+        t->set_text("Better Song Search");
+
+        reinterpret_cast<HMUI::SelectableCell*>(t)->wasPressedSignal=nullptr;
+
+        
+        std::function<void(HMUI::SelectableCell*, HMUI::SelectableCell::TransitionType, ::Il2CppObject*)> fun = [t](HMUI::SelectableCell* cell, HMUI::SelectableCell::TransitionType transition, Il2CppObject* obj) { 
+            if(!t->get_selected())
+                return;
+
+            t->set_selected(false);
+            manager.ShowFlow(false);
+         };
+
+        auto action = BSML::MakeSystemAction(fun);
+
+        t->add_selectionDidChangeEvent(action);
+    }
+
+    button->set_active(multiplayer);
+}
+	
 // Called later on in the game loading - a good time to install function hooks
 extern "C" void load() {
     il2cpp_functions::Init();
@@ -114,9 +164,11 @@ extern "C" void load() {
     QuestUI::Init();
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
+    INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
 
     custom_types::Register::AutoRegister();
-    modInfo.id = "Better Song Search";
-    QuestUI::Register::RegisterMainMenuModSettingsFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>(modInfo);
+
     modInfo.id = MOD_ID;
+    
+    manager.Init();
 }

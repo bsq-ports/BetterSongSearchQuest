@@ -12,13 +12,13 @@ DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordina
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
-    if (!SongListController) {
+    if (!SongListController || !SongListController->m_CachedPtr.m_value) {
         SongListController = BeatSaberUI::CreateViewController<ViewControllers::SongListController*>();
     }
-    if (!FilterViewController) {
+    if (!FilterViewController ||  !FilterViewController->m_CachedPtr.m_value) {
         FilterViewController = BeatSaberUI::CreateViewController<ViewControllers::FilterViewController*>();
     }
-    if (!DownloadHistoryViewController) {
+    if (!DownloadHistoryViewController ||  !DownloadHistoryViewController->m_CachedPtr.m_value) {
         DownloadHistoryViewController = BeatSaberUI::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
     }
 }
