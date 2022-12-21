@@ -79,7 +79,17 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
     SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
     SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
     SAVE_INTEGER_CONFIG(this->minimumVotes,MinVotes, minVotes);
-    SAVE_INTEGER_CONFIG(this->hideOlderThan, MinUploadDateInMonths, minUploadDate);
+
+    // Special case for saving date
+    if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
+        filtersChanged = true;
+        std::chrono::time_point val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months((int)this->hideOlderThan);
+        int sec = duration_cast<std::chrono::seconds>(val.time_since_epoch()).count();
+
+        DataHolder::filterOptions.minUploadDate = sec;
+        getPluginConfig().MinUploadDate.SetValue(sec);
+        getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
+    }
 
     if (filtersChanged) {
         DEBUG("Filters changed");
@@ -100,6 +110,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     if (!firstActivation)
         return;
 
+    // It needs to be registere
+    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+    {
+        DEBUG("RUNNING update");
+        coro(this->_UpdateFilterSettings());
+    }, 0.2f);
+
     INFO("Filter View contoller activated");
 
     // Get settings and set stuff
@@ -115,7 +132,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     this->maximumStars = DataHolder::filterOptions.maxStars;
     this->minimumRating = DataHolder::filterOptions.minRating;
     this->minimumVotes = DataHolder::filterOptions.minVotes;
-    this->hideOlderThan = DataHolder::filterOptions.minUploadDate;
+    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();;
     
     // TODO: fix uploaders field loading
     // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
@@ -146,12 +163,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     hideOlderThanSlider->slider->set_numberOfSteps(maxUploadDate);
     int steps = (hideOlderThanSlider->slider->get_maxValue() - hideOlderThanSlider->slider->get_minValue()) / hideOlderThanSlider->increments;
     hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
+    hideOlderThanSlider->set_Value(getPluginConfig().MinUploadDateInMonths.GetValue());
     hideOlderThanSlider->ReceiveValue();
-    
-    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-        { 
-            coro(this->_UpdateFilterSettings());
-        }, 0.2f);
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";

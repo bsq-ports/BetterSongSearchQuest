@@ -57,8 +57,9 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(float, minimumStars);
     DECLARE_INSTANCE_FIELD(float, maximumStars);
     DECLARE_INSTANCE_FIELD(float, minimumRating);
-    DECLARE_INSTANCE_FIELD(int, minimumVotes);
-    DECLARE_INSTANCE_FIELD(int, hideOlderThan);
+    // These are float because there is some bug in 
+    DECLARE_INSTANCE_FIELD(float, minimumVotes);
+    DECLARE_INSTANCE_FIELD(float, hideOlderThan);
 
     DECLARE_INSTANCE_METHOD(void, UpdateFilterSettings);
 
