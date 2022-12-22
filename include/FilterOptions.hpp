@@ -111,14 +111,14 @@ public:
         downloadType=s.downloadType;
         localScoreType=s.localScoreType;
         minLength=s.minLength;
-        maxLength=s.maxLength;
+        if (s.maxLength >= SONG_LENGTH_FILTER_MAX) { maxLength=9999999.0f; } else { maxLength=s.maxLength;}
         minNJS=s.minNJS;
-        maxNJS=s.maxNJS;
+        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=99999.0f; } else { maxNJS=s.maxNJS;}
         minNPS=s.minNPS;
-        maxNPS=s.maxNPS;
+        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=99999.0f; } else { maxNPS=s.maxNPS;}
         rankedType=s.rankedType;
         minStars=s.minStars;
-        maxStars=s.maxStars;
+        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=99999.0f; } else { maxStars=s.maxStars;}
         minUploadDate=s.minUploadDate;
         minRating=s.minRating;
         minVotes=s.minVotes;
@@ -127,7 +127,12 @@ public:
         charFilter=s.charFilter;
         modRequirement=s.modRequirement;
     }
-        
+    
+    // Prolly need to deduplicate these..
+    const float SONG_LENGTH_FILTER_MAX = 15.0f;
+    const float STAR_FILTER_MAX = 14.0f;
+    const float NJS_FILTER_MAX = 25.0f;
+    const float NPS_FILTER_MAX = 12.0f;
 
     //General
     FilterOptions::DownloadFilterType downloadType = FilterOptions::DownloadFilterType::All;
