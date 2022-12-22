@@ -74,6 +74,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumNpsSlider);
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumSongLengthSlider);
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumSongLengthSlider);
+    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumVotesSlider);
 
     // Values for string fields
     DECLARE_INSTANCE_FIELD(StringW, uploadersString);

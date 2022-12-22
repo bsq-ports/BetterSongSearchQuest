@@ -53,7 +53,7 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
     } \
 
 
-
+// TODO: Fix unlimited to better search songs outside of filters boundaries
 custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateFilterSettings() {
     // Wait for next frame
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
@@ -125,7 +125,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     if (!firstActivation)
         return;
 
-    // It needs to be registere
+    // It needs to be registered
     limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
     {
         DEBUG("RUNNING update");
@@ -180,6 +180,80 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
     hideOlderThanSlider->set_Value(getPluginConfig().MinUploadDateInMonths.GetValue());
     hideOlderThanSlider->ReceiveValue();
+
+    // Format other values
+    std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
+        float totalSeconds = value * 60;
+        int minutes = ((int)totalSeconds % 3600) / 60;
+        int seconds = (int)totalSeconds % 60;
+
+        return fmt::format("{:02}:{:02}", minutes, seconds);
+        
+    };
+    minimumSongLengthSlider->formatter = minLengthSliderFormatFunction;
+
+    // Max length format
+    std::function<std::string(float)> maxLengthSliderFormatFunction = [](float value) {
+        float totalSeconds = value * 60;
+        int minutes = ((int)totalSeconds % 3600) / 60;
+        int seconds = (int)totalSeconds % 60;
+
+        if (value >= DataHolder::filterOptions.SONG_LENGTH_FILTER_MAX) {
+            return (std::string) "Unlimited";
+        } else {
+            return fmt::format("{:02}:{:02}", minutes, seconds);
+        }
+    };
+    maximumSongLengthSlider->formatter = maxLengthSliderFormatFunction;
+
+    // Min rating format
+    std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
+        return fmt::format("{:.1f}%", value*100);
+    };
+    minimumRatingSlider->formatter = minRatingSliderFormatFunction;
+
+    // NJS format
+    std::function<std::string(float)> minNJSFormat = [](float value) {
+            return fmt::format("{:.1f}", value);
+    };
+    std::function<std::string(float)> maxNJSFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.NJS_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minimumNjsSlider->formatter = minNJSFormat;
+    maximumNjsSlider->formatter = maxNJSFormat;
+    
+    // NPS format
+    std::function<std::string(float)> minNPSFormat = [](float value) {
+        return fmt::format("{:.1f}", value);
+    };
+    std::function<std::string(float)> maxNPSFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.NPS_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minimumNpsSlider->formatter = minNPSFormat;
+    maximumNpsSlider->formatter = maxNPSFormat;
+
+    // Stars formatting
+    std::function<std::string(float)> minStarFormat = [](float value) {
+        return fmt::format("{:.1f}", value);
+    };
+    std::function<std::string(float)> maxStarFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.STAR_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minStarsSetting->formatter = minStarFormat;
+    maxStarsSetting->formatter = maxStarFormat;
+    std::function<std::string(float)> minimumVotesFormat = [](float value) {
+        return fmt::format("{}", (int) value);
+    };
+    minimumVotesSlider->formatter = minimumVotesFormat;
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
