@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <limits>
 #include "main.hpp"
 
 class FilterOptions
@@ -111,14 +112,14 @@ public:
         downloadType=s.downloadType;
         localScoreType=s.localScoreType;
         minLength=s.minLength;
-        if (s.maxLength >= SONG_LENGTH_FILTER_MAX) { maxLength=9999999.0f; } else { maxLength=s.maxLength;}
+        if (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); } else { maxLength=s.maxLength;}
         minNJS=s.minNJS;
-        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=99999.0f; } else { maxNJS=s.maxNJS;}
+        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); } else { maxNJS=s.maxNJS;}
         minNPS=s.minNPS;
-        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=99999.0f; } else { maxNPS=s.maxNPS;}
+        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); } else { maxNPS=s.maxNPS;}
         rankedType=s.rankedType;
         minStars=s.minStars;
-        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=99999.0f; } else { maxStars=s.maxStars;}
+        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); } else { maxStars=s.maxStars;}
         minUploadDate=s.minUploadDate;
         minRating=s.minRating;
         minVotes=s.minVotes;
