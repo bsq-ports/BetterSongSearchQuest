@@ -49,6 +49,7 @@
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UI/Manager.hpp"
+#include "Util/TextUtil.hpp"
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -103,12 +104,15 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     auto const& filterOptions = DataHolder::filterOptionsCache;
     std::string songHash = song->hash.string_data;
 
-    /*if(filterOptions->uploaders.size() != 0) {
-		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
-		} else {
+    if(filterOptions.uploaders.size() != 0) {
+		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions.uploaders.end()) {
+            if(filterOptions.uploadersBlackList)
+                return false;
+		} else if (!filterOptions.uploadersBlackList) {
 			return false;
 		}
-	}*/
+	}
+
 
     if(song->uploaded_unix_time < filterOptions.minUploadDate)
         return false;
@@ -287,45 +291,6 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }}
 };
 
-// this hurts
-std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter = " ") {
-    std::vector<std::string> ret{};
-    std::decay_t<decltype(std::string::npos)> pos{};
-    while ((pos = buffer.find(delimeter)) != std::string::npos) {
-        const auto match = buffer.substr(0, pos);
-        if (!match.empty()) ret.emplace_back(match);
-        buffer = buffer.substr(pos + delimeter.size());
-    }
-    if (!buffer.empty()) ret.emplace_back(buffer);
-    return ret;
-}
-
-std::string removeSpecialCharacter(std::string_view const s) {
-    std::string stringy(s);
-    for (int i = 0; i < stringy.size(); i++) {
-
-        if (stringy[i] < 'A' || stringy[i] > 'Z' &&
-                                stringy[i] < 'a' || stringy[i] > 'z')
-        {
-            stringy.erase(i, 1);
-            i--;
-        }
-    }
-    return stringy;
-}
-
-inline std::string toLower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}
-
-inline std::string toLower(std::string_view s) {
-    return toLower(std::string(s));
-}
-
-inline std::string toLower(char const* s) {
-    return toLower(std::string(s));
-}
 
 bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
 {
@@ -870,6 +835,13 @@ void ViewControllers::SongListController::UpdateDetails () {
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
+    if (!this->currentSong) {
+        return;
+    }
+    
+    fcInstance->FilterViewController->uploadersString = this->currentSong->GetAuthor();
+    fcInstance->FilterViewController->uploadersStringControl->ApplyValue();
+    fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }
 

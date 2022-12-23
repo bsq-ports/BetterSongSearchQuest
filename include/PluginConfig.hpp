@@ -31,6 +31,7 @@ CONFIG_VALUE(MinRating, float, "Minimum Rating", 0);
 CONFIG_VALUE(MinVotes, int, "Minimum Votes", 0);
 CONFIG_VALUE(DifficultyType, int, "Difficulty Type", 0);
 CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
+CONFIG_VALUE(Uploaders, std::string, "Characteristic Type", "");
 CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
     CONFIG_INIT_FUNCTION(
         CONFIG_INIT_VALUE(ReturnToBSS);
@@ -54,6 +55,7 @@ CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
         CONFIG_INIT_VALUE(MinVotes);
         CONFIG_INIT_VALUE(DifficultyType);
         CONFIG_INIT_VALUE(CharacteristicType);
+        CONFIG_INIT_VALUE(Uploaders);
         CONFIG_INIT_VALUE(RequirementType);
     )
 )

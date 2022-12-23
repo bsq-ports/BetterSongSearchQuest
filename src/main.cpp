@@ -24,10 +24,11 @@
 #include "UI/Manager.hpp"
 #include "HMUI/TextSegmentedControlCell.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
-
+#include "Util/TextUtil.hpp"
 #include <regex>
 
 using namespace QuestUI;
+using namespace BetterSongSearch::Util;
 
 static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
@@ -82,6 +83,20 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
+
+        // Custom string loader
+        auto uploadersString = getPluginConfig().Uploaders.GetValue();
+        if (uploadersString.size() > 0) {
+            if (uploadersString[0] == '!') {
+                uploadersString.erase(0,1);
+                filterOptions.uploadersBlackList = true;
+            } else {
+                filterOptions.uploadersBlackList = false;
+            }
+            filterOptions.uploaders = split(toLower(uploadersString), " ");
+        } else {
+            filterOptions.uploaders.clear();
+        }
 
 
         auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();

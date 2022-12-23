@@ -14,7 +14,7 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "Util/BSMLStuff.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-
+#include "Util/TextUtil.hpp"
 
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
@@ -106,6 +106,44 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         getPluginConfig().MaxLength.SetValue(seconds);
     }
 
+    // Save uploaders
+    if (this->uploadersString != getPluginConfig().Uploaders.GetValue()) {
+        filtersChanged = true;
+
+        // Save to config
+        getPluginConfig().Uploaders.SetValue(this->uploadersString);
+
+        // Apply to filters
+        std::string copy = uploadersString;
+        if (copy.size() > 0) {
+            if (copy[0] == '!') {
+                copy.erase(0,1);
+                DataHolder::filterOptions.uploadersBlackList = true;
+            } else {
+                DataHolder::filterOptions.uploadersBlackList = false;
+            }
+            DataHolder::filterOptions.uploaders = split(toLower(copy), " ");
+        } else {
+            DataHolder::filterOptions.uploaders.clear();
+        }
+    }
+    
+    std::function<std::string(StringW)> uploadersStringFormat = [](std::string value) {
+        bool blacklist = false;
+        if (value.size() > 0) {
+            if (value[0] == '!') {
+                value.erase(0,1);
+                blacklist = true;
+            }
+        } else {
+            return (std::string) "";
+        }
+        auto uploaders = split(value, " ");
+
+        return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
+    };
+
+
     if (filtersChanged) {
         DEBUG("Filters changed");
         auto controller = fcInstance->SongListController;
@@ -147,7 +185,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     this->maximumStars = DataHolder::filterOptions.maxStars;
     this->minimumRating = DataHolder::filterOptions.minRating;
     this->minimumVotes = DataHolder::filterOptions.minVotes;
-    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();;
+    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
+
+    // Custom string loader
+    this->uploadersString = getPluginConfig().Uploaders.GetValue();
+
     
     // TODO: fix uploaders field loading
     // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
@@ -254,6 +296,21 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         return fmt::format("{}", (int) value);
     };
     minimumVotesSlider->formatter = minimumVotesFormat;
+
+    std::function<std::string(StringW)> uploadersStringFormat = [](std::string value) {
+        bool blacklist = false;
+        if (value.size() > 0) {
+            if (value[0] == '!') {
+                value.erase(0,1);
+                blacklist = true;
+            }
+        }
+        auto uploaders = split(value, " ");
+
+        return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
+    };
+
+    uploadersStringControl->formatter = uploadersStringFormat;
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";

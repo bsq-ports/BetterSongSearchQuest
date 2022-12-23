@@ -82,6 +82,7 @@ public:
     float minRating = 0;
     int minVotes = 0;
     std::vector<std::string> uploaders;
+    bool uploadersBlackList = false;
 
     //Difficulty
     DifficultyFilterType difficultyFilter = DifficultyFilterType::All;
@@ -124,6 +125,7 @@ public:
         minRating=s.minRating;
         minVotes=s.minVotes;
         uploaders=s.uploaders;
+        uploadersBlackList=s.uploadersBlackList;
         difficultyFilter=s.difficultyFilter;
         charFilter=s.charFilter;
         modRequirement=s.modRequirement;
@@ -153,6 +155,7 @@ public:
     float minRating = 0;
     int minVotes = 0;
     std::vector<std::string> uploaders;
+    bool uploadersBlackList = false;
 
     //Difficulty
     FilterOptions::DifficultyFilterType difficultyFilter = FilterOptions::DifficultyFilterType::All;
