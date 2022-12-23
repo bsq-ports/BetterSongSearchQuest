@@ -459,6 +459,21 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
             after = CurrentTimeMs();
             INFO("table reset in {} ms",  after-before);
+
+            if(songSearchPlaceholder) {
+                if(DataHolder::filteredSongList.size() == DataHolder::songList.size()) {
+                    songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+                } else {
+                    songSearchPlaceholder->set_text(fmt::format("Search {} songs", DataHolder::filteredSongList.size()));
+                }
+            }
+            if(!currentSong) {
+                SelectSong(songListTable(), 0);
+            } else {
+                // Always un-select in the list to prevent wrong-selections on resorting, etc.
+                songListTable()->ClearSelection();
+            }
+
             this->searchInProgress->get_gameObject()->set_active(false);
             
 
@@ -528,8 +543,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (searchBox) {
         auto newSearchBox = Instantiate(searchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
         auto songSearchInput = newSearchBox->GetComponent<HMUI::InputFieldView *>();
-        auto songSearchPlaceholder = newSearchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
-
+        songSearchPlaceholder = newSearchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
+        songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
 
         std::function<void(HMUI::InputFieldView * view)> onClick = [this](HMUI::InputFieldView * view) {
@@ -546,6 +561,11 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         ViewControllers::SongListController::SortAndFilterSongs(SortMode::Newest, "", true);
     }
 
+    // Get regional beat saver urls
+    BeatSaverRegionManager::RegionLookup();
+
+    // Get the default cover image
+    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
 
     // Get song preview player 
     songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
@@ -563,7 +583,9 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 }
 
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
-{   
+{
+    if(!table)
+        return;
     DEBUG("Cell clicked {}", id);
     if (DataHolder::sortedSongList.size() < id) {
         // Return if the id is invalid
@@ -766,6 +788,7 @@ void ViewControllers::SongListController::UpdateDetails () {
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
+    this->coverImage->set_sprite(defaultImage);
     
     if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
         std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];
@@ -776,6 +799,7 @@ void ViewControllers::SongListController::UpdateDetails () {
     else {
 
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+        DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
         GetByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
             QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {

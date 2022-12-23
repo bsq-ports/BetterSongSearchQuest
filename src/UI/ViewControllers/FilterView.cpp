@@ -1,7 +1,9 @@
 #include "UI/ViewControllers/FilterView.hpp"
 
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/Components/Backgroundable.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "HMUI/ImageView.hpp"
 
 #include "main.hpp"
 #include "PluginConfig.hpp"
@@ -156,7 +158,13 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
 }
 
-
+UnityEngine::Sprite* GetBGSprite(std::string str)
+{
+    return QuestUI::ArrayUtil::First(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>(),
+                                     [str](UnityEngine::Sprite* x) {
+                                         return to_utf8(csstrtostr(x->get_name())) == str;
+                                     });
+}
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
@@ -222,6 +230,20 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
     hideOlderThanSlider->set_Value(getPluginConfig().MinUploadDateInMonths.GetValue());
     hideOlderThanSlider->ReceiveValue();
+
+    auto getBgSprite = GetBGSprite("RoundRect10BorderFade");
+
+    for(auto x : QuestUI::ArrayUtil::Select<HMUI::ImageView*>(GetComponentsInChildren<BSML::Backgroundable*>(), [](BSML::Backgroundable* x) {return x->GetComponent<HMUI::ImageView*>();})) {
+        if(!x || x->get_color0() != Color::get_white() || x->get_sprite()->get_name() != "RoundRect10")
+            continue;
+        x->skew = 0.0f;
+        x->set_overrideSprite(nullptr);
+        x->set_sprite(getBgSprite);
+        x->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
+    }
+
+    for(auto x : QuestUI::ArrayUtil::Where(filterbarContainer->GetComponentsInChildren<HMUI::ImageView*>(), [](HMUI::ImageView* x) {return x->get_gameObject()->get_name() == "Underline";}))
+        x->set_sprite(getBgSprite);
 
     // Format other values
     std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {

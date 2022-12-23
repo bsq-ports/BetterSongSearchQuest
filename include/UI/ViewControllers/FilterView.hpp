@@ -1,5 +1,6 @@
 #pragma once
 
+#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
 #include "HMUI/ViewController.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -63,6 +64,9 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(float, hideOlderThan);
 
     DECLARE_INSTANCE_METHOD(void, UpdateFilterSettings);
+
+    // BG layout stuff
+    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalLayoutGroup*, filterbarContainer);
 
     // Sliders that need to be formatted
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, hideOlderThanSlider);

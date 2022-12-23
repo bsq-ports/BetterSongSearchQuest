@@ -182,7 +182,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
             return;
         }
         
-        firstEntry->statusDetails = fmt::format("({}{})", downloadPercentage, firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
+        firstEntry->statusDetails = fmt::format("({}%{})", (int)round(downloadPercentage), firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
         firstEntry->lastUpdate = now;
 
         firstEntry->downloadProgress = downloadPercentage / 100.0f;

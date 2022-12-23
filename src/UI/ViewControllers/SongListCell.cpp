@@ -17,7 +17,6 @@ namespace BetterSongSearch::UI::ViewControllers {
         this->levelAuthorName->set_text(entry->GetAuthor());
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->duration_secs), entry->upvotes, entry->downvotes));
         this->uploadDateFormatted->set_text(fmt::format("{:%d. %b %Y}", fmt::localtime(entry->uploaded_unix_time)));
-
         auto ranked = entry->GetMaxStarValue() > 0;
         bool downloaded = RuntimeSongLoader::API::GetLevelByHash(entry->hash.string_data).has_value();
 

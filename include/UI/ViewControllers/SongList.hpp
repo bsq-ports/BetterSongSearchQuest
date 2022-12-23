@@ -1,5 +1,6 @@
 #pragma once
 #include "UI/ViewControllers/SongListCellTableData.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView_IDataSource.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/ViewController.hpp"
@@ -149,6 +150,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(bool, IsSearching);
     
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, searchBoxContainer);
+    DECLARE_INSTANCE_FIELD(HMUI::CurvedTextMeshPro*, songSearchPlaceholder);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);
@@ -162,6 +164,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongAuthor);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongName);
 
+    DECLARE_INSTANCE_FIELD(UnityEngine::Sprite*, defaultImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverLoading);
 
