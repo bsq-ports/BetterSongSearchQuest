@@ -14,6 +14,10 @@
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/GameplaySetupViewController.hpp"
+#include "GlobalNamespace/LevelFilteringNavigationController.hpp"
+#include "GlobalNamespace/IBeatmapLevelPack.hpp"
+#include "GlobalNamespace/SongPackMask.hpp"
+#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "PluginConfig.hpp"
@@ -156,6 +160,17 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
     button->set_active(multiplayer);
 }
+
+MAKE_HOOK_MATCH(LevelFilteringNavigationController_Setup, &GlobalNamespace::LevelFilteringNavigationController::Setup, void, GlobalNamespace::LevelFilteringNavigationController* self, GlobalNamespace::SongPackMask songPackMask, GlobalNamespace::IBeatmapLevelPack* levelPackToBeSelectedAfterPresent, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory startLevelCategory, bool hidePacksIfOneOrNone, bool enableCustomLevels)
+{
+	LevelFilteringNavigationController_Setup(self, songPackMask, levelPackToBeSelectedAfterPresent, startLevelCategory, hidePacksIfOneOrNone, enableCustomLevels);
+
+    // To have interoperability with pinkcore I trigger it only if pressing play in the bss
+	if (openToCustom ) {
+		self->selectLevelCategoryViewController->Setup(startLevelCategory.CustomSongs, self->enabledLevelCategories);
+        openToCustom = false;
+	}
+}
 	
 // Called later on in the game loading - a good time to install function hooks
 extern "C" void load() {
@@ -165,6 +180,8 @@ extern "C" void load() {
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
+    INSTALL_HOOK(getLoggerOld(), LevelFilteringNavigationController_Setup);
+    
 
     custom_types::Register::AutoRegister();
 
