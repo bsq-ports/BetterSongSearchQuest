@@ -9,7 +9,7 @@
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "GlobalNamespace/SharedCoroutineStarter.hpp"
-
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/ViewControllers/DownloadListTableData.hpp"
@@ -34,6 +34,10 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
     if (!firstActivation)
         return;
 
+    limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
+        this->downloadHistoryTable()->ReloadData();
+    }, 0.1f);
+
     getLoggerOld().info("Download contoller activated");
     BSML::parse_and_construct(IncludedAssets::DownloadHistory_bsml, this->get_transform(), this);
 
@@ -46,10 +50,14 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
     }
 
-    limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
-        this->downloadHistoryTable()->ReloadData();
-    }, 0.1f);
-
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
+    auto platformHelper = Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    if (platformHelper == nullptr) {
+    } else {
+        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
+            x->platformHelper=platformHelper;
+        }
+    }
 
 
     #ifdef HotReload

@@ -463,7 +463,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             after = CurrentTimeMs();
             INFO("table reset in {} ms",  after-before);
 
-            if(songSearchPlaceholder) {
+            if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr.m_value) {
                 if(DataHolder::filteredSongList.size() == DataHolder::songList.size()) {
                     songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
                 } else {
@@ -497,6 +497,59 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 void ViewControllers::SongListController::UpdateSearchedSongsList() {
     coro(limitedUpdateSearchedSongsList->CallNextFrame());
 }
+
+void ViewControllers::SongListController::PostParse() {
+    // Steal search box from the base game
+    static SafePtrUnity<HMUI::InputFieldView> gameSearchBox;
+    if (!gameSearchBox) {
+        gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>().First(
+        [](HMUI::InputFieldView *x) {
+            return x->get_name() == "SearchInputField";
+        });
+    }
+
+    if (gameSearchBox) {
+        // Cleanup the old search
+        if (searchBox && searchBox->m_CachedPtr.m_value) {
+            DestroyImmediate(searchBox);
+        }
+        searchBox = Instantiate(gameSearchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
+        auto songSearchInput = searchBox->GetComponent<HMUI::InputFieldView *>();
+        songSearchPlaceholder = searchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
+        songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+        songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
+
+        std::function<void(HMUI::InputFieldView * view)> onValueChanged = [this](HMUI::InputFieldView * view) {
+            DEBUG("Input is: {}", (std::string) view->get_text());
+            fcInstance->SongListController->SortAndFilterSongs(this->sort, (std::string) view->get_text() , true);
+            // colorPickerModal->Show();
+        };
+        
+        songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onValueChanged));
+    }
+
+    // Get the default cover image
+    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
+
+    // Get song preview player 
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
+    beatmapLevelsModel = QuestUI::ArrayUtil::First(
+        UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
+        [](GlobalNamespace::BeatmapLevelsModel *x) {
+            return x->customLevelPackCollection != nullptr;
+        });
+
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
+    auto platformHelper = Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    if (platformHelper == nullptr) {
+    } else {
+        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
+            x->platformHelper=platformHelper;
+        }
+    }
+}
+
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
     fromBSS = false;
@@ -505,6 +558,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (!firstActivation)
         return;
 
+    // Get regional beat saver urls
+    BeatSaverRegionManager::RegionLookup();
     
     limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
         { 
@@ -512,9 +567,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         }, 0.1f);
 
     IsSearching = false;
-    #ifdef HotReload
-        fileWatcher->filePath = "/sdcard/SongList.bsml";
-    #endif
     getLoggerOld().info("Song list contoller activated");
 
     // Get sort setting from config
@@ -529,61 +581,21 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (this->songList != nullptr && this->songList->m_CachedPtr.m_value != nullptr)
     {
         getLoggerOld().info("Table exists");
-
         songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
-
-        
     }
 
-    // Steal search box from the base game
-    static SafePtrUnity<HMUI::InputFieldView> searchBox;
-    if (!searchBox) {
-        searchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>().First(
-        [](HMUI::InputFieldView *x) {
-            return x->get_name() == "SearchInputField";
-        });
-    }
-
-    if (searchBox) {
-        auto newSearchBox = Instantiate(searchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
-        auto songSearchInput = newSearchBox->GetComponent<HMUI::InputFieldView *>();
-        songSearchPlaceholder = newSearchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
-        songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
-        songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
-
-        std::function<void(HMUI::InputFieldView * view)> onClick = [this](HMUI::InputFieldView * view) {
-            DEBUG("Input is: {}", (std::string) view->get_text());
-            fcInstance->SongListController->SortAndFilterSongs(this->sort, (std::string) view->get_text() , true);
-            // colorPickerModal->Show();
-        };
-        
-        songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onClick));
-    }
+    multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
+    settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
+    uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
 
     // Reset table the first time and load data
     if (DataHolder::loadedSDC == true) {
         ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
     }
 
-    // Get regional beat saver urls
-    BeatSaverRegionManager::RegionLookup();
-
-    // Get the default cover image
-    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
-
-    // Get song preview player 
-    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
-    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
-    beatmapLevelsModel = QuestUI::ArrayUtil::First(
-        UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
-        [](GlobalNamespace::BeatmapLevelsModel *x) {
-            return x->customLevelPackCollection != nullptr;
-        });
-
-
-    multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
-    settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
-    uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/SongList.bsml";
+    #endif
 }
 
 void ViewControllers::SongListController::SelectSongByHash(std::string hash) {

@@ -4,7 +4,7 @@
 	</horizontal>
 	<horizontal preferred-height='72' pad-top='5' pad-bottom='2' preferred-width='80'>
 		<vertical preferred-width='70'>
-			<list id='downloadList' select-cell='SelectSong' visible-cells='9' show-scrollbar='true' stick-scrolling="true" />
+			<list id='downloadList' select-cell='SelectSong' visible-cells='9' show-scrollbar='true' />
 		</vertical>
 	</horizontal>
 </vertical>

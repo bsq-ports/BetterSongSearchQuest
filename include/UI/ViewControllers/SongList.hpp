@@ -141,6 +141,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
     // Play/DL
     DECLARE_INSTANCE_METHOD(void, Download);
+    DECLARE_INSTANCE_METHOD(void, PostParse);
     DECLARE_INSTANCE_METHOD(void, Play);
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
@@ -164,6 +165,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongAuthor);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongName);
 
+    DECLARE_INSTANCE_FIELD(UnityEngine::GameObject *, searchBox);
     DECLARE_INSTANCE_FIELD(UnityEngine::Sprite*, defaultImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverLoading);

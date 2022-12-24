@@ -23,6 +23,7 @@ namespace BetterSongSearch::UI {
 
             void Init(){
                 BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this](){
+                    DEBUG("MenuButtonClick");
                     ShowFlow(false);
                 } );
             }
@@ -30,8 +31,9 @@ namespace BetterSongSearch::UI {
             
 
             void ShowFlow(bool immediately) {
-                
+                DEBUG("Should create flow");
                 if (flow == nullptr || flow->m_CachedPtr.m_value == nullptr) {
+                    DEBUG("CreateFlowCoordinator");
                     flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
                 }
 
