@@ -519,6 +519,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     auto sortMode = getPluginConfig().SortMode.GetValue();
     if (sortMode < get_sortModeSelections()->size ) {
         selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
+        sort = (SortMode) sortMode;
     }
 
     BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
@@ -672,8 +673,6 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateData
     if (filtersChanged) {
         DEBUG("Sort changed");
         this->SortAndFilterSongs(sort, this->prevSearch, true);
-    } else {
-        DEBUG("Sort did not change");
     }
 }
 
