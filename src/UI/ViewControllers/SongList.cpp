@@ -168,6 +168,9 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
     auto const& currentFilter = DataHolder::filterOptionsCache;
 
+    if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
+        return false;
+
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
         if(!diff->ranked)
             return false;

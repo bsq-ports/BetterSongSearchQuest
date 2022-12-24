@@ -25,8 +25,8 @@ public:
     enum class RankedFilterType
     {
         All,
-        HideRanked,
-        OnlyRanked
+        OnlyRanked,
+        HideRanked
     };
     enum class DifficultyFilterType
     {

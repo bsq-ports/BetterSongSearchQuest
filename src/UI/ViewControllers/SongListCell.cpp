@@ -1,8 +1,10 @@
 #include "UI/ViewControllers/SongListCell.hpp"
+#include "UI/ViewControllers/SongList.hpp"
 
 #include "UnityEngine/Color.hpp"
 #include "sombrero/shared/FastColor.hpp"
 #include "songloader/shared/API.hpp"
+#include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
 
 #include "PluginConfig.hpp"
 
@@ -13,6 +15,32 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
 
 namespace BetterSongSearch::UI::ViewControllers {
+    static std::map<std::string, std::string> shortMapDiffNames = {
+            { "Easy", "Easy" },
+            { "Normal", "Norm" },
+            { "Hard", "Hard" },
+            { "Expert", "Ex" },
+            { "ExpertPlus", "Ex+" }
+    };
+
+    static std::map<song_data_core::BeatStarCharacteristics, std::string> customCharNames = {
+            { song_data_core::BeatStarCharacteristics::Degree90, "90" },
+            { song_data_core::BeatStarCharacteristics::Degree360, "360" },
+            { song_data_core::BeatStarCharacteristics::Lawless, "LL" },
+            { song_data_core::BeatStarCharacteristics::Unknown, "?" },
+            { song_data_core::BeatStarCharacteristics::Lightshow, "LS" }
+    };
+
+    std::string GetCombinedShortDiffName(int diffCount, const SDC_wrapper::BeatStarSongDifficultyStats* diff) {
+        auto retVal = fmt::format("{}", (diffCount > 5 ? shortMapDiffNames[std::string(diff->GetName())] : diff->GetName()));
+
+        if(diff->diff_characteristics == SDC_wrapper::BeatStarCharacteristic::Standard())
+            return retVal;
+        retVal += fmt::format("({})", customCharNames[diff->diff_characteristics]);
+
+        return retVal;
+    }
+
     CustomSongListTableCell* CustomSongListTableCell::PopulateWithSongData(const SDC_wrapper::BeatStarSong* entry) {
         this->levelAuthorName->set_text(entry->GetAuthor());
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->duration_secs), entry->upvotes, entry->downvotes));
@@ -47,7 +75,11 @@ namespace BetterSongSearch::UI::ViewControllers {
             if(diffsLeft != 1 && i == diffs.size() - 1) {
                 diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
             } else {
-                diffs[i]->SetText(sortedDiffs[i]->GetName());
+                bool passesFilter = DifficultyCheck(sortedDiffs[i], entry);
+                diffs[i]->SetText(fmt::format("<color=#{}>{}</color>{}",
+                                              (passesFilter ? "EEE" : "888"),
+                                              GetCombinedShortDiffName(sortedDiffs.size(), sortedDiffs[i]),
+                                              ((sortedDiffs[i]->stars > 0 && sortedDiffs[i]->diff_characteristics == song_data_core::BeatStarCharacteristics::Standard) ? fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i]->stars, 1)) : "")));
                 diffsLeft--;
             }
         }
