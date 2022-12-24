@@ -60,6 +60,29 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView *table, int id)
 {
     DEBUG("Cell is clicked");
+    if (id >= CellSize()) {
+        WARNING("Non existent song id");
+        return;
+    } 
+    
+    auto entry = downloadEntryList[id];
+    INFO("Selecting a song {}", entry->songName );
+
+    // If downloaded then select the song
+    if (entry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+        DEBUG("DOWNLOADED");
+        auto controller = fcInstance->SongListController;
+
+        // Find a song in the song list 
+    
+    } else if (entry->status == DownloadHistoryEntry::DownloadStatus::Failed){
+        entry->retries = 0;
+        ProcessDownloads(true);
+    }
+
+    // Reset selection 
+    this->downloadHistoryTable()->ClearSelection();
+
 }
 
 float ViewControllers::DownloadHistoryViewController::CellSize()
@@ -248,7 +271,10 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                             });
                     },
                     progressUpdate);
-            }else {
+            } else {
+                errored("Error" ,firstEntry);
+                RefreshTable(true);
+                this->ProcessDownloads(forceTableReload);
             }
         });
     this->ProcessDownloads(forceTableReload);
