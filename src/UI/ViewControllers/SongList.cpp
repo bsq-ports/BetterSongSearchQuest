@@ -731,11 +731,16 @@ void ViewControllers::SongListController::Download () {
     #endif
 }
 
-void GetByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> finished) {
+void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
     BeatSaverRegionManager::GetAsync(url,
            [finished](long httpCode, std::string data) {
-               std::vector<uint8_t> bytes(data.begin(), data.end());
-               finished(bytes);
+            if (httpCode == 200) {
+                std::vector<uint8_t> bytes(data.begin(), data.end());
+                finished(true, bytes);
+            }  else {
+                std::vector<uint8_t> bytes;
+                finished(false,  bytes);
+            }
            }, [](float progress){}
     );
 }
@@ -743,14 +748,17 @@ void GetByURLAsync(std::string url, std::function<void(std::vector<uint8_t>)> fi
 custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip*)> finished) {
     auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
-    if(webRequest->get_isNetworkError())
+    if(webRequest->get_isNetworkError()) {
         INFO("Network error");
-
-    while(webRequest->GetDownloadProgress() < 1.0f);
-
-    INFO("Download complete");
-    UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
-    finished(clip);
+        finished(nullptr);   
+        co_return;
+    } else {
+        while(webRequest->GetDownloadProgress() < 1.0f);
+        INFO("Download complete");
+        UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+        finished(clip);
+    }
+    co_return;
 }
 
 custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
@@ -813,16 +821,20 @@ void ViewControllers::SongListController::UpdateDetails () {
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
-        GetByURLAsync(newUrl, [this, song](std::vector<uint8_t> bytes) {
-            QuestUI::MainThreadScheduler::Schedule([this, bytes, song] {
-                std::vector<uint8_t> data = bytes;
+        GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
+            QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success] {
+                if (success) {
+                     std::vector<uint8_t> data = bytes;
 
-                if (song->GetHash() != this->currentSong->GetHash()) return;
-                this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
-                Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
-                this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
-              
-                coverLoading->set_enabled(false);
+                    if (song->GetHash() != this->currentSong->GetHash()) return;
+                    this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
+                    Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
+                    this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
+                
+                    coverLoading->set_enabled(false);
+                } else {
+                    coverLoading->set_enabled(false);
+                }
             });
         });
     }
@@ -845,9 +857,15 @@ void ViewControllers::SongListController::UpdateDetails () {
 
         std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
 
-        GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(GetPreview(newUrl, [ssp](UnityEngine::AudioClip* clip) {
-            ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
-        })));
+        coro(GetPreview(
+            newUrl, 
+            [ssp](UnityEngine::AudioClip* clip) {
+                if (clip == nullptr) {
+                    return;
+                }
+                ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
+            }
+        ));
     }
 
     #endif
