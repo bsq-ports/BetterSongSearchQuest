@@ -72,9 +72,8 @@ void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView 
     if (entry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
         DEBUG("DOWNLOADED");
         auto controller = fcInstance->SongListController;
-
-        // Find a song in the song list 
-    
+        controller->SelectSongByHash(entry->hash);
+        controller->songListTable()->ClearSelection();
     } else if (entry->status == DownloadHistoryEntry::DownloadStatus::Failed){
         entry->retries = 0;
         ProcessDownloads(true);

@@ -586,7 +586,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
 }
 
-void ViewControllers::SongListController::SelectSongByHash(HMUI::TableView *table, std::string hash) {
+void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
     for(auto song : DataHolder::songList) {
         if(song->hash.string_data == hash) {
             SetSelectedSong(song);

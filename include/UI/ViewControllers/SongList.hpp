@@ -195,7 +195,7 @@ public:
     std::vector<std::string> songsWithScores;
     FilterOptions filterOptions;
 
-    void SelectSongByHash(HMUI::TableView* table, std::string hash);
+    void SelectSongByHash(std::string hash);
     void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
 
 
