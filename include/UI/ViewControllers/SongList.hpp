@@ -213,10 +213,10 @@ public:
     // Temp values
     std::string search;
     SortMode sort = (SortMode) 0;
-
     // Prev values
     std::string prevSearch;
     SortMode prevSort = (SortMode) 0;
+    
     bool filterChanged = true;
     int currentSelectedSong = 0;
     void UpdateSearch();

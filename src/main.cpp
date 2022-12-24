@@ -106,7 +106,7 @@ extern "C" void setup(ModInfo& info) {
         DataHolder::loadedSDC = true;
         if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
             fcInstance->SongListController->filterChanged = true;
-            fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, "", true);
+            fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
         }
     }).detach();
 }

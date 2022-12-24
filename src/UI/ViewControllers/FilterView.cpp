@@ -152,7 +152,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         DEBUG("Filters changed");
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;
-        controller->SortAndFilterSongs(controller->prevSort, controller->prevSearch, true);
+        controller->SortAndFilterSongs(controller->sort, controller->search, true);
     } else {
         DEBUG("Filters did not change");
     }

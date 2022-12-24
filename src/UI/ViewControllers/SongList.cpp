@@ -553,7 +553,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         std::function<void(HMUI::InputFieldView * view)> onClick = [this](HMUI::InputFieldView * view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
-            fcInstance->SongListController->SortAndFilterSongs(SortMode::Newest, (std::string) view->get_text() , true);
+            fcInstance->SongListController->SortAndFilterSongs(this->sort, (std::string) view->get_text() , true);
             // colorPickerModal->Show();
         };
         
@@ -562,7 +562,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
     // Reset table the first time and load data
     if (DataHolder::loadedSDC == true) {
-        ViewControllers::SongListController::SortAndFilterSongs(SortMode::Newest, "", true);
+        ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
     }
 
     // Get regional beat saver urls
