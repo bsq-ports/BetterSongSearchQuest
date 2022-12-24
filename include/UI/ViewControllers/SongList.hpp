@@ -116,7 +116,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_CTOR(ctor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
-    
+
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     DECLARE_INSTANCE_FIELD(float, cellSize);
@@ -195,9 +195,7 @@ public:
     std::vector<std::string> songsWithScores;
     FilterOptions filterOptions;
 
-
-    
-
+    void SelectSongByHash(HMUI::TableView* table, std::string hash);
     void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
 
 
