@@ -50,6 +50,7 @@
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
+#include "Util/BSMLStuff.hpp"
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -57,6 +58,7 @@
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
+using namespace BetterSongSearch::UI::Util::BSMLStuff;
 
 #define SONGDOWNLOADER
 
@@ -864,7 +866,7 @@ void ViewControllers::SongListController::FilterByUploader () {
     }
     
     fcInstance->FilterViewController->uploadersString = this->currentSong->GetAuthor();
-    fcInstance->FilterViewController->uploadersStringControl->ApplyValue();
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->GetAuthor());
     fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }

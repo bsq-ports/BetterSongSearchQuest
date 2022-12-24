@@ -18,8 +18,10 @@
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"
 
+
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
+using namespace BetterSongSearch::UI::Util::BSMLStuff;
 
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
@@ -326,13 +328,30 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
                 value.erase(0,1);
                 blacklist = true;
             }
+        } else {
+            return (std::string) "";
         }
+
         auto uploaders = split(value, " ");
 
         return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
     };
 
     uploadersStringControl->formatter = uploadersStringFormat;
+
+    // Force format values
+    FormatSliderSettingValue(this->minStarsSetting);
+    FormatSliderSettingValue(this->maxStarsSetting);
+    FormatSliderSettingValue(this->minimumNjsSlider);
+    FormatSliderSettingValue(this->maximumNjsSlider);
+    FormatSliderSettingValue(this->minimumSongLengthSlider);
+    FormatSliderSettingValue(this->hideOlderThanSlider);
+    FormatSliderSettingValue(this->minimumNpsSlider);
+    FormatSliderSettingValue(this->maximumNpsSlider);
+    FormatSliderSettingValue(this->minimumRatingSlider);
+    FormatSliderSettingValue(this->minimumVotesSlider);
+    FormatStringSettingValue(this->uploadersStringControl);
+    
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";

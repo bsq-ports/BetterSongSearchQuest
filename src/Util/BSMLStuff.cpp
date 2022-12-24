@@ -54,6 +54,36 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
             }
         }
     }
+
+    void SetStringSettingValue(BSML::StringSetting* element, std::string value) {
+        // auto formatter = element->formatter;
+        // auto formattedValue = formatter(formatter ? formatter(value) : StringW(value));
+        // element->modalKeyboard->SetText(value);
+        element->set_text(value);
+        element->ApplyValue();
+    }
+
+    void SetSliderSettingValue(BSML::SliderSetting* element, float value) {
+        // auto formatter = element->formatter;
+        // auto formattedValue = formatter(formatter ? formatter(value) : value);
+        // element->slider->set_value(value);
+        element->set_Value(value);
+        element->ApplyValue();
+        
+    }
+
+    void FormatSliderSettingValue(BSML::SliderSetting* element) {
+        // Not pretty but works
+        auto value = element->get_Value();
+        auto formatter = element->formatter;
+        element->text->set_text(formatter ? formatter(value) : StringW(fmt::format("{}", value)));
+    }
+    void FormatStringSettingValue(BSML::StringSetting* element) {
+        // Not pretty but works
+        auto value = element->get_text();
+        auto formatter = element->formatter;
+        element->text->set_text(formatter ? formatter(value) : value);
+    }
 };
 
 
