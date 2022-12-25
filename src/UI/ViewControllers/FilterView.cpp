@@ -354,6 +354,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     FormatSliderSettingValue(this->minimumVotesSlider);
     FormatStringSettingValue(this->uploadersStringControl);
     
+    // I hate BSML some times
+    auto m = modsRequirementDropdown->dropdown->modalView;
+    reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";

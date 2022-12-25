@@ -5,6 +5,7 @@
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
+#include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/StringSetting.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "custom-types/shared/coroutine.hpp"
@@ -81,6 +82,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumSongLengthSlider);
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumVotesSlider);
     DECLARE_INSTANCE_FIELD(BSML::StringSetting*, uploadersStringControl);    
+    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, modsRequirementDropdown);    
 
     // Values for string fields
     DECLARE_INSTANCE_FIELD(StringW, uploadersString);
