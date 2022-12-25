@@ -76,6 +76,7 @@ void Modals::UploadDetails::OpenModal(const SDC_wrapper::BeatStarSong* song)
     selectedSongKey->set_text(song->key.string_data);
     selectedRating->set_text(fmt::format("{:.1f}%", song->rating * 100));
     selectedSongDescription->SetText("Loading...");
+    selectedSongDescription->ScrollTo(0, false);
 
     songDetailsLoading->get_gameObject()->SetActive(true);
 
