@@ -548,6 +548,13 @@ void ViewControllers::SongListController::PostParse() {
             x->platformHelper=platformHelper;
         }
     }
+
+    // Make the sort dropdown bigger
+    auto c = std::min(9, this->get_sortModeSelections()->size);
+    sortDropdown->dropdown->numberOfVisibleCells = c;
+    sortDropdown->dropdown->ReloadData();
+    auto m = sortDropdown->dropdown->modalView;
+    reinterpret_cast<RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
 }
 
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
