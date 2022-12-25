@@ -14,7 +14,7 @@ namespace BetterSongSearch::UI {
     class Manager
     {
         HMUI::FlowCoordinator* parentFlow;
-        BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator* flow;
+        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
         // static UnityEngine::UI::Button::ButtonClickedEvent* goToSongSelect = nullptr;
 
         public:
@@ -32,21 +32,21 @@ namespace BetterSongSearch::UI {
 
             void ShowFlow(bool immediately) {
                 DEBUG("Should create flow");
-                if (flow == nullptr || flow->m_CachedPtr.m_value == nullptr) {
+                if (!flow) {
                     DEBUG("CreateFlowCoordinator");
                     flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
                 }
 
                 parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-                parentFlow->PresentFlowCoordinator(flow, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::Out, false);
+                parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::Out, false);
             }
 
             void GoToSongSelect() {
-                auto button = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-                if (button == nullptr || button->m_CachedPtr.m_value == nullptr) {
+                SafePtrUnity<UnityEngine::GameObject> button = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+                if (!button) {
                     button = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
                 }
-                if (button == nullptr || button->m_CachedPtr.m_value == nullptr) {
+                if (!button) {
                     return;
                 }
                 button->GetComponent<HMUI::NoTransitionsButton *>()->Press();

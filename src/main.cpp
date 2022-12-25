@@ -144,11 +144,11 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
     // FIXME: This button does not get recreated in the multiplayer menu for some reason, find a way to detect button dying
     // Button instance
-    static GameObject* button = nullptr;
+    static SafePtrUnity<GameObject> button;
 
     bool multiplayer = self->showMultiplayer;
 
-    if(!button || !button->m_CachedPtr.m_value) {
+    if(!button) {
         DEBUG("Button not found, creating");
         auto x = self->get_transform()->Find("BSMLBackground/BSMLTabSelector");
         if (x==nullptr) {
