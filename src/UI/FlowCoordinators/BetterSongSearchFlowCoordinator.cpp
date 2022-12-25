@@ -10,6 +10,8 @@ using namespace QuestUI;
 
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);
 
+
+
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
     if (!SongListController || !SongListController->m_CachedPtr.m_value) {
@@ -32,5 +34,57 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Di
 }
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::BackButtonWasPressed(HMUI::ViewController* topViewController) {
+    this->Close();
+    
+}
+
+//  std::function<void(int)> cancelConfirmCallback; 
+void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Close(bool immediately, bool downloadAbortConfim){
+    if(downloadAbortConfim && ConfirmCancelOfPending([this, immediately](){this->Close(immediately, false);}))
+		return;
+
+    cancelConfirmCallback = nullptr;
+    
+    // Trigger refresh of songs cause why not xD
+    RuntimeSongLoader::API::RefreshSongs(false);
+
+    // Hide all modals
+    for(auto modal: SongListController->GetComponentsInChildren<HMUI::ModalView*>()) {
+        modal->Hide(false, nullptr);
+    }
+
+    
     this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, false);
+};
+bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){
+    
+    for (auto entry : DownloadHistoryViewController->downloadEntryList)
+    {
+        if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued)))
+        {
+            cancelConfirmCallback = callback;
+            SongListController->ShowCloseConfirmation();
+            return true;
+        }
+    }
+    return false;
+};
+
+void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelCallback(bool doCancel){
+    if(doCancel) {
+        // Fail all dls
+        for (auto entry : DownloadHistoryViewController->downloadEntryList)
+        {
+            if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued)))
+            {
+                entry->retries = 69;
+                entry->status = DownloadHistoryEntry::DownloadStatus::Failed;
+            }
+        }
+
+        // closeCancelSource?.Cancel();
+        cancelConfirmCallback();
+    }
+
+    cancelConfirmCallback = nullptr;
 }

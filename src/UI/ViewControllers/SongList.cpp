@@ -615,6 +615,7 @@ void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
     DEBUG("Uh oh, you somehow downloaded a song that was only a figment of your imagination");
 }
 
+
 void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
 {
     if(!table)
@@ -681,6 +682,21 @@ void ViewControllers::SongListController::HideMoreModal() {
     DEBUG("HideMoreModal");
 };
 
+void ViewControllers::SongListController::ShowCloseConfirmation() {
+    this->downloadCancelConfirmModal->Show();
+    DEBUG("ShowCloseConfirmation");
+};
+void ViewControllers::SongListController::ForcedUIClose() {
+    fcInstance->ConfirmCancelCallback(true);
+    this->downloadCancelConfirmModal->Hide();
+};
+void ViewControllers::SongListController::ForcedUICloseCancel() {
+    fcInstance->ConfirmCancelCallback(false);
+    this->downloadCancelConfirmModal->Hide();
+};
+
+
+
 custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateDataAndFiltersCoro() {
     // Wait
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
@@ -712,13 +728,6 @@ void ViewControllers::SongListController::UpdateDataAndFilters () {
     DEBUG("UpdateDataAndFilters");
 }
 
-void ViewControllers::SongListController::ForcedUIClose() {
-    DEBUG("ForcedUIClose");
-};
-
-void ViewControllers::SongListController::ForcedUICloseCancel () {
-    DEBUG("ForcedUICloseCancel");
-}
 
 void ViewControllers::SongListController::ShowPlaylistCreation() {
     // Hide modal cause bsml does not support automagic hiding of it
@@ -794,16 +803,42 @@ custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel
 
 
 void ViewControllers::SongListController::Play () {
-    if (!currentSong) return;
-    backButton = UnityEngine::GameObject::Find("BackButton");
-    auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(currentSong->GetHash()));
-    if(level.has_value())
-    {
-        currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+    this->PlaySong();
+}
+void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarSong* songToPlay) {
+    if (songToPlay == nullptr) {
+        songToPlay = currentSong;
+        if (currentSong == nullptr) {
+            return;
+        }
     }
-    fromBSS = true;
-    openToCustom = true;
-    GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
+
+    if(fcInstance->ConfirmCancelOfPending([this, songToPlay](){PlaySong(songToPlay);} ))
+        return;
+
+    // Make sure to load all downloaded songs before going to the next step
+    RuntimeSongLoader::API::RefreshSongs(false, [this, songToPlay](std::vector<GlobalNamespace::CustomPreviewBeatmapLevel*> const&){
+        QuestUI::MainThreadScheduler::Schedule(
+        [this, songToPlay]
+        {
+            backButton = UnityEngine::GameObject::Find("BackButton");
+            auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->GetHash()));
+            if(level.has_value())
+            {
+                currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+            }
+
+            // TODO: Preselect passing difficulty
+            
+
+            fromBSS = true;
+            openToCustom = true;
+            GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
+        });
+    });
+
+    
+   
 }
 
 

@@ -21,6 +21,13 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFl
 
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::FlowCoordinator::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling);
     DECLARE_OVERRIDE_METHOD(void, BackButtonWasPressed, GET_FIND_METHOD(&HMUI::FlowCoordinator::BackButtonWasPressed), HMUI::ViewController* topViewController);
+    
+    public:
+
+    std::function<void()> cancelConfirmCallback; 
+    void Close(bool immediately = false, bool downloadAbortConfim = true);
+    bool ConfirmCancelOfPending(std::function<void()> callback);
+    void ConfirmCancelCallback(bool doCancel = true);
 )
 
 inline BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator* fcInstance;

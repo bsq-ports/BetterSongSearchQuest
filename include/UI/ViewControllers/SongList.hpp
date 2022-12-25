@@ -131,18 +131,21 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, HideMoreModal);
     DECLARE_INSTANCE_METHOD(void, UpdateDataAndFilters);
 
-    // Forced close modal methods
-    DECLARE_INSTANCE_METHOD(void, ForcedUIClose);
-    DECLARE_INSTANCE_METHOD(void, ForcedUICloseCancel);
 
     DECLARE_INSTANCE_METHOD(void, ShowBatchDownload);
     DECLARE_INSTANCE_METHOD(void, ShowPlaylistCreation);
     DECLARE_INSTANCE_METHOD(void, ShowSettings);
+    DECLARE_INSTANCE_METHOD(void, ShowCloseConfirmation);
+    DECLARE_INSTANCE_METHOD(void, ForcedUIClose);
+    DECLARE_INSTANCE_METHOD(void, ForcedUICloseCancel);
+    
+    
 
     // Play/DL
     DECLARE_INSTANCE_METHOD(void, Download);
     DECLARE_INSTANCE_METHOD(void, PostParse);
     DECLARE_INSTANCE_METHOD(void, Play);
+    
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
     DECLARE_INSTANCE_METHOD(void, UpdateSearchedSongsList);
@@ -155,7 +158,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
     DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);
-    DECLARE_INSTANCE_FIELD(HMUI::ModalView*, downloadCancelConfirmModal);
+    DECLARE_INSTANCE_FIELD(BSML::ModalView*, downloadCancelConfirmModal);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
@@ -180,8 +183,6 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, playButton);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, infoButton);
-    
-
     BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
 
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
@@ -221,5 +222,7 @@ public:
     int currentSelectedSong = 0;
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
+
+    void PlaySong(const SDC_wrapper::BeatStarSong* song = nullptr);
 )
 
