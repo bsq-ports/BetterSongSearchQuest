@@ -1,5 +1,5 @@
 ﻿<!-- old preferred-width="130"  anchor-pos-y="10.5" anchor-min-y="0"  -->
-<vertical preferred-width="130"  anchor-pos-y="10.8" anchor-min-y="0"  child-control-height="false" xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/RedBrumbler/Quest-BSML-Docs/gh-pages/schema.xsd'>
+<vertical preferred-width="130" anchor-min-y="1" child-control-height="false" xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:noNamespaceSchemaLocation='https://raw.githubusercontent.com/RedBrumbler/Quest-BSML-Docs/gh-pages/schema.xsd'>
 	<horizontal bg='panel-top-gradient' id='filterbarContainer' child-align='MiddleRight' child-control-width='false'>
 		<horizontal ignore-layout='true' pad-top='1'>
 			<text text='FILTERS' align='Center' font-size='7' italics='true'/>

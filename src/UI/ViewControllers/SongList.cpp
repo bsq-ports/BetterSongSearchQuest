@@ -613,7 +613,7 @@ void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int
     if(!table)
         return;
     DEBUG("Cell clicked {}", id);
-    if (DataHolder::sortedSongList.size() < id) {
+    if (DataHolder::sortedSongList.size() <= id) {
         // Return if the id is invalid
         return;
     }

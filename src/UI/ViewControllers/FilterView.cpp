@@ -211,10 +211,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     // Create bsml view
     BSML::parse_and_construct(IncludedAssets::FilterView_bsml, this->get_transform(), this);
 
+    auto x = reinterpret_cast<UnityEngine::RectTransform*>(this->get_gameObject()->get_transform());
+    x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
+
     auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
     coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
-
 
 
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
