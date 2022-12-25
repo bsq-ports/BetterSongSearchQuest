@@ -145,5 +145,10 @@ public:
         }
         return x;
     }
+    DownloadHistoryEntry* GetDownloadByHash(std::string hash);
+    bool CheckIsDownloadedAndLoaded(std::string songHash);
+    bool CheckIsDownloadable(std::string songHash);
+    bool CheckIsDownloadable(DownloadHistoryEntry* entry);
+    bool CheckIsDownloaded(std::string songHash);
     const int MAX_PARALLEL_DOWNLOADS = 2;
 )

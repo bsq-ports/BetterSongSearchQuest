@@ -302,3 +302,50 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
         coro(this->limitedFullTableReload->Call());
     });
 }
+
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(std::string songHash){
+    return RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+};
+
+DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string hash){
+    for(auto entry : this->downloadEntryList) {
+        if(entry->hash == hash) {
+            return entry;
+        }
+    }
+    DEBUG("S");
+    return nullptr;
+}
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(DownloadHistoryEntry* entry){
+    auto dlElem = entry;
+    if (dlElem == nullptr) return true;
+    if (dlElem->retries == 3 && dlElem->status == DownloadHistoryEntry::DownloadStatus::Failed) return true;
+
+    if (
+        !dlElem->IsInAnyOfStates(
+            (DownloadHistoryEntry::DownloadStatus) (
+                DownloadHistoryEntry::DownloadStatus::Preparing |
+                DownloadHistoryEntry::DownloadStatus::Downloading
+            )
+        ) && !CheckIsDownloaded(dlElem->hash)){
+        return true;
+    }
+
+    return false;
+
+}
+
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloaded(std::string songHash){
+    auto entry = this->GetDownloadByHash(songHash);
+    bool downloadedInList = false;
+
+    if (entry != nullptr && entry->status == DownloadHistoryEntry::DownloadStatus::Downloaded){
+        downloadedInList = true;
+    };
+    return (downloadedInList || CheckIsDownloadedAndLoaded(songHash));
+}
+
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::string songHash){
+    auto dlElem = this->GetDownloadByHash(songHash);
+    return this->CheckIsDownloadable(dlElem);
+}

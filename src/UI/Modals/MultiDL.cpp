@@ -8,7 +8,7 @@
 #include "bsml/shared/BSML.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
-
+#include "System/Tuple_2.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/ViewControllers/DownloadListTableData.hpp"
@@ -27,8 +27,28 @@ void Modals::MultiDL::OnEnable()
 
 void Modals::MultiDL::StartMultiDownload()
 {   
-    this->CloseModal();
     DEBUG("Downloading {} songs", this->songsToDownload);
+
+    auto songController = fcInstance->SongListController;
+    auto dlController = fcInstance->DownloadHistoryViewController;
+    auto table = songController->songListTable();
+    auto range = table->GetVisibleCellsIdRange();
+
+    int downloaded = 0;
+    for (int i = range->get_Item1(); i < DataHolder::sortedSongList.size(); i++)
+    {   
+        auto song = DataHolder::sortedSongList[i];
+        // Skip if can't dl or already downloading
+        if (dlController->CheckIsDownloaded(std::string(song->GetHash())) || !dlController->CheckIsDownloadable(std::string(song->GetHash()))) 
+            continue;
+            
+        dlController->TryAddDownload(song, true);
+
+        if (++downloaded >= this->songsToDownload)
+            break;
+    }
+    dlController->RefreshTable(true);
+    this->CloseModal();
     return;
 }
 void Modals::MultiDL::CloseModal()
