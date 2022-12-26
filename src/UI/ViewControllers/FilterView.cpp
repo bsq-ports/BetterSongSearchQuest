@@ -388,6 +388,109 @@ void ViewControllers::FilterViewController::OpenSponsorsLink()
 void ViewControllers::FilterViewController::ClearFilters()
 {
     DEBUG("ClearFilters FIRED");
+    
+    // Reset config
+    getPluginConfig().DownloadType.SetValue(getPluginConfig().DownloadType.GetDefaultValue());
+    getPluginConfig().LocalScoreType.SetValue(getPluginConfig().LocalScoreType.GetDefaultValue());
+    getPluginConfig().CharacteristicType.SetValue(getPluginConfig().CharacteristicType.GetDefaultValue());
+    getPluginConfig().RankedType.SetValue(getPluginConfig().RankedType.GetDefaultValue());
+    getPluginConfig().DifficultyType.SetValue(getPluginConfig().DifficultyType.GetDefaultValue());
+    getPluginConfig().RequirementType.SetValue(getPluginConfig().RequirementType.GetDefaultValue());
+
+    getPluginConfig().MinLength.SetValue(getPluginConfig().MinLength.GetDefaultValue());
+    getPluginConfig().MaxLength.SetValue(getPluginConfig().MaxLength.GetDefaultValue());
+    getPluginConfig().MinNJS.SetValue(getPluginConfig().MinNJS.GetDefaultValue());
+    getPluginConfig().MaxNJS.SetValue(getPluginConfig().MaxNJS.GetDefaultValue());
+    getPluginConfig().MinNPS.SetValue(getPluginConfig().MinNPS.GetDefaultValue());
+    getPluginConfig().MaxNPS.SetValue(getPluginConfig().MaxNPS.GetDefaultValue());
+    getPluginConfig().MinStars.SetValue(getPluginConfig().MinStars.GetDefaultValue());
+    getPluginConfig().MaxStars.SetValue(getPluginConfig().MaxStars.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    getPluginConfig().MinRating.SetValue(getPluginConfig().MinRating.GetDefaultValue());
+    getPluginConfig().MinVotes.SetValue(getPluginConfig().MinVotes.GetDefaultValue());
+    getPluginConfig().Uploaders.SetValue(getPluginConfig().Uploaders.GetDefaultValue());
+    getPluginConfig().MinUploadDateInMonths.SetValue(getPluginConfig().MinUploadDateInMonths.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    
+
+    // Load to dataHolder
+    DataHolder::filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
+    DataHolder::filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
+    DataHolder::filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
+    DataHolder::filterOptions.rankedType = (FilterOptions::RankedFilterType) getPluginConfig().RankedType.GetValue();
+    DataHolder::filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
+    DataHolder::filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
+    DataHolder::filterOptions.minLength = getPluginConfig().MinLength.GetValue();
+    DataHolder::filterOptions.maxLength = getPluginConfig().MaxLength.GetValue();
+    DataHolder::filterOptions.minNJS = getPluginConfig().MinNJS.GetValue();
+    DataHolder::filterOptions.maxNJS = getPluginConfig().MaxNJS.GetValue();
+    DataHolder::filterOptions.minNPS = getPluginConfig().MinNPS.GetValue();
+    DataHolder::filterOptions.maxNPS = getPluginConfig().MaxNPS.GetValue();
+    DataHolder::filterOptions.minStars = getPluginConfig().MinStars.GetValue();
+    DataHolder::filterOptions.maxStars = getPluginConfig().MaxStars.GetValue();
+    DataHolder::filterOptions.minUploadDate = getPluginConfig().MinUploadDate.GetValue();
+    DataHolder::filterOptions.minRating = getPluginConfig().MinRating.GetValue();
+    DataHolder::filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
+    auto uploadersString = getPluginConfig().Uploaders.GetValue();
+    if (uploadersString.size() > 0) {
+        if (uploadersString[0] == '!') {
+            uploadersString.erase(0,1);
+            DataHolder::filterOptions.uploadersBlackList = true;
+        } else {
+            DataHolder::filterOptions.uploadersBlackList = false;
+        }
+        DataHolder::filterOptions.uploaders = split(toLower(uploadersString), " ");
+    } else {
+        DataHolder::filterOptions.uploaders.clear();
+    }
+
+    // Load to UI
+    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
+    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
+    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
+    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
+    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
+    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
+
+    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
+    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
+    this->minimumNjs = DataHolder::filterOptions.minNJS;
+    this->maximumNjs = DataHolder::filterOptions.maxNJS;
+    this->minimumNps = DataHolder::filterOptions.minNPS;
+    this->maximumNps = DataHolder::filterOptions.maxNPS;
+    this->minimumStars = DataHolder::filterOptions.minStars;
+    this->maximumStars = DataHolder::filterOptions.maxStars;
+    this->minimumRating = DataHolder::filterOptions.minRating;
+    this->minimumVotes = DataHolder::filterOptions.minVotes;
+    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
+    this->uploadersString = getPluginConfig().Uploaders.GetValue();
+
+
+    // Refresh UI
+    // Force format values
+    SetSliderSettingValue(this->minimumSongLengthSlider, this->minimumSongLength);
+    SetSliderSettingValue(this->maximumSongLengthSlider, this->maximumSongLength);
+    SetSliderSettingValue(this->minimumNjsSlider, this->minimumNjs);
+    SetSliderSettingValue(this->maximumNjsSlider, this->maximumNjs);
+    SetSliderSettingValue(this->minimumNpsSlider, this->minimumNps);
+    SetSliderSettingValue(this->maximumNpsSlider, this->maximumNps);
+    SetSliderSettingValue(this->minStarsSetting, this->minimumStars);
+    SetSliderSettingValue(this->maxStarsSetting, this->maximumStars);
+    SetSliderSettingValue(this->minimumRatingSlider, this->minimumRating);
+    SetSliderSettingValue(this->minimumVotesSlider, this->minimumVotes);
+    SetSliderSettingValue(this->hideOlderThanSlider, this->hideOlderThan);
+    SetStringSettingValue(this->uploadersStringControl, getPluginConfig().Uploaders.GetValue());
+    existingSongsSetting->set_Value(this->existingSongs);
+    existingScoreSetting->set_Value(this->existingScore);
+    rankedStateSetting->set_Value(this->rankedState);
+    characteristicDropdown->set_Value(this->characteristic);
+    difficultyDropdown->set_Value(this->difficulty);
+    modsRequirementDropdown->set_Value(this->mods);
+
+    DEBUG("Filters changed");
+    auto controller = fcInstance->SongListController;
+    controller->filterChanged = true;
+    controller->SortAndFilterSongs(controller->sort, controller->search, true);
 }
 void ViewControllers::FilterViewController::ShowPresets()
 {

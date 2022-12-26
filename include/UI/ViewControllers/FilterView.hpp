@@ -6,6 +6,7 @@
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
+#include "bsml/shared/BSML/Components/Settings/ListSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/StringSetting.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
 #include "custom-types/shared/coroutine.hpp"
@@ -82,11 +83,17 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumSongLengthSlider);
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumVotesSlider);
     DECLARE_INSTANCE_FIELD(BSML::StringSetting*, uploadersStringControl);    
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, modsRequirementDropdown);    
 
     // Values for string fields
     DECLARE_INSTANCE_FIELD(StringW, uploadersString);
 
+    // Dropdowns and settings
+    DECLARE_INSTANCE_FIELD(BSML::ListSetting*, existingSongsSetting);
+    DECLARE_INSTANCE_FIELD(BSML::ListSetting*, existingScoreSetting);
+    DECLARE_INSTANCE_FIELD(BSML::ListSetting*, rankedStateSetting);
+    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, characteristicDropdown);
+    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, difficultyDropdown);   
+    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, modsRequirementDropdown);  
 
 
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);

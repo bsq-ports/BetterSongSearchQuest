@@ -14,8 +14,8 @@
 			<vertical spacing='2'>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>General' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
-					<list-setting text='Downloaded' value="existingSongs" choices='downloadedFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
-					<list-setting text='Local score' value="existingScore" choices='scoreFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
+					<list-setting id="existingSongsSetting" text='Downloaded' value="existingSongs" choices='downloadedFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
+					<list-setting id="existingScoreSetting" text='Local score' value="existingScore" choices='scoreFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
 					<slider-setting id="minimumSongLengthSlider" text='Length' value="minimumSongLength" bind-value="true" apply-on-change="true" max='10' increment='0.25' formatter='FormatSongLengthLimitFloat' on-change="UpdateFilterSettings"/>
 					<slider-setting id="maximumSongLengthSlider" text='MERGE_TO_PREV' value="maximumSongLength" bind-value="true" apply-on-change="true" max='15' increment='0.25' formatter='FormatSongLengthLimitFloat' on-change="UpdateFilterSettings"/>
 				</vertical>
@@ -28,7 +28,7 @@
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>ScoreSaber' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
-					<list-setting text='Ranked Status' value="rankedState" choices='rankedFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
+					<list-setting id="rankedStateSetting" text='Ranked Status' value="rankedState" choices='rankedFilterOptions' bind-value="true" apply-on-change="true" on-change="UpdateFilterSettings"/>
 					<slider-setting id="minStarsSetting" text='Stars' value="minimumStars" bind-value="true" apply-on-change="true" max='13' increment='0.2' formatter='FormatShortFloat' on-change="UpdateFilterSettings"/>
 					<slider-setting id="maxStarsSetting" text='MERGE_TO_PREV' value="maximumStars" bind-value="true" apply-on-change="true" max='14' increment='0.2' formatter='FormatMaxStarsFloat' on-change="UpdateFilterSettings"/>
 				</vertical>
@@ -44,8 +44,8 @@
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>Characteristic / Difficulty' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
-					<dropdown-list-setting text='Characteristic' value="characteristic" apply-on-change="true" bind-value="true" choices='characteristics' on-change="UpdateFilterSettings"/>
-					<dropdown-list-setting text='Difficulty' value="difficulty" apply-on-change="true" bind-value="true" choices='difficulties' on-change="UpdateFilterSettings"/>
+					<dropdown-list-setting id="characteristicDropdown" text='Characteristic' value="characteristic" apply-on-change="true" bind-value="true" choices='characteristics' on-change="UpdateFilterSettings"/>
+					<dropdown-list-setting id="difficultyDropdown" text='Difficulty' value="difficulty" apply-on-change="true" bind-value="true" choices='difficulties' on-change="UpdateFilterSettings"/>
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>Mods' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
