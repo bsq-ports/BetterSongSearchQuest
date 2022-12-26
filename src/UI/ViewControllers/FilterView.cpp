@@ -388,7 +388,7 @@ void ViewControllers::FilterViewController::OpenSponsorsLink()
 void ViewControllers::FilterViewController::ClearFilters()
 {
     DEBUG("ClearFilters FIRED");
-    
+
     // Reset config
     getPluginConfig().DownloadType.SetValue(getPluginConfig().DownloadType.GetDefaultValue());
     getPluginConfig().LocalScoreType.SetValue(getPluginConfig().LocalScoreType.GetDefaultValue());
@@ -502,3 +502,12 @@ void ViewControllers::FilterViewController::ShowPresets()
 // StringW ViewControllers::FilterViewController::DateTimeToStr(int d) {
 //     // FilterView.hideOlderThanOptions[d].ToString("MMM yyyy", CultureInfo.InvariantCulture);
 // }
+void ViewControllers::FilterViewController::TryToDownloadDataset()
+{
+    if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
+        if (fcInstance->SongListController !=nullptr && fcInstance->SongListController->m_CachedPtr.m_value != nullptr) {
+            fcInstance->SongListController->RetryDownloadSongList();
+        }
+    }
+    DEBUG("TryToDownloadDataset");
+}

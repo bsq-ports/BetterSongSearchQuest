@@ -9,6 +9,7 @@
 #include "bsml/shared/BSML/Components/Settings/ListSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/StringSetting.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
+#include "bsml/shared/BSML/Components/ClickableText.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 
@@ -29,6 +30,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);
     DECLARE_INSTANCE_METHOD(void, CloseSponsorModal);
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsLink);
+    DECLARE_INSTANCE_METHOD(void, TryToDownloadDataset);
+    
 
     // Header buttons
     DECLARE_INSTANCE_METHOD(void, ClearFilters);
@@ -95,6 +98,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, difficultyDropdown);   
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, modsRequirementDropdown);  
 
+    DECLARE_INSTANCE_FIELD(BSML::ClickableText*, datasetInfoLabel);
 
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);

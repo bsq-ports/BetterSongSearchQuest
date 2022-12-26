@@ -67,6 +67,8 @@ namespace BetterSongSearch::UI {
         
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
+        inline static bool failedSDC = false;
+        inline static bool loadingSDC = false;
         inline static FilterOptions filterOptions;
         inline static FilterOptionsCache filterOptionsCache;
     };
@@ -208,14 +210,13 @@ public:
     void ResetTable();
     const SDC_wrapper::BeatStarSong* currentSong = nullptr;
     void UpdateDetails();
-    std::unordered_map<std::string, std::vector<uint8_t>> imageCoverCache = std::unordered_map<std::string, std::vector<uint8_t>>();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
     // Temp values
-    std::string search;
+    std::string search = "";
     SortMode sort = (SortMode) 0;
     // Prev values
-    std::string prevSearch;
+    std::string prevSearch = "";
     SortMode prevSort = (SortMode) 0;
     
     bool filterChanged = true;
@@ -224,5 +225,7 @@ public:
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 
     void PlaySong(const SDC_wrapper::BeatStarSong* song = nullptr);
+    void DownloadSongList();
+    void RetryDownloadSongList();
 )
 

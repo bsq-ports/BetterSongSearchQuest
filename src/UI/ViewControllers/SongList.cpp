@@ -101,6 +101,14 @@ using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wr
 
 //////////////////// UTILS //////////////////////
 
+// FIXME: Gives us blank sprite 
+UnityEngine::Sprite* GetCoverFromDownloadedSong(const SDC_wrapper::BeatStarSong* song) {
+    auto customLevel = RuntimeSongLoader::API::GetLevelByHash(song->hash.string_data);
+    if(customLevel.has_value())
+        return customLevel.value()->coverImage;
+    return nullptr;
+}
+
 bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
     auto const& filterOptions = DataHolder::filterOptionsCache;
@@ -561,6 +569,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 {
     fromBSS = false;
 
+    // Retry if failed to dl
+    this->RetryDownloadSongList();
 
     if (!firstActivation)
         return;
@@ -598,6 +608,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     // Reset table the first time and load data
     if (DataHolder::loadedSDC == true) {
         ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
+    } else {
+        this->DownloadSongList();
     }
 
     #ifdef HotReload
@@ -828,9 +840,6 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
                 currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
             }
 
-            // TODO: Preselect passing difficulty
-            
-
             fromBSS = true;
             openToCustom = true;
             GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
@@ -862,36 +871,30 @@ void ViewControllers::SongListController::UpdateDetails () {
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
     bool downloaded = beatmap.has_value();
     #ifdef SONGDOWNLOADER
-    this->coverImage->set_sprite(defaultImage);
     
-    if(this->imageCoverCache.contains(std::string(song->GetHash()))) {
-        std::vector<uint8_t> data = this->imageCoverCache[std::string(song->GetHash())];
-        Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
-        this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
-        // this->coverImage->sizethis->coverImage.child.sizeDelta = UnityEngine::Vector2(160, 160);
-    }
-    else {
-
+    
+    // if (downloaded) {
+    //     auto cover = GetCoverFromDownloadedSong(song);
+    //     this->coverImage->set_sprite(cover);
+    // } else {
+        this->coverImage->set_sprite(defaultImage);
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
         GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
             QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success] {
                 if (success) {
-                     std::vector<uint8_t> data = bytes;
-
+                    std::vector<uint8_t> data = bytes;
                     if (song->GetHash() != this->currentSong->GetHash()) return;
-                    this->imageCoverCache[std::string(song->GetHash())] = {data.begin(), data.end()};
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
                     this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
-                
                     coverLoading->set_enabled(false);
                 } else {
                     coverLoading->set_enabled(false);
                 }
             });
         });
-    }
+    // }
     if(downloaded) {
         //Get preview from beatmap
         if(!beatmapLevelsModel)
@@ -904,22 +907,27 @@ void ViewControllers::SongListController::UpdateDetails () {
             levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(preview);
     }
     else {
-        if(!songPreviewPlayer)
-            return;
+        if (!getPluginConfig().LoadSongPreviews.GetValue()) {
+            
+        } else {
+            if(!songPreviewPlayer)
+                return;
 
-        auto ssp = songPreviewPlayer;
+            auto ssp = songPreviewPlayer;
+            
+            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
 
-        std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
-
-        coro(GetPreview(
-            newUrl, 
-            [ssp](UnityEngine::AudioClip* clip) {
-                if (clip == nullptr) {
-                    return;
+            coro(GetPreview(
+                newUrl, 
+                [ssp](UnityEngine::AudioClip* clip) {
+                    if (clip == nullptr) {
+                        return;
+                    }
+                    ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
                 }
-                ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
-            }
-        ));
+            ));
+        }
+        
     }
 
     #endif
@@ -991,4 +999,58 @@ void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded,  bo
     downloadButton->get_gameObject()->set_active(!isDownloaded);
     downloadButton->set_interactable(!isDownloaded);
     infoButton->set_interactable(true);
+}
+
+
+void ViewControllers::SongListController::DownloadSongList() {
+    if (DataHolder::loadingSDC) {
+        return;
+    }
+
+    fcInstance->FilterViewController->datasetInfoLabel->set_text("Loading dataset...");
+
+    std::thread([this]{
+        DataHolder::loadingSDC = true;
+        try {
+            auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
+
+            getLoggerOld().info("Successfully got songs!");
+            DataHolder::songList = songs;
+            
+            INFO("Finished loading songs.");
+            DataHolder::loadedSDC = true;
+            DataHolder::loadingSDC = false;
+            DataHolder::failedSDC = false;
+            
+            if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
+                fcInstance->SongListController->filterChanged = true;
+                fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
+            }
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr && this->get_isActiveAndEnabled() ) {
+                    this->filterChanged = true;
+                    fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+                    // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
+                    fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songList.size()));
+                }
+            });
+        } catch (...) {
+            DataHolder::loadingSDC = false;
+            DataHolder::failedSDC = true;
+            DataHolder::loadedSDC = false;
+            
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr ) {  
+                    fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
+                }
+            });
+            getLoggerOld().info("Failed to get songs");
+        }
+    }).detach();
+}
+
+void ViewControllers::SongListController::RetryDownloadSongList() {
+    if (DataHolder::failedSDC && !DataHolder::loadingSDC && !DataHolder::loadedSDC) {
+        this->DownloadSongList();
+    }
 }

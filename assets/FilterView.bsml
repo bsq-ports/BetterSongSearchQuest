@@ -56,12 +56,12 @@
 	<!-- </macro.as-host> -->
 
 	<horizontal>
-		<horizontal preferred-width="65" child-expand-width="false" spacing='2' child-align='MiddleCenter'>
+		<!-- <horizontal preferred-width="65" child-expand-width="false" spacing='2' child-align='MiddleCenter'>
 			<text text="~version" font-size="3" font-color="#CC6E3B" align="Center"/>
 			<clickable-text text='♥ Donate' font-size="4" align="Center"  on-click="OpenSponsorsModal"/>
-		</horizontal>
+		</horizontal> -->
 		<horizontal preferred-width="65">
-			<text id="datasetInfoLabel" font-size="3" font-color="#CCC" text="Loading dataset..." align="Center"/>
+			<clickable-text id="datasetInfoLabel" font-size="3" font-color="#CCC" text="Loading dataset..." align="Center"  on-click="TryToDownloadDataset"/>
 		</horizontal>
 	</horizontal>
 

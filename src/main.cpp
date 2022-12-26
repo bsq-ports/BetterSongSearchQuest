@@ -97,24 +97,6 @@ extern "C" void setup(ModInfo& info) {
         } else {
             filterOptions.uploaders.clear();
         }
-
-        
-        try {
-            auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-
-            getLoggerOld().info("Successfully got songs!");
-            DataHolder::songList = songs;
-            
-            INFO("Finished loading songs.");
-            DataHolder::loadedSDC = true;
-            if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
-                fcInstance->SongListController->filterChanged = true;
-                fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
-            }
-        } catch (...) {
-            getLoggerOld().info("Failed to get songs");
-        }
-       
     }).detach();
 }
 
