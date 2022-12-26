@@ -51,6 +51,8 @@
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
 #include "Util/BSMLStuff.hpp"
+#include "System/Threading/Tasks/Task.hpp"
+#include "System/Threading/Tasks/Task_1.hpp"
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -100,15 +102,6 @@ int currentSelectedSong = 0;
 using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
 
 //////////////////// UTILS //////////////////////
-
-// FIXME: Gives us blank sprite 
-UnityEngine::Sprite* GetCoverFromDownloadedSong(const SDC_wrapper::BeatStarSong* song) {
-    auto customLevel = RuntimeSongLoader::API::GetLevelByHash(song->hash.string_data);
-    if(customLevel.has_value())
-        return customLevel.value()->coverImage;
-    return nullptr;
-}
-
 bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
     auto const& filterOptions = DataHolder::filterOptionsCache;
@@ -873,10 +866,17 @@ void ViewControllers::SongListController::UpdateDetails () {
     #ifdef SONGDOWNLOADER
     
     
-    // if (downloaded) {
-    //     auto cover = GetCoverFromDownloadedSong(song);
-    //     this->coverImage->set_sprite(cover);
-    // } else {
+    if (downloaded) {
+        System::Threading::Tasks::Task_1<UnityEngine::Sprite*>* coverTask = beatmap.value()->GetCoverImageAsync(System::Threading::CancellationToken::get_None());
+        auto action = il2cpp_utils::MakeDelegate<System::Action_1<System::Threading::Tasks::Task*>*>(classof(System::Action_1<System::Threading::Tasks::Task*>*), (std::function<void()>)[coverTask, this, beatmap] {
+                UnityEngine::Sprite* cover = coverTask->get_ResultOnSuccess();
+                if (cover) {
+                    this->coverImage->set_sprite(cover);
+                }
+            }
+        );
+        reinterpret_cast<System::Threading::Tasks::Task*>(coverTask)->ContinueWith(action);
+    } else {
         this->coverImage->set_sprite(defaultImage);
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
         DEBUG("{}", newUrl.c_str());
@@ -894,7 +894,7 @@ void ViewControllers::SongListController::UpdateDetails () {
                 }
             });
         });
-    // }
+    }
     if(downloaded) {
         //Get preview from beatmap
         if(!beatmapLevelsModel)
