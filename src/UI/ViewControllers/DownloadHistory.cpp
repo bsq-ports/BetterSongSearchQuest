@@ -264,7 +264,10 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 }
                                 // If has no more dls left, refresh songs
                                 if (!this->HasPendingDownloads()) {
-                                    RuntimeSongLoader::API::RefreshSongs(false);
+                                    // Do not refresh songs if not active anymore
+                                    if (this->get_isActiveAndEnabled()) {
+                                        RuntimeSongLoader::API::RefreshSongs(false);
+                                    }
                                 }
                                 if (fcInstance->SongListController->currentSong != nullptr) {
                                     if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
