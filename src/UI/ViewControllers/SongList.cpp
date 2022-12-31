@@ -414,7 +414,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     prevSearch = search;
     this->filterChanged = false;
 
-    auto searchQuery = split(search, " ");
+    auto searchQuery = split(currentSearch, " ");
 
 
     std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
@@ -569,8 +569,7 @@ void ViewControllers::SongListController::PostParse() {
 
         std::function<void(HMUI::InputFieldView * view)> onValueChanged = [this](HMUI::InputFieldView * view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
-            fcInstance->SongListController->SortAndFilterSongs(this->sort, (std::string) view->get_text() , true);
-            // colorPickerModal->Show();
+            this->SortAndFilterSongs(this->sort, (std::string) view->get_text(), true);
         };
         
         songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onValueChanged));
