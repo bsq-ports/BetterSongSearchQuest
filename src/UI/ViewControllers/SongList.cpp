@@ -686,7 +686,8 @@ void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int
 float ViewControllers::SongListController::CellSize()
 {
     // TODO: Different font sizes
-    return true ? 11.66f : 14.0f;
+    bool smallFont = getPluginConfig().SmallerFontSize.GetValue();
+    return smallFont ? 11.66f : 14.0f;
 }
 
 void ViewControllers::SongListController::ResetTable()
