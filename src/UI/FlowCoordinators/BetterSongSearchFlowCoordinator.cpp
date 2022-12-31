@@ -57,17 +57,13 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, false);
 };
 bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){
-    
-    for (auto entry : DownloadHistoryViewController->downloadEntryList)
-    {
-        if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued)))
-        {
-            cancelConfirmCallback = callback;
-            SongListController->ShowCloseConfirmation();
-            return true;
-        }
+    if (DownloadHistoryViewController->HasPendingDownloads()) {
+        cancelConfirmCallback = callback;
+        SongListController->ShowCloseConfirmation();
+        return true;
+    } else {
+        return false;
     }
-    return false;
 };
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelCallback(bool doCancel){

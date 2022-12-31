@@ -919,6 +919,7 @@ void ViewControllers::SongListController::UpdateDetails () {
                 UnityEngine::Sprite* cover = coverTask->get_ResultOnSuccess();
                 if (cover) {
                     this->coverImage->set_sprite(cover);
+                    coverLoading->set_enabled(false);
                 }
             }
         );

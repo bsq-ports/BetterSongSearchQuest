@@ -38,11 +38,6 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         this->downloadHistoryTable()->ReloadData();
     }, 0.1f);
 
-    limitedSongReload = new BetterSongSearch::Util::RatelimitCoroutine([](){
-        DEBUG("Songs refreshed ------------");
-        // It needs to be done not to run two refresh songs at once, it does not usually run more than 0.1s
-        RuntimeSongLoader::API::RefreshSongs(false);
-    }, 2.0f);
 
     getLoggerOld().info("Download contoller activated");
     BSML::parse_and_construct(IncludedAssets::DownloadHistory_bsml, this->get_transform(), this);
@@ -265,8 +260,11 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                     firstEntry->downloadProgress = 1.0f;
                                     DEBUG("Success downloading the song");
                                     RefreshTable(true);
-                                    coro(this->limitedSongReload->Call());
                                     this->ProcessDownloads(forceTableReload);
+                                }
+                                // If has no more dls left, refresh songs
+                                if (!this->HasPendingDownloads()) {
+                                    RuntimeSongLoader::API::RefreshSongs(false);
                                 }
                                 if (fcInstance->SongListController->currentSong != nullptr) {
                                     if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
@@ -355,3 +353,14 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::st
     auto dlElem = this->GetDownloadByHash(songHash);
     return this->CheckIsDownloadable(dlElem);
 }
+
+bool ViewControllers::DownloadHistoryViewController::HasPendingDownloads(){
+    for (auto entry : downloadEntryList)
+    {
+        if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued)))
+        {
+            return true;
+        }
+    }
+    return false;
+};
