@@ -59,7 +59,7 @@ namespace BetterSongSearch::UI::ViewControllers
         //     songColor = UnityEngine::Color(1, 0.647f, 0, 1);
         // }
 
-        this->fullFormattedSongName->set_text(fmt::format("{} - {}", entry->GetName(), entry->GetSongAuthor()));
+        this->fullFormattedSongName->set_text(fmt::format("{} - {}",  entry->GetSongAuthor(), entry->GetName()));
         this->fullFormattedSongName->set_color(songColor);
 
         this->entry = entry;
