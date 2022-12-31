@@ -10,6 +10,7 @@
 
 #include <fmt/chrono.h>
 #include <fmt/core.h>
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
@@ -46,15 +47,15 @@ namespace BetterSongSearch::UI::ViewControllers {
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->duration_secs), entry->upvotes, entry->downvotes));
         this->uploadDateFormatted->set_text(fmt::format("{:%d. %b %Y}", fmt::localtime(entry->uploaded_unix_time)));
         auto ranked = entry->GetMaxStarValue() > 0;
-        bool downloaded = RuntimeSongLoader::API::GetLevelByHash(entry->hash.string_data).has_value();
+        bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded((std::string) entry->GetHash());
 
         Sombrero::FastColor songColor = Sombrero::FastColor::white();
         if (downloaded) {
             songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
         }
-        if (ranked) {
-            songColor = UnityEngine::Color(1, 0.647f, 0, 1);
-        }
+        // if (ranked) {
+        //     songColor = UnityEngine::Color(1, 0.647f, 0, 1);
+        // }
 
         this->fullFormattedSongName->set_text(fmt::format("{} - {}", entry->GetName(), entry->GetSongAuthor()));
         this->fullFormattedSongName->set_color(songColor);
