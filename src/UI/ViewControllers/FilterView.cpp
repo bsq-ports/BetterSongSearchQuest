@@ -85,10 +85,10 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
     if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
         filtersChanged = true;
 
-        auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan - 1).count();
+        auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan).count();
 
         DataHolder::filterOptions.minUploadDate = timestamp;
-        DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan - 1));
+        DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan));
 
         getPluginConfig().MinUploadDate.SetValue(timestamp);
         getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
@@ -222,9 +222,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
 
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
-    std::function<StringW(float monthsSinceFirstUpload)>   DateTimeToStr = [](float monthsSinceFirstUpload)
+    std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
-        auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
+        auto val = GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
         return fmt::format("{:%b:%Y}", fmt::localtime(val));
     };
 

@@ -320,7 +320,6 @@ DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloa
             return entry;
         }
     }
-    DEBUG("S");
     return nullptr;
 }
 bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(DownloadHistoryEntry* entry){
