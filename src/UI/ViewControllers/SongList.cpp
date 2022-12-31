@@ -122,7 +122,9 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
     if(song->uploaded_unix_time < filterOptions.minUploadDate)
         return false;
 
-    if(song->GetRating() < filterOptions.minRating) return false;
+    float songRating = std::isnan(song->GetRating())? 0: song->GetRating();
+    if(songRating < filterOptions.minRating) return false;
+    
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
     bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
     if(downloaded)
