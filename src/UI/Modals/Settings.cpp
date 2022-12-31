@@ -67,4 +67,5 @@ bool Modals::Settings::get_smallerFontSize() {
 }
 void Modals::Settings::set_smallerFontSize(bool value) {
     getPluginConfig().SmallerFontSize.SetValue(value);
+    fcInstance->SongListController->songListTable()->ReloadData();
 }

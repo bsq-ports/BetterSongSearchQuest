@@ -869,7 +869,7 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
     if(fcInstance->ConfirmCancelOfPending([this, songToPlay](){PlaySong(songToPlay);} ))
         return;
 
-    // Make sure to load all downloaded songs before going to the next step
+    // Make sure to load all downloaded songs before going to the next step (Allows us not to do song refresh every time)
     RuntimeSongLoader::API::RefreshSongs(false, [this, songToPlay](std::vector<GlobalNamespace::CustomPreviewBeatmapLevel*> const&){
         QuestUI::MainThreadScheduler::Schedule(
         [this, songToPlay]
@@ -879,6 +879,9 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
             if(level.has_value())
             {
                 currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+            } else {
+                ERROR("Song somehow is not downloaded, pls fix");
+                return;
             }
 
             fromBSS = true;
@@ -886,9 +889,6 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
             GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
         });
     });
-
-    
-   
 }
 
 
@@ -910,11 +910,12 @@ void ViewControllers::SongListController::UpdateDetails () {
     
     auto song = currentSong;
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
-    bool downloaded = beatmap.has_value();
+    bool loaded = beatmap.has_value();
+    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->GetHash()));
     #ifdef SONGDOWNLOADER
     
-    
-    if (downloaded) {
+    // if beatmap is loaded
+    if (loaded) {
         System::Threading::Tasks::Task_1<UnityEngine::Sprite*>* coverTask = beatmap.value()->GetCoverImageAsync(System::Threading::CancellationToken::get_None());
         auto action = il2cpp_utils::MakeDelegate<System::Action_1<System::Threading::Tasks::Task*>*>(classof(System::Action_1<System::Threading::Tasks::Task*>*), (std::function<void()>)[coverTask, this, beatmap] {
                 UnityEngine::Sprite* cover = coverTask->get_ResultOnSuccess();
@@ -944,7 +945,9 @@ void ViewControllers::SongListController::UpdateDetails () {
             });
         });
     }
-    if(downloaded) {
+
+    // If the song is loaded then get it from local sources
+    if(loaded) {
         //Get preview from beatmap
         if(!beatmapLevelsModel)
             return;
@@ -957,7 +960,6 @@ void ViewControllers::SongListController::UpdateDetails () {
     }
     else {
         if (!getPluginConfig().LoadSongPreviews.GetValue()) {
-            
         } else {
             if(!songPreviewPlayer)
                 return;
@@ -976,7 +978,6 @@ void ViewControllers::SongListController::UpdateDetails () {
                 }
             ));
         }
-        
     }
 
     #endif
