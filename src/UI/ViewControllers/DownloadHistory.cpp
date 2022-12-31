@@ -38,6 +38,12 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         this->downloadHistoryTable()->ReloadData();
     }, 0.1f);
 
+    limitedSongReload = new BetterSongSearch::Util::RatelimitCoroutine([](){
+        DEBUG("Songs refreshed ------------");
+        // It needs to be done not to run two refresh songs at once, it does not usually run more than 0.1s
+        RuntimeSongLoader::API::RefreshSongs(false);
+    }, 2.0f);
+
     getLoggerOld().info("Download contoller activated");
     BSML::parse_and_construct(IncludedAssets::DownloadHistory_bsml, this->get_transform(), this);
 
@@ -259,7 +265,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                     firstEntry->downloadProgress = 1.0f;
                                     DEBUG("Success downloading the song");
                                     RefreshTable(true);
-                                    RuntimeSongLoader::API::RefreshSongs(false);
+                                    coro(this->limitedSongReload->Call());
                                     this->ProcessDownloads(forceTableReload);
                                 }
                                 if (fcInstance->SongListController->currentSong != nullptr) {

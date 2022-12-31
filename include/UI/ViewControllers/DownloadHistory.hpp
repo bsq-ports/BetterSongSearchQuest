@@ -133,6 +133,7 @@ public:
     void ProcessDownloads(bool forceTableReload = false);
     void RefreshTable(bool fullReload = true);
     BetterSongSearch::Util::RatelimitCoroutine* limitedFullTableReload = nullptr;
+    BetterSongSearch::Util::RatelimitCoroutine* limitedSongReload = nullptr;
     bool TryAddDownload(const SDC_wrapper::BeatStarSong* song, bool isBatch = false);
     bool hasUnloadedDownloads() {
         bool x = false;
@@ -150,5 +151,5 @@ public:
     bool CheckIsDownloadable(std::string songHash);
     bool CheckIsDownloadable(DownloadHistoryEntry* entry);
     bool CheckIsDownloaded(std::string songHash);
-    const int MAX_PARALLEL_DOWNLOADS = 2;
+    const int MAX_PARALLEL_DOWNLOADS = 3;
 )
