@@ -84,11 +84,13 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
     // Special case for saving date
     if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
         filtersChanged = true;
-        std::chrono::time_point val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months((int)this->hideOlderThan);
-        int sec = duration_cast<std::chrono::seconds>(val.time_since_epoch()).count();
 
-        DataHolder::filterOptions.minUploadDate = sec;
-        getPluginConfig().MinUploadDate.SetValue(sec);
+        auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan - 1).count();
+
+        DataHolder::filterOptions.minUploadDate = timestamp;
+        DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan - 1));
+
+        getPluginConfig().MinUploadDate.SetValue(timestamp);
         getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
     }
 
