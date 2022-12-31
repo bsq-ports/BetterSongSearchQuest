@@ -218,6 +218,7 @@ public:
     // Prev values
     std::string prevSearch = "";
     SortMode prevSort = (SortMode) 0;
+    bool prevIsRankedSort = false;
     
     bool filterChanged = true;
     int currentSelectedSong = 0;

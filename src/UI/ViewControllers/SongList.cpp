@@ -53,6 +53,8 @@
 #include "Util/BSMLStuff.hpp"
 #include "System/Threading/Tasks/Task.hpp"
 #include "System/Threading/Tasks/Task_1.hpp"
+#include "Util/Debug.hpp"
+#include <cmath>
 
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -176,6 +178,12 @@ bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDiffic
         if(!diff->ranked)
             return false;
 
+    // If we have a ranked sort, we force ranked filter
+    if (currentFilter.isRankedSort) {
+        if (!diff->ranked)
+            return false;
+    }
+
     if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
         if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
             return false;
@@ -287,11 +295,17 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }},
         {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
                            {
-                               return (struct1->rating > struct2->rating);
+                                // Move nan to the end
+                               float v1 = std::isnan(struct1->rating)? 0: struct1->rating;
+                               float v2 = std::isnan(struct2->rating)? 0: struct2->rating;
+                               return (v1 > v2);
                            }},
         {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
-                           {
-                               return (struct1->rating < struct2->rating);
+                            {
+                                // Move nan to the end
+                                float v1 = std::isnan(struct1->rating)? 9999: struct1->rating;
+                                float v2 = std::isnan(struct2->rating)? 9999: struct2->rating;
+                                return (v1 < v2);
                            }}
 };
 
@@ -346,8 +360,40 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
 
     IsSearching = true;
+
+    // Check if sort is ranked and set the filter
+    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+    DataHolder::filterOptions.isRankedSort = isRankedSort;
+    // Detect changes
+    bool currentFilterChanged = this->filterChanged;
+    bool currentSortChanged = prevSort != sort;
+    bool currentSearchChanged = prevSearch != search;
+    bool rankedSortChanged = DataHolder::filterOptionsCache.isRankedSort != isRankedSort;
+
     // Take a snapshot of current filter options
     DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
+
+    DEBUG("SEARCHING Cache");
+    DEBUG("Sort: {}", SortToString((int) sort));
+    DEBUG("Requirement: {}", RequirementTypeToString((int) DataHolder::filterOptionsCache.modRequirement));
+    DEBUG("Char: {}", CharFilterTypeToString((int) DataHolder::filterOptionsCache.charFilter));
+    DEBUG("Difficulty: {}", DifficultyFilterTypeToString((int) DataHolder::filterOptionsCache.difficultyFilter));
+    DEBUG("Ranked: {}", RankedFilterTypeToString((int) DataHolder::filterOptionsCache.rankedType));
+    DEBUG("LocalScore: {}", LocalScoreFilterTypeToString((int) DataHolder::filterOptionsCache.localScoreType));
+    DEBUG("Download: {}", DownloadFilterTypeToString((int) DataHolder::filterOptionsCache.downloadType));
+    DEBUG("MinNJS: {}", DataHolder::filterOptionsCache.minNJS);
+    DEBUG("MaxNJS: {}", DataHolder::filterOptionsCache.maxNJS);
+    DEBUG("MinNPS: {}", DataHolder::filterOptionsCache.minNPS);
+    DEBUG("MaxNPS: {}", DataHolder::filterOptionsCache.maxNPS);
+    DEBUG("MinStars: {}", DataHolder::filterOptionsCache.minStars);
+    DEBUG("MaxStars: {}", DataHolder::filterOptionsCache.maxStars);
+    DEBUG("MinLength: {}", DataHolder::filterOptionsCache.minLength);
+    DEBUG("MaxLength: {}", DataHolder::filterOptionsCache.maxLength);
+    DEBUG("MinRating: {}", DataHolder::filterOptionsCache.minRating);
+    DEBUG("MinVotes: {}",  DataHolder::filterOptionsCache.minVotes);
+    DEBUG("Uploaders number: {}",  DataHolder::filterOptionsCache.uploaders.size());
+    DEBUG("IsRankedSort: {}", DataHolder::filterOptionsCache.isRankedSort);
+    DEBUG("RankedSortChanged: {}", rankedSortChanged);
 
     this->searchInProgress->get_gameObject()->set_active(true);
 
@@ -357,11 +403,9 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         songListTable()->ClearSelection();
         songListTable()->ClearHighlights();
     }
-    // Detect changes
-    bool currentFilterChanged = this->filterChanged;
-    bool currentSortChanged = prevSort != sort;
-    bool currentSearchChanged = prevSearch != search;
+ 
 
+    // Grab current values for sort and search
     auto currentSort = sort;
     auto currentSearch = search;
 
@@ -372,9 +416,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     auto searchQuery = split(search, " ");
 
-    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
 
-    std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
+    std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
         long long before = 0;
         long long after = 0;
         before = CurrentTimeMs();
@@ -385,7 +428,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         
       
         // Filter songs if needed
-        if (currentFilterChanged) {
+        if (currentFilterChanged || rankedSortChanged) {
+            DEBUG("Filtering");
             DataHolder::filteredSongList.clear();
             // Set up variables for threads
             int totalSongs = DataHolder::songList.size();
@@ -415,7 +459,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         }
 
 
-        if (currentFilterChanged || currentSearchChanged) {
+        if (currentFilterChanged || rankedSortChanged || currentSearchChanged) {
+            DEBUG("Searching");
             DataHolder::searchedSongList.clear();
             // Set up variables for threads
             int totalSongs = DataHolder::filteredSongList.size();
@@ -444,7 +489,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         }
 
         // Sort has to change?
-        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
+        if (currentFilterChanged  || rankedSortChanged || currentSearchChanged || currentSortChanged) {
+            DEBUG("Sorting");
             std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
                 sortFunctionMap.at(currentSort)
             );
@@ -458,6 +504,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             before = CurrentTimeMs();
             
             // Copy the list to the displayed one
+            DataHolder::sortedSongList.clear();
             DataHolder::sortedSongList = DataHolder::searchedSongList;
             this->ResetTable();
 
@@ -1022,6 +1069,7 @@ void ViewControllers::SongListController::DownloadSongList() {
             DataHolder::loadingSDC = false;
             DataHolder::failedSDC = false;
             
+            // Initial search
             if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
                 fcInstance->SongListController->filterChanged = true;
                 fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);

@@ -90,6 +90,8 @@ public:
 
     //Mods
     RequirementType modRequirement = RequirementType::Any;
+
+    bool isRankedSort = false;
 };
 
 enum class SortMode {
@@ -129,6 +131,7 @@ public:
         difficultyFilter=s.difficultyFilter;
         charFilter=s.charFilter;
         modRequirement=s.modRequirement;
+        isRankedSort =s.isRankedSort;
     }
     
     // Prolly need to deduplicate these..
@@ -145,6 +148,8 @@ public:
     //Mapping
     float minNJS = 0, maxNJS = 25;
     float minNPS = 0, maxNPS = 12;
+
+    bool isRankedSort = false;
 
     //ScoreSaber
     FilterOptions::RankedFilterType rankedType = FilterOptions::RankedFilterType::All;
