@@ -39,11 +39,11 @@
 		</vertical>
 	</horizontal>
 	
-	<modal id="moreModal" clickerino-offerino-closerino='true' move-to-center='false' size-delta-x='50' size-delta-y='35' anchor-pos-x='-18' anchor-pos-y='14'>
+	<modal id="moreModal" clickerino-offerino-closerino='true' move-to-center='false' size-delta-x='50' size-delta-y='25' anchor-pos-x='-18' anchor-pos-y='14'>
 		<vertical horizontal-fit='Unconstrained' pad='2' pad-bottom='-2'>
 			<!-- on-click='HideMoreModal'  -->
 			<primary-button text='Batch Download' on-click='ShowBatchDownload'  horizontal-fit='Unconstrained'/>
-			<primary-button text='Create / Update Playlist' on-click='ShowPlaylistCreation' horizontal-fit='Unconstrained'/>
+			<!-- <primary-button text='Create / Update Playlist' on-click='ShowPlaylistCreation' horizontal-fit='Unconstrained'/> -->
 			<primary-button text='BetterSongSearch Settings' on-click='ShowSettings' horizontal-fit='Unconstrained'/>
 		</vertical>
 	</modal>
