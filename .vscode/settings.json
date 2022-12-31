@@ -116,6 +116,8 @@
         "xutility": "cpp",
         "format": "cpp",
         "stop_token": "cpp",
-        "resumable": "cpp"
+        "resumable": "cpp",
+        "source_location": "cpp",
+        "__std_stream": "cpp"
     }
 }
