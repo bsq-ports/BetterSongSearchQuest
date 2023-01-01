@@ -126,7 +126,7 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
     // FIXME: This button does not get recreated in the multiplayer menu for some reason, find a way to detect button dying
     // Button instance
-    static SafePtrUnity<GameObject> button;
+    static SafePtrUnity<UnityEngine::GameObject> button;
 
     bool multiplayer = self->showMultiplayer;
 
