@@ -15,7 +15,7 @@ namespace BetterSongSearch::UI {
     {
         HMUI::FlowCoordinator* parentFlow;
         SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
-        // static UnityEngine::UI::Button::ButtonClickedEvent* goToSongSelect = nullptr;
+        SafePtrUnity<UnityEngine::GameObject> songSelectButton = nullptr;
 
         public:
             Manager(Manager const&) = delete; // no accidental copying
@@ -31,6 +31,14 @@ namespace BetterSongSearch::UI {
             
 
             void ShowFlow(bool immediately) {
+                songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+                if (!songSelectButton) {
+                    songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
+                }
+                // if (!songSelectButton) {
+                //     return;
+                // }
+                
                 DEBUG("Should create flow");
                 if (!flow) {
                     DEBUG("CreateFlowCoordinator");
@@ -42,14 +50,13 @@ namespace BetterSongSearch::UI {
             }
 
             void GoToSongSelect() {
-                SafePtrUnity<UnityEngine::GameObject> button = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-                if (!button) {
-                    button = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
+                if (songSelectButton) {
+                    auto event = songSelectButton->GetComponent<HMUI::NoTransitionsButton *>()->get_onClick();
+                    event->Invoke();
+                } else {
+                    ERROR("no song select button");
                 }
-                if (!button) {
-                    return;
-                }
-                button->GetComponent<HMUI::NoTransitionsButton *>()->Press();
+                
             }
     };
 

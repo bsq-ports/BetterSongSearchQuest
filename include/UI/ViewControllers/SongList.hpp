@@ -13,6 +13,10 @@
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
+#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
+#include "GlobalNamespace/MultiplayerLevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator_State.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
@@ -190,7 +194,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
     DECLARE_INSTANCE_FIELD(StringW, selectedSortMode);
 
-    
+    DECLARE_INSTANCE_FIELD(GlobalNamespace::SoloFreePlayFlowCoordinator*, soloFreePlayFlowCoordinator);
+    DECLARE_INSTANCE_FIELD(GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator*, multiplayerLevelSelectionFlowCoordinator);
+
 
 public:
     HMUI::TableView* songListTable() {
@@ -228,5 +234,7 @@ public:
     void PlaySong(const SDC_wrapper::BeatStarSong* song = nullptr);
     void DownloadSongList();
     void RetryDownloadSongList();
+
+    custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level);
 )
 

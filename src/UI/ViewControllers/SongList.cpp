@@ -23,13 +23,17 @@
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
 #include "System/StringComparison.hpp"
+#include "System/Nullable_1.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
+#include "songloader/shared/CustomTypes/"
 
 #include <iterator>
 #include <chrono>
@@ -616,6 +620,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (!firstActivation)
         return;
 
+    // Get coordinators
+    soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<GlobalNamespace::SoloFreePlayFlowCoordinator*>();
+    multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator*>();
+
     // Get regional beat saver urls
     BeatSaverRegionManager::RegionLookup();
     
@@ -843,15 +851,33 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     co_return;
 }
 
-custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
-    backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
-    co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.5)));
+custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
+    // backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
+    // co_yield reinterpret_cast<System::manager.GoToSongSelect();
+    // GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
+    // if(levelCollectionNavigationController) {
+    //     co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
+    //     levelCollectionNavigationController->SelectLevel(level);
+    // }
+
+    auto songloaderpack = UnityEngine::Object::FindObjectOfType<RuntimeSongLoader::SongLoaderCustomBeatmapLevelPack*>();
+
+    auto category = GlobalNamespace::SelectLevelCategoryViewController::LevelCategory();
+    category.value = GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::All;
+
+    auto state = GlobalNamespace::LevelSelectionFlowCoordinator::State::New_ctor(
+        System::Nullable_1(category, true),
+        reinterpret_cast<GlobalNamespace::IBeatmapLevelPack*> (songloaderpack->CustomLevelsPack),
+        level,
+        nullptr
+    );
+
+    multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
+    soloFreePlayFlowCoordinator->Setup(state);
+
     manager.GoToSongSelect();
-    GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
-    if(levelCollectionNavigationController) {
-        co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
-        levelCollectionNavigationController->SelectLevel(level);
-    }
+    
+    
 }
 
 
