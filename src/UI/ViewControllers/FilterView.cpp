@@ -1,77 +1,165 @@
 #include "UI/ViewControllers/FilterView.hpp"
+
+#include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/Components/Backgroundable.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+#include "HMUI/ImageView.hpp"
+
 #include "main.hpp"
-
 #include "PluginConfig.hpp"
-using namespace BetterSongSearch::UI;
-
-#include "questui/shared/QuestUI.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/Settings/IncrementSetting.hpp"
-#include "questui/shared/CustomTypes/Components/Settings/SliderSetting.hpp"
-#include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-using namespace QuestUI;
-
-#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "UnityEngine/UI/LayoutElement.hpp"
-#include "UnityEngine/UI/ContentSizeFitter.hpp"
-#include "UnityEngine/RectOffset.hpp"
-#include "UnityEngine/RectTransform.hpp"
-#include "UnityEngine/Material.hpp"
-#include "UnityEngine/Resources.hpp"
-#include "UnityEngine/Sprite.hpp"
-
-#include "HMUI/CurvedCanvasSettingsHelper.hpp"
-#include "HMUI/TimeSlider.hpp"
-#include "HMUI/Touchable.hpp"
-#include "HMUI/SimpleTextDropdown.hpp"
-#include "HMUI/DropdownWithTableView.hpp"
-#include "HMUI/ModalView.hpp"
-
-#include "TMPro/TextMeshProUGUI.hpp"
-
-#include "System/Collections/IEnumerator.hpp"
-#include "custom-types/shared/coroutine.hpp"
-#include "UnityEngine/WaitForEndOfFrame.hpp"
-
-#include "DateUtils.hpp"
-#include "FilterOptions.hpp"
-#include "UI/ViewControllers/SongList.hpp"
-#include<sstream>
-
-#include "questui_components/shared/concepts.hpp"
+#include "assets.hpp"
 
 #include <fmt/chrono.h>
 
-DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
+#include "FilterOptions.hpp"
+#include "DateUtils.hpp"
+#include "UI/ViewControllers/SongList.hpp"
+#include "Util/BSMLStuff.hpp"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "Util/TextUtil.hpp"
+
+
+using namespace BetterSongSearch::Util;
+using namespace BetterSongSearch::UI;
+using namespace BetterSongSearch::UI::Util::BSMLStuff;
 
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
+DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
-UnityEngine::UI::VerticalLayoutGroup* filterViewLayout;
-
-template<typename T = std::string, typename V = std::string_view>
-requires(QUC::IsQUCConvertible<T, V>)
-constexpr size_t getIndex(std::span<T const> const v, V const& k)
-{
-    auto it = std::find(v.begin(), v.end(), k);
-    if (it != v.end())
-    {
-        return std::distance(v.begin(), it);
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
+    if (value != nullptr) { \
+        int index = get_##options()->IndexOf(value); \
+        if (index < 0 ) { \
+            ERROR("WE HAVE A BUG WITH SAVING VALUE {}", (std::string) value); \
+        } else { \
+            if (index != getPluginConfig().configName.GetValue()) { \
+                filtersChanged = true; \
+                getPluginConfig().configName.SetValue(index); \
+                DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) index; \
+            } \
+        }\
     }
-    else {
-        return -1;
+
+#define SAVE_NUMBER_CONFIG(value, configName, filterProperty) \
+    if (value != getPluginConfig().configName.GetValue()) { \
+        filtersChanged = true; \
+        getPluginConfig().configName.SetValue(value); \
+        DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) value; \
+    } \
+
+// TODO: Fix saving last saved
+#define SAVE_INTEGER_CONFIG(value, configName, filterProperty) \
+    if (static_cast<int>(value) != getPluginConfig().configName.GetValue()) { \
+        filtersChanged = true; \
+        getPluginConfig().configName.SetValue(static_cast<int>(value)); \
+        DataHolder::filterOptions.filterProperty = static_cast<int>(value); \
+    } \
+
+
+// TODO: Fix unlimited to better search songs outside of filters boundaries
+custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateFilterSettings() {
+    // Wait for next frame
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+
+    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
+    bool filtersChanged = false;
+
+    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
+    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
+
+    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType, charFilter);
+    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
+    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
+    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
+    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
+    SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
+    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
+    SAVE_NUMBER_CONFIG(this->maximumNps,MaxNPS,  maxNPS);
+    SAVE_NUMBER_CONFIG(this->minimumStars,MinStars, minStars);
+    SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
+    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
+    SAVE_INTEGER_CONFIG(this->minimumVotes,MinVotes, minVotes);
+
+    // Special case for saving date
+    if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
+        filtersChanged = true;
+
+        auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan).count();
+
+        DataHolder::filterOptions.minUploadDate = timestamp;
+        DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan));
+
+        getPluginConfig().MinUploadDate.SetValue(timestamp);
+        getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
     }
-}
-template<typename T = std::string>
-constexpr size_t getIndex(std::span<T const> const v, T const& k)
-{
-    return getIndex<T, T>(v, k);
-}
+
+    // Special case for min song length
+    if (this->minimumSongLength * 60 != getPluginConfig().MinLength.GetValue()) {
+        int seconds = minimumSongLength * 60;
+
+        filtersChanged = true;
+        DataHolder::filterOptions.minLength = seconds;
+        getPluginConfig().MinLength.SetValue(seconds);
+    }
+
+    // Special case for max song length
+    if (this->maximumSongLength * 60 != getPluginConfig().MaxLength.GetValue()) {
+        int seconds = maximumSongLength * 60;
+
+        filtersChanged = true;
+        DataHolder::filterOptions.maxLength = seconds;
+        getPluginConfig().MaxLength.SetValue(seconds);
+    }
+
+    // Save uploaders
+    if (this->uploadersString != getPluginConfig().Uploaders.GetValue()) {
+        filtersChanged = true;
+
+        // Save to config
+        getPluginConfig().Uploaders.SetValue(this->uploadersString);
+
+        // Apply to filters
+        std::string copy = uploadersString;
+        if (copy.size() > 0) {
+            if (copy[0] == '!') {
+                copy.erase(0,1);
+                DataHolder::filterOptions.uploadersBlackList = true;
+            } else {
+                DataHolder::filterOptions.uploadersBlackList = false;
+            }
+            DataHolder::filterOptions.uploaders = split(toLower(copy), " ");
+        } else {
+            DataHolder::filterOptions.uploaders.clear();
+        }
+    }
+    
+    std::function<std::string(StringW)> uploadersStringFormat = [](std::string value) {
+        bool blacklist = false;
+        if (value.size() > 0) {
+            if (value[0] == '!') {
+                value.erase(0,1);
+                blacklist = true;
+            }
+        } else {
+            return (std::string) "";
+        }
+        auto uploaders = split(value, " ");
+
+        return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
+    };
 
 
-constexpr size_t getIndex(std::span<StringW const> const v, StringW const k)
-{
-    return getIndex<StringW, StringW>(v, k);
+    if (filtersChanged) {
+        DEBUG("Filters changed");
+        auto controller = fcInstance->SongListController;
+        controller->filterChanged = true;
+        controller->SortAndFilterSongs(controller->sort, controller->search, true);
+    } else {
+        DEBUG("Filters did not change");
+    }
+
+
 }
 
 UnityEngine::Sprite* GetBGSprite(std::string str)
@@ -82,541 +170,346 @@ UnityEngine::Sprite* GetBGSprite(std::string str)
                                      });
 }
 
+void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
+{
+    if (!firstActivation)
+        return;
 
-void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
-    if (!firstActivation) return;
-    auto filterBorderSprite = GetBGSprite("RoundRect10BorderFade");
+    // It needs to be registered
+    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+    {
+        DEBUG("RUNNING update");
+        coro(this->_UpdateFilterSettings());
+    }, 0.2f);
 
-    std::vector<StringW> downloadFilterOptions({"Show All", "Only Downloaded", "Hide Downloaded"});
-    std::vector<StringW> scoreFilterOptions = {"Show All", "Hide Passed", "Only Passed"};
-    std::vector<StringW> rankedFilterOptions = {"Show All", "Hide Ranked", "Only Ranked"};
-    std::vector<StringW> charFilterOptions = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
-    std::vector<StringW> diffFilterOptions = {"Any", "Easy", "Normal", "Hard", "Expert", "Expert+"};
-    std::vector<StringW> modsOptions = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+    INFO("Filter View contoller activated");
 
-    auto& filterOptions = DataHolder::filterOptions;
+    // Get settings and set stuff
+    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
+    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
+    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
+    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
+    this->minimumNjs = DataHolder::filterOptions.minNJS;
+    this->maximumNjs = DataHolder::filterOptions.maxNJS;
+    this->minimumNps = DataHolder::filterOptions.minNPS;
+    this->maximumNps = DataHolder::filterOptions.maxNPS;
+    this->minimumStars = DataHolder::filterOptions.minStars;
+    this->maximumStars = DataHolder::filterOptions.maxStars;
+    this->minimumRating = DataHolder::filterOptions.minRating;
+    this->minimumVotes = DataHolder::filterOptions.minVotes;
+    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
 
-    get_rectTransform()->set_offsetMax(UnityEngine::Vector2(20, 22));
-    get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>()->set_preferredWidth(130);
+    // Custom string loader
+    this->uploadersString = getPluginConfig().Uploaders.GetValue();
 
-    // This could've been great in QUC v2
-    // but
-    // I cannot be bothered to convert this further
-    // and it just works:tm:
-    filterViewLayout = BeatSaberUI::CreateVerticalLayoutGroup(get_transform());
-    auto filterViewLayoutElement = filterViewLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    filterViewLayoutElement->set_preferredWidth(130);
-    filterViewLayout->set_childControlHeight(false);
-    filterViewLayout->get_gameObject()->AddComponent<HMUI::Touchable*>();
-    filterViewLayout->get_rectTransform()->set_anchorMin(UnityEngine::Vector2(filterViewLayout->get_rectTransform()->get_anchorMin().x, 1));
+    
+    // TODO: fix uploaders field loading
+    // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
+    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
+    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
+    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
+    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
 
-    //Top Bar
-    auto topBar = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
-    topBar->set_childAlignment(UnityEngine::TextAnchor::MiddleCenter);
-    topBar->set_childControlWidth(false);
+    // Create bsml view
+    BSML::parse_and_construct(IncludedAssets::FilterView_bsml, this->get_transform(), this);
 
-    auto topBarElement = topBar->GetComponent<UnityEngine::UI::LayoutElement*>();
-    topBarElement->set_preferredWidth(130);
+    auto x = reinterpret_cast<UnityEngine::RectTransform*>(this->get_gameObject()->get_transform());
+    x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
 
-    auto topBarBG = topBar->get_gameObject()->AddComponent<Backgroundable*>();
-    topBarBG->ApplyBackgroundWithAlpha(il2cpp_utils::newcsstr("panel-top-gradient"), 1);
+    auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
-    auto imageView = (HMUI::ImageView*)topBarBG->background;
-    imageView->skew = 0.18f;
-    imageView->gradientDirection = HMUI::ImageView::GradientDirection::Vertical;
-    imageView->set_color0(UnityEngine::Color(0.0f,0.75f, 1.0f, 1));
-    imageView->set_color1(UnityEngine::Color(0.0f,0.37f, 0.5f, 1));
-    imageView->gradient = true;
-    imageView->set_material(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Material*>().First(
-            [](UnityEngine::Material* x) {
-                return x->get_name() == "AnimatedButton";
-            }));
-    imageView->SetAllDirty();
-    imageView->curvedCanvasSettingsHelper->Reset();
+    coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
 
-    std::function<void(bool)> titleToggleChange = [](bool value) {
-        getPluginConfig().ReturnToBSS.SetValue(value);
+
+    // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
+    std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
+    {
+        auto val = GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
+        return fmt::format("{:%b:%Y}", fmt::localtime(val));
     };
-    auto topBarTitleLayout = BeatSaberUI::CreateHorizontalLayoutGroup(topBar->get_transform());
-    auto topBarTitleLayoutElement = topBarTitleLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    topBarTitleLayoutElement->set_ignoreLayout(true);
-    topBarTitleLayout->set_padding(UnityEngine::RectOffset::New_ctor(10, 0, 0, 0));
 
-    auto topBarTitle = BeatSaberUI::CreateText(topBar->get_transform(), "FILTERS", true);
-    topBarTitle->set_fontSize(7);
-    topBarTitle->set_alignment(TMPro::TextAlignmentOptions::Center);
+    // Update the value and set the formatter
+    hideOlderThanSlider->formatter = DateTimeToStr;
+    hideOlderThanSlider->slider->set_maxValue(maxUploadDate);
+    hideOlderThanSlider->slider->set_numberOfSteps(maxUploadDate);
+    int steps = (hideOlderThanSlider->slider->get_maxValue() - hideOlderThanSlider->slider->get_minValue()) / hideOlderThanSlider->increments;
+    hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
+    hideOlderThanSlider->set_Value(getPluginConfig().MinUploadDateInMonths.GetValue());
+    hideOlderThanSlider->ReceiveValue();
 
-    auto topBarToggle = BeatSaberUI::CreateToggle(topBarTitle->get_transform(), "", getPluginConfig().ReturnToBSS.GetValue(), titleToggleChange);
-    BeatSaberUI::AddHoverHint(topBarToggle, "Toggle returning to this menu from Solo.");
+    auto getBgSprite = GetBGSprite("RoundRect10BorderFade");
 
-    //Filter Options
-    auto filterOptionsLayout = BeatSaberUI::CreateHorizontalLayoutGroup(filterViewLayout->get_transform());
-    auto filterOptionsLayoutElement = filterOptionsLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    auto filterOptionsLayoutFitter = filterOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::ContentSizeFitter*>();
-    filterOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(0,0,3,1));
-    filterOptionsLayoutElement->set_preferredHeight(80);
-    filterOptionsLayout->set_childForceExpandWidth(true);
-    filterOptionsLayoutFitter->set_horizontalFit(UnityEngine::UI::ContentSizeFitter::FitMode::PreferredSize);
+    for(auto x : QuestUI::ArrayUtil::Select<HMUI::ImageView*>(GetComponentsInChildren<BSML::Backgroundable*>(), [](BSML::Backgroundable* x) {return x->GetComponent<HMUI::ImageView*>();})) {
+        if(!x || x->get_color0() != Color::get_white() || x->get_sprite()->get_name() != "RoundRect10")
+            continue;
+        x->skew = 0.0f;
+        x->set_overrideSprite(nullptr);
+        x->set_sprite(getBgSprite);
+        x->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
+    }
 
-    //LeftSide
-    auto leftOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(filterOptionsLayout->get_transform());
-    auto leftOptionsLayoutElement = leftOptionsLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    leftOptionsLayout->set_childForceExpandHeight(false);
-    leftOptionsLayout->set_spacing(2.0f);
-    leftOptionsLayoutElement->set_preferredWidth(65);
+    for(auto x : QuestUI::ArrayUtil::Where(filterbarContainer->GetComponentsInChildren<HMUI::ImageView*>(), [](HMUI::ImageView* x) {return x->get_gameObject()->get_name() == "Underline";}))
+        x->set_sprite(getBgSprite);
 
-    {
-        auto generalOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(leftOptionsLayout->get_transform());
-        //generalOptionsLayout->set_childControlHeight(false);
-        generalOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
+    // Format other values
+    std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
+        float totalSeconds = value * 60;
+        int minutes = ((int)totalSeconds % 3600) / 60;
+        int seconds = (int)totalSeconds % 60;
 
-        auto layoutE = generalOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
+        return fmt::format("{:02}:{:02}", minutes, seconds);
+        
+    };
+    minimumSongLengthSlider->formatter = minLengthSliderFormatFunction;
 
-        auto bg = generalOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0, 0.7f, 1.0f, 0.4f));
+    // Max length format
+    std::function<std::string(float)> maxLengthSliderFormatFunction = [](float value) {
+        float totalSeconds = value * 60;
+        int minutes = ((int)totalSeconds % 3600) / 60;
+        int seconds = (int)totalSeconds % 60;
 
-        auto generalTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(generalOptionsLayout->get_transform());
-        auto generalText = BeatSaberUI::CreateText(generalTextLayout->get_transform(), "<color=#DDD>[ General ]");
-        generalText->set_fontSize(3.5);
-        generalText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        generalText->set_fontStyle(TMPro::FontStyles::Underline);
-        generalText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
-
-        std::function<void(StringW)> downloadFilterChange = [downloadFilterOptions](StringW value) {
-            filterOptions.downloadType = (FilterOptions::DownloadFilterType) getIndex(downloadFilterOptions, value);
-            getPluginConfig().DownloadType.SetValue((int) getIndex(downloadFilterOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        auto downloadFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Downloaded", downloadFilterOptions[(int)getPluginConfig().DownloadType.GetValue()], downloadFilterOptions, downloadFilterChange);
-
-        std::function<void(StringW)> scoreFilterChange = [scoreFilterOptions](StringW value) {
-            filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getIndex(scoreFilterOptions, value);
-            getPluginConfig().LocalScoreType.SetValue((int) getIndex(scoreFilterOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        auto scoreFilterDropdown = BeatSaberUI::CreateDropdown(generalOptionsLayout->get_transform(), "Local score", scoreFilterOptions[(int)getPluginConfig().LocalScoreType.GetValue()], scoreFilterOptions, scoreFilterChange);
-
-        std::function<void(float)> minLengthChange = [](float value) {
-            filterOptions.minLength = value * 60;
-            getPluginConfig().MinLength.SetValue(value * 60);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<void(float)> maxLengthChange = [](float value) {
-            filterOptions.maxLength = value * 60;
-            getPluginConfig().MaxLength.SetValue(value * 60);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-
-        auto lengthSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(generalOptionsLayout->get_transform());
-        lengthSliderLayout->set_spacing(2);
-        auto lengthSliders = BeatSaberUI::CreateHorizontalLayoutGroup(lengthSliderLayout->get_transform());
-        lengthSliders->set_spacing(-2);
-        auto lengthLabels = BeatSaberUI::CreateHorizontalLayoutGroup(lengthSliderLayout->get_transform());
-
-        auto lengthLabel = BeatSaberUI::CreateText(lengthLabels->get_transform(), "Length");
-        lengthLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
-
-        auto minLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MinLength.GetValue() / 60, 0, 15, minLengthChange);
-        auto maxLengthSlider = BeatSaberUI::CreateSliderSetting(lengthSliderLayout->get_transform(), "", 0.25, getPluginConfig().MaxLength.GetValue() / 60, 0, 15, maxLengthChange);
-
-        std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
-            float totalSeconds = value * 60;
-            int minutes = ((int)totalSeconds % 3600) / 60;
-            int seconds = (int)totalSeconds % 60;
-
+        if (value >= DataHolder::filterOptions.SONG_LENGTH_FILTER_MAX) {
+            return (std::string) "Unlimited";
+        } else {
             return fmt::format("{:02}:{:02}", minutes, seconds);
-        };
-        std::function<std::string(float)> maxLengthSliderFormatFunction = [](float value) {
-            float totalSeconds = value * 60;
-            int minutes = ((int)totalSeconds % 3600) / 60;
-            int seconds = (int)totalSeconds % 60;
+        }
+    };
+    maximumSongLengthSlider->formatter = maxLengthSliderFormatFunction;
 
-            return fmt::format("{:02}:{:02}", minutes, seconds);
-        };
+    // Min rating format
+    std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
+        return fmt::format("{:.1f}%", value*100);
+    };
+    minimumRatingSlider->formatter = minRatingSliderFormatFunction;
 
-        minLengthSlider->FormatString = minLengthSliderFormatFunction;
-        maxLengthSlider->FormatString = maxLengthSliderFormatFunction;
-
-        reinterpret_cast<UnityEngine::RectTransform*>(minLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxLengthSlider->slider->get_transform())->set_sizeDelta({20, 1});
-    }
-    {
-        auto mappingOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(leftOptionsLayout->get_transform());
-        //mappingOptionsLayout->set_childControlHeight(false);
-        mappingOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
-
-        auto layoutE = mappingOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
-
-        auto bg = mappingOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
-
-        auto mappingTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
-        auto mappingText = BeatSaberUI::CreateText(mappingTextLayout->get_transform(), "<color=#DDD>[ Mapping ]");
-        mappingText->set_fontSize(3.5);
-        mappingText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        mappingText->set_fontStyle(TMPro::FontStyles::Underline);
-        mappingText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
-
-        std::function<void(float)> minNJSChange = [](float value) {
-            filterOptions.minNJS = value;
-            getPluginConfig().MinNJS.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<void(float)> maxNJSChange = [](float value) {
-            filterOptions.maxNJS = value;
-            getPluginConfig().MaxNJS.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<std::string(float)> minNJSFormat = [](float value) {
+    // NJS format
+    std::function<std::string(float)> minNJSFormat = [](float value) {
             return fmt::format("{:.1f}", value);
-        };
-        std::function<std::string(float)> maxNJSFormat = [](float value) {
-            return fmt::format("{:.1f}", value);
-        };
+    };
+    std::function<std::string(float)> maxNJSFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.NJS_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minimumNjsSlider->formatter = minNJSFormat;
+    maximumNjsSlider->formatter = maxNJSFormat;
+    
+    // NPS format
+    std::function<std::string(float)> minNPSFormat = [](float value) {
+        return fmt::format("{:.1f}", value);
+    };
+    std::function<std::string(float)> maxNPSFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.NPS_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minimumNpsSlider->formatter = minNPSFormat;
+    maximumNpsSlider->formatter = maxNPSFormat;
 
+    // Stars formatting
+    std::function<std::string(float)> minStarFormat = [](float value) {
+        return fmt::format("{:.1f}", value);
+    };
+    std::function<std::string(float)> maxStarFormat = [](float value) {
+        if (value >= DataHolder::filterOptions.STAR_FILTER_MAX) {
+            return  (std::string)  "Unlimited";
+        }
+        return fmt::format("{:.1f}", value);
+    };
+    minStarsSetting->formatter = minStarFormat;
+    maxStarsSetting->formatter = maxStarFormat;
+    std::function<std::string(float)> minimumVotesFormat = [](float value) {
+        return fmt::format("{}", (int) value);
+    };
+    minimumVotesSlider->formatter = minimumVotesFormat;
 
-        auto NJSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
-        NJSSliderLayout->set_spacing(2);
-        auto NJSSliders = BeatSaberUI::CreateHorizontalLayoutGroup(NJSSliderLayout->get_transform());
-        NJSSliders->set_spacing(-2);
-        auto NJSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NJSSliderLayout->get_transform());
-
-        auto NJSLabel = BeatSaberUI::CreateText(NJSLabels->get_transform(), "NJS");
-        NJSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
-
-        auto minNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, getPluginConfig().MinNJS.GetValue(), 0, 25, minNJSChange);
-        auto maxNJSSlider = BeatSaberUI::CreateSliderSetting(NJSSliderLayout->get_transform(), "", 0.5, getPluginConfig().MaxNJS.GetValue(), 0, 25, maxNJSChange);
-        minNJSSlider->FormatString = minNJSFormat;
-        maxNJSSlider->FormatString = maxNJSFormat;
-
-        reinterpret_cast<UnityEngine::RectTransform*>(minNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxNJSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-
-        std::function<void(float)> minNPSChange = [](float value) {
-            filterOptions.minNPS = value;
-            getPluginConfig().MinNPS.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<void(float)> maxNPSChange = [](float value) {
-            filterOptions.maxNPS = value;
-            getPluginConfig().MaxNPS.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<std::string(float)> minNPSFormat = [](float value) {
-            return fmt::format("{:.1f}", value);
-        };
-        std::function<std::string(float)> maxNPSFormat = [](float value) {
-            return fmt::format("{:.1f}", value);
-        };
-
-        auto NPSSliderLayout = BeatSaberUI::CreateHorizontalLayoutGroup(mappingOptionsLayout->get_transform());
-        NPSSliderLayout->set_spacing(2);
-        auto NPSSliders = BeatSaberUI::CreateHorizontalLayoutGroup(NPSSliderLayout->get_transform());
-        NPSSliders->set_spacing(-2);
-        auto NPSLabels = BeatSaberUI::CreateHorizontalLayoutGroup(NPSSliderLayout->get_transform());
-
-        auto NPSLabel = BeatSaberUI::CreateText(NPSLabels->get_transform(), "Notes/s");
-        NPSLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
-
-        auto minNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, getPluginConfig().MinNPS.GetValue(), 0, 12, minNPSChange);
-        auto maxNPSSlider = BeatSaberUI::CreateSliderSetting(NPSSliderLayout->get_transform(), "", 0.5, getPluginConfig().MaxNPS.GetValue(), 0, 12, maxNPSChange);
-
-        minNPSSlider->FormatString = minNPSFormat;
-        maxNPSSlider->FormatString = maxNPSFormat;
-
-        reinterpret_cast<UnityEngine::RectTransform*>(minNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxNPSSlider->slider->get_transform())->set_sizeDelta({20, 1});
-    }
-    {
-        auto scoreSaberOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(leftOptionsLayout->get_transform());
-        //scoreSaberOptionsLayout->set_childControlHeight(false);
-        scoreSaberOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
-
-        auto layoutE = scoreSaberOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
-
-        auto bg = scoreSaberOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
-
-        auto scoresaberTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(scoreSaberOptionsLayout->get_transform());
-        auto scoresaberText = BeatSaberUI::CreateText(scoresaberTextLayout->get_transform(), "<color=#DDD>[ ScoreSaber ]");
-        scoresaberText->set_fontSize(3.5);
-        scoresaberText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        scoresaberText->set_fontStyle(TMPro::FontStyles::Underline);
-        scoresaberText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
-
-
-        std::function<void(StringW)> rankedFilterChange = [rankedFilterOptions](StringW value) {
-            if(value == "Show All")
-                filterOptions.rankedType = FilterOptions::RankedFilterType::All;
-            if(value == "Only Ranked")
-                filterOptions.rankedType = FilterOptions::RankedFilterType::OnlyRanked;
-            if(value == "Hide Ranked")
-                filterOptions.rankedType = FilterOptions::RankedFilterType::HideRanked;
-            getPluginConfig().RankedType.SetValue(getIndex(rankedFilterOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        auto rankedFilterDropdown = BeatSaberUI::CreateDropdown(scoreSaberOptionsLayout->get_transform(), "Ranked Status", rankedFilterOptions[(int)getPluginConfig().RankedType.GetValue()], rankedFilterOptions, rankedFilterChange);
-
-        std::function<void(float)> minStarChange = [](float value) {
-            filterOptions.minStars = value;
-            getPluginConfig().MinStars.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<void(float)> maxStarChange = [](float value) {
-            filterOptions.maxStars = value;
-            getPluginConfig().MaxStars.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        std::function<std::string(float)> minStarFormat = [](float value) {
-            return fmt::format("{:.1f}", value);
-        };
-        std::function<std::string(float)> maxStarFormat = [](float value) {
-            return fmt::format("{:.1f}", value);
-        };
-
-
-        auto rankedStarLayout = BeatSaberUI::CreateHorizontalLayoutGroup(scoreSaberOptionsLayout->get_transform());
-        rankedStarLayout->set_spacing(2);
-        auto rankedStarSliders = BeatSaberUI::CreateHorizontalLayoutGroup(rankedStarLayout->get_transform());
-        rankedStarSliders->set_spacing(-2);
-        auto rankedStarLabels = BeatSaberUI::CreateHorizontalLayoutGroup(rankedStarLayout->get_transform());
-
-        auto rankedStarLabel = BeatSaberUI::CreateText(rankedStarLabels->get_transform(), "Stars");
-        rankedStarLabel->set_alignment(TMPro::TextAlignmentOptions::Center);
-
-        auto minStarSlider = BeatSaberUI::CreateSliderSetting(rankedStarLayout->get_transform(), "", 0.2, getPluginConfig().MinStars.GetValue(), 0, 13, minStarChange);
-        auto maxStarSlider = BeatSaberUI::CreateSliderSetting(rankedStarLayout->get_transform(), "", 0.2, getPluginConfig().MaxStars.GetValue(), 0, 14, maxStarChange);
-        minStarSlider->FormatString = minStarFormat;
-        maxStarSlider->FormatString = maxStarFormat;
-
-        reinterpret_cast<UnityEngine::RectTransform*>(minStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
-        reinterpret_cast<UnityEngine::RectTransform*>(maxStarSlider->slider->get_transform())->set_sizeDelta({20, 1});
-    }
-
-    //RightSide
-    auto rightOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(filterOptionsLayout->get_transform());
-    auto rightOptionsLayoutElement = rightOptionsLayout->GetComponent<UnityEngine::UI::LayoutElement*>();
-    rightOptionsLayout->set_childForceExpandHeight(false);
-    rightOptionsLayout->set_spacing(2.0f);
-    rightOptionsLayoutElement->set_preferredWidth(65);
-
-    {
-        auto beatSaverOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(rightOptionsLayout->get_transform());
-        //beatSaverOptionsLayout->set_childControlHeight(false);
-        beatSaverOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
-
-        auto layoutE = beatSaverOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
-
-        auto bg = beatSaverOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
-
-        auto beatsaverTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(beatSaverOptionsLayout->get_transform());
-        auto beatsaverText = BeatSaberUI::CreateText(beatsaverTextLayout->get_transform(), "<color=#DDD>[ BeatSaver ]");
-        beatsaverText->set_fontSize(3.5);
-        beatsaverText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        beatsaverText->set_fontStyle(TMPro::FontStyles::Underline);
-        beatsaverText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
-
-        QuestUI::SliderSetting* minUploadDateSlider;
-        std::function<void(float)> minUploadDateChange = [](float value) {
-            std::chrono::time_point val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months((int)value);
-            int sec = duration_cast<std::chrono::seconds>(val.time_since_epoch()).count();
-            filterOptions.minUploadDate = sec;
-            getPluginConfig().MinUploadDate.SetValue(sec);
-            getPluginConfig().MinUploadDateInMonths.SetValue((int)value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        QuestUI::SliderSetting* minRatingSlider;
-        std::function<void(float)> minRatingChange = [](float value) {
-            filterOptions.minRating = value;
-            getPluginConfig().MinRating.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        QuestUI::SliderSetting* minVotesSlider;
-        std::function<void(float)> minVotesChange = [](float value) {
-            filterOptions.minVotes = value;
-            getPluginConfig().MinVotes.SetValue(value);
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-
-        // TODO: Minimum upload date filter
-        std::function<std::string(float)> minUploadDateSliderFormatFunciton = [](float monthsSinceFirstUpload) {
-            auto val = BEATSAVER_EPOCH_TIME_POINT + std::chrono::months(int(monthsSinceFirstUpload));
-            return fmt::format("{:%b:%Y}", fmt::localtime(val));
-        };
-
-        auto minUploadDate = 0;
-        auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
-
-        minUploadDateSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Min upload date", 1, getPluginConfig().MinUploadDateInMonths.GetValue(), minUploadDate, maxUploadDate, minUploadDateChange);
-        minUploadDateSlider->FormatString = minUploadDateSliderFormatFunciton;
-
-        std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
-            return fmt::format("{:.1f}%", value);
-        };
-
-        minRatingSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Rating", 5, getPluginConfig().MinRating.GetValue(), 0, 90, minRatingChange);
-        minRatingSlider->FormatString = minRatingSliderFormatFunction;
-        minVotesSlider = BeatSaberUI::CreateSliderSetting(beatSaverOptionsLayout->get_transform(), "Minimum Votes", 1, getPluginConfig().MinVotes.GetValue(), 0, 100, minVotesChange);
-
-        /*std::function<void(std::string_view)> UploadersChange = [=](std::string_view value) {
-            filterOptions->uploaderString = value;
-            std::vector<std::string> result;
-            std::stringstream s_stream(filterOptions->uploaderString); //create string stream from the string
-            while(s_stream.good()) {
-                std::string substr;
-                getline(s_stream, substr, ','); //get first string delimited by comma
-                result.push_back(substr);
+    std::function<std::string(StringW)> uploadersStringFormat = [](std::string value) {
+        bool blacklist = false;
+        if (value.size() > 0) {
+            if (value[0] == '!') {
+                value.erase(0,1);
+                blacklist = true;
             }
-            filterOptions->uploaders = result;
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };*/
+        } else {
+            return (std::string) "";
+        }
 
-        //auto uploaderInput = BeatSaberUI::CreateStringSetting(beatSaverOptionsLayout->get_transform(), "Uploader(s)", "", UploadersChange);
+        auto uploaders = split(value, " ");
+
+        return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
+    };
+
+    uploadersStringControl->formatter = uploadersStringFormat;
+
+    // Force format values
+    FormatSliderSettingValue(this->minStarsSetting);
+    FormatSliderSettingValue(this->maxStarsSetting);
+    FormatSliderSettingValue(this->minimumNjsSlider);
+    FormatSliderSettingValue(this->maximumNjsSlider);
+    FormatSliderSettingValue(this->minimumSongLengthSlider);
+    FormatSliderSettingValue(this->hideOlderThanSlider);
+    FormatSliderSettingValue(this->minimumNpsSlider);
+    FormatSliderSettingValue(this->maximumNpsSlider);
+    FormatSliderSettingValue(this->minimumRatingSlider);
+    FormatSliderSettingValue(this->minimumVotesSlider);
+    FormatStringSettingValue(this->uploadersStringControl);
+    
+    // I hate BSML some times
+    auto m = modsRequirementDropdown->dropdown->modalView;
+    reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
+
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/FilterView.bsml";
+    #endif
+}
+
+void ViewControllers::FilterViewController::UpdateFilterSettings()
+{
+    // We need to wait 1 frame for all the properties to get applied and then save the values?
+    coro(limitedUpdateFilterSettings->CallNextFrame());
+}
+
+// Sponsors related things
+void ViewControllers::FilterViewController::OpenSponsorsModal()
+{
+    DEBUG("OpenSponsorsModal FIRED");
+}
+void ViewControllers::FilterViewController::CloseSponsorModal()
+{
+    DEBUG("CloseSponsorModal FIRED");
+}
+void ViewControllers::FilterViewController::OpenSponsorsLink()
+{
+    DEBUG("OpenSponsorsLink FIRED");
+}
+
+
+// Top buttons
+void ViewControllers::FilterViewController::ClearFilters()
+{
+    DEBUG("ClearFilters FIRED");
+
+    // Reset config
+    getPluginConfig().DownloadType.SetValue(getPluginConfig().DownloadType.GetDefaultValue());
+    getPluginConfig().LocalScoreType.SetValue(getPluginConfig().LocalScoreType.GetDefaultValue());
+    getPluginConfig().CharacteristicType.SetValue(getPluginConfig().CharacteristicType.GetDefaultValue());
+    getPluginConfig().RankedType.SetValue(getPluginConfig().RankedType.GetDefaultValue());
+    getPluginConfig().DifficultyType.SetValue(getPluginConfig().DifficultyType.GetDefaultValue());
+    getPluginConfig().RequirementType.SetValue(getPluginConfig().RequirementType.GetDefaultValue());
+
+    getPluginConfig().MinLength.SetValue(getPluginConfig().MinLength.GetDefaultValue());
+    getPluginConfig().MaxLength.SetValue(getPluginConfig().MaxLength.GetDefaultValue());
+    getPluginConfig().MinNJS.SetValue(getPluginConfig().MinNJS.GetDefaultValue());
+    getPluginConfig().MaxNJS.SetValue(getPluginConfig().MaxNJS.GetDefaultValue());
+    getPluginConfig().MinNPS.SetValue(getPluginConfig().MinNPS.GetDefaultValue());
+    getPluginConfig().MaxNPS.SetValue(getPluginConfig().MaxNPS.GetDefaultValue());
+    getPluginConfig().MinStars.SetValue(getPluginConfig().MinStars.GetDefaultValue());
+    getPluginConfig().MaxStars.SetValue(getPluginConfig().MaxStars.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    getPluginConfig().MinRating.SetValue(getPluginConfig().MinRating.GetDefaultValue());
+    getPluginConfig().MinVotes.SetValue(getPluginConfig().MinVotes.GetDefaultValue());
+    getPluginConfig().Uploaders.SetValue(getPluginConfig().Uploaders.GetDefaultValue());
+    getPluginConfig().MinUploadDateInMonths.SetValue(getPluginConfig().MinUploadDateInMonths.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    
+
+    // Load to dataHolder
+    DataHolder::filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
+    DataHolder::filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
+    DataHolder::filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
+    DataHolder::filterOptions.rankedType = (FilterOptions::RankedFilterType) getPluginConfig().RankedType.GetValue();
+    DataHolder::filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
+    DataHolder::filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
+    DataHolder::filterOptions.minLength = getPluginConfig().MinLength.GetValue();
+    DataHolder::filterOptions.maxLength = getPluginConfig().MaxLength.GetValue();
+    DataHolder::filterOptions.minNJS = getPluginConfig().MinNJS.GetValue();
+    DataHolder::filterOptions.maxNJS = getPluginConfig().MaxNJS.GetValue();
+    DataHolder::filterOptions.minNPS = getPluginConfig().MinNPS.GetValue();
+    DataHolder::filterOptions.maxNPS = getPluginConfig().MaxNPS.GetValue();
+    DataHolder::filterOptions.minStars = getPluginConfig().MinStars.GetValue();
+    DataHolder::filterOptions.maxStars = getPluginConfig().MaxStars.GetValue();
+    DataHolder::filterOptions.minUploadDate = getPluginConfig().MinUploadDate.GetValue();
+    DataHolder::filterOptions.minRating = getPluginConfig().MinRating.GetValue();
+    DataHolder::filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
+    auto uploadersString = getPluginConfig().Uploaders.GetValue();
+    if (uploadersString.size() > 0) {
+        if (uploadersString[0] == '!') {
+            uploadersString.erase(0,1);
+            DataHolder::filterOptions.uploadersBlackList = true;
+        } else {
+            DataHolder::filterOptions.uploadersBlackList = false;
+        }
+        DataHolder::filterOptions.uploaders = split(toLower(uploadersString), " ");
+    } else {
+        DataHolder::filterOptions.uploaders.clear();
     }
 
-    {
-        auto charDiffOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(rightOptionsLayout->get_transform());
-        //charDiffOptionsLayout->set_childControlHeight(false);
-        charDiffOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
+    // Load to UI
+    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
+    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
+    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
+    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
+    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
+    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
 
-        auto layoutE = charDiffOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
-
-        auto bg = charDiffOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
-
-        auto charDiffTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(charDiffOptionsLayout->get_transform());
-        auto charDiffText = BeatSaberUI::CreateText(charDiffTextLayout->get_transform(), "<color=#DDD>[ Characteristic / Difficulty ]");
-        charDiffText->set_fontSize(3.5);
-        charDiffText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        charDiffText->set_fontStyle(TMPro::FontStyles::Underline);
-        charDiffText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
+    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
+    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
+    this->minimumNjs = DataHolder::filterOptions.minNJS;
+    this->maximumNjs = DataHolder::filterOptions.maxNJS;
+    this->minimumNps = DataHolder::filterOptions.minNPS;
+    this->maximumNps = DataHolder::filterOptions.maxNPS;
+    this->minimumStars = DataHolder::filterOptions.minStars;
+    this->maximumStars = DataHolder::filterOptions.maxStars;
+    this->minimumRating = DataHolder::filterOptions.minRating;
+    this->minimumVotes = DataHolder::filterOptions.minVotes;
+    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
+    this->uploadersString = getPluginConfig().Uploaders.GetValue();
 
 
-        std::function<void(StringW)> charFilterChange = [charFilterOptions](StringW value) {
-            if(value == "Any") filterOptions.charFilter = FilterOptions::CharFilterType::All;
-            else if(value == "Custom") filterOptions.charFilter = FilterOptions::CharFilterType::Custom;
-            else if(value == "Standard") filterOptions.charFilter = FilterOptions::CharFilterType::Standard;
-            else if(value == "One Saber") filterOptions.charFilter = FilterOptions::CharFilterType::OneSaber;
-            else if(value == "No Arrows") filterOptions.charFilter = FilterOptions::CharFilterType::NoArrows;
-            else if(value == "90 Degrees") filterOptions.charFilter = FilterOptions::CharFilterType::NinetyDegrees;
-            else if(value == "360 Degrees") filterOptions.charFilter = FilterOptions::CharFilterType::ThreeSixtyDegrees;
-            else if(value == "LightShow") filterOptions.charFilter = FilterOptions::CharFilterType::LightShow;
-            else if(value == "Lawless") filterOptions.charFilter = FilterOptions::CharFilterType::Lawless;
-            getPluginConfig().CharacteristicType.SetValue(getIndex(charFilterOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        auto charDropdown = BeatSaberUI::CreateDropdown(charDiffOptionsLayout->get_transform(), "Characteristic", charFilterOptions[(int)getPluginConfig().CharacteristicType.GetValue()], charFilterOptions, charFilterChange);
+    // Refresh UI
+    // Force format values
+    SetSliderSettingValue(this->minimumSongLengthSlider, this->minimumSongLength);
+    SetSliderSettingValue(this->maximumSongLengthSlider, this->maximumSongLength);
+    SetSliderSettingValue(this->minimumNjsSlider, this->minimumNjs);
+    SetSliderSettingValue(this->maximumNjsSlider, this->maximumNjs);
+    SetSliderSettingValue(this->minimumNpsSlider, this->minimumNps);
+    SetSliderSettingValue(this->maximumNpsSlider, this->maximumNps);
+    SetSliderSettingValue(this->minStarsSetting, this->minimumStars);
+    SetSliderSettingValue(this->maxStarsSetting, this->maximumStars);
+    SetSliderSettingValue(this->minimumRatingSlider, this->minimumRating);
+    SetSliderSettingValue(this->minimumVotesSlider, this->minimumVotes);
+    SetSliderSettingValue(this->hideOlderThanSlider, this->hideOlderThan);
+    SetStringSettingValue(this->uploadersStringControl, getPluginConfig().Uploaders.GetValue());
+    existingSongsSetting->set_Value(this->existingSongs);
+    existingScoreSetting->set_Value(this->existingScore);
+    rankedStateSetting->set_Value(this->rankedState);
+    characteristicDropdown->set_Value(this->characteristic);
+    difficultyDropdown->set_Value(this->difficulty);
+    modsRequirementDropdown->set_Value(this->mods);
 
-        std::function<void(StringW)> diffFilterChange = [diffFilterOptions](StringW value) {
-            if(value == "Any") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::All;
-            else if(value == "Easy") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::Easy;
-            else if(value == "Normal") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::Normal;
-            else if(value == "Hard") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::Hard;
-            else if(value == "Expert") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::Expert;
-            else if(value == "Expert+") filterOptions.difficultyFilter = FilterOptions::DifficultyFilterType::ExpertPlus;
-            getPluginConfig().DifficultyType.SetValue(getIndex(diffFilterOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-        auto diffDropdown = BeatSaberUI::CreateDropdown(charDiffOptionsLayout->get_transform(), "Difficulty", diffFilterOptions[(int)getPluginConfig().DifficultyType.GetValue()], diffFilterOptions, diffFilterChange);
+    DEBUG("Filters changed");
+    auto controller = fcInstance->SongListController;
+    controller->filterChanged = true;
+    controller->SortAndFilterSongs(controller->sort, controller->search, true);
+}
+void ViewControllers::FilterViewController::ShowPresets()
+{
+    DEBUG("ShowPresets FIRED");
+}
+
+
+
+// StringW ViewControllers::FilterViewController::DateTimeToStr(int d) {
+//     // FilterView.hideOlderThanOptions[d].ToString("MMM yyyy", CultureInfo.InvariantCulture);
+// }
+void ViewControllers::FilterViewController::TryToDownloadDataset()
+{
+    if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
+        if (fcInstance->SongListController !=nullptr && fcInstance->SongListController->m_CachedPtr.m_value != nullptr) {
+            fcInstance->SongListController->RetryDownloadSongList();
+        }
     }
-    {
-        auto modsOptionsLayout = BeatSaberUI::CreateVerticalLayoutGroup(rightOptionsLayout->get_transform());
-        //charDiffOptionsLayout->set_childControlHeight(false);
-        modsOptionsLayout->set_padding(UnityEngine::RectOffset::New_ctor(2,2,1,1));
-
-        auto layoutE = modsOptionsLayout->get_gameObject()->AddComponent<UnityEngine::UI::LayoutElement*>();
-        layoutE->set_preferredWidth(64);
-
-        auto bg = modsOptionsLayout->get_gameObject()->AddComponent<QuestUI::Backgroundable*>();
-        bg->ApplyBackground(il2cpp_utils::newcsstr("panel-top"));
-        auto bgImg = reinterpret_cast<HMUI::ImageView*>(bg->background);
-        bgImg->dyn__skew() = 0.0f;
-        bgImg->set_overrideSprite(nullptr);
-        bgImg->set_sprite(filterBorderSprite);
-        bgImg->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
-
-        auto modsTextLayout = BeatSaberUI::CreateHorizontalLayoutGroup(modsOptionsLayout->get_transform());
-        auto modsText = BeatSaberUI::CreateText(modsTextLayout->get_transform(), "<color=#DDD>[ Mods ]");
-        modsText->set_fontSize(3.5);
-        modsText->set_alignment(TMPro::TextAlignmentOptions::Center);
-        modsText->set_fontStyle(TMPro::FontStyles::Underline);
-        modsText->set_color(UnityEngine::Color(102.0f,153.0f,187.0f, 1.0f));
-
-        std::function<void(StringW)> modsChange = [modsOptions](StringW value) {
-            filterOptions.modRequirement = (FilterOptions::RequirementType) getIndex(modsOptions, value);
-            getPluginConfig().RequirementType.SetValue((int) getIndex(modsOptions, value));
-            std::thread([]{
-                Sort(true);
-            }).detach();
-        };
-
-        auto modsDropdown = BeatSaberUI::CreateDropdown(modsOptionsLayout->get_transform(), "Requirement", modsOptions[(int)getPluginConfig().RequirementType.GetValue()], modsOptions, modsChange);
-#define CODEGEN_FIELD_ACCESSIBILITY
-        reinterpret_cast<UnityEngine::RectTransform*>(reinterpret_cast<HMUI::DropdownWithTableView*>(modsDropdown)->modalView->get_transform())->set_pivot(Sombrero::FastVector2(0.5f, 0.3f));
-    }
+    DEBUG("TryToDownloadDataset");
 }

@@ -5,7 +5,9 @@
 #include "libcurl/shared/curl.h"
 #include "libcurl/shared/easy.h"
 
-static class BeatSaverRegionManager {
+#include <future>
+
+class BeatSaverRegionManager {
     public:
         static inline const std::string mapDownloadUrlFallback = "https://cdn.beatsaver.com";
         static inline const std::string detailsDownloadUrl = "https://api.beatsaver.com/maps/id/";
@@ -17,7 +19,7 @@ static class BeatSaverRegionManager {
         static inline bool didTheThing = false;
 
     #define TIMEOUT 10
-    #define USER_AGENT std::string(MOD_ID "/" VERSION " (BeatSaber/1.24.0) (Oculus)").c_str()
+    #define USER_AGENT std::string(MOD_ID "/" VERSION " (BeatSaber/1.25.1) (Oculus)").c_str()
     #define X_BSSB "X-BSSB: ✔"
 
     static std::string query_encode(std::string s)
@@ -93,7 +95,7 @@ static class BeatSaverRegionManager {
             s->append((char*)contents, newLength);
         } catch(std::bad_alloc &e) {
             //handle memory problem
-            getLogger().critical("Failed to allocate string of size: %lu", newLength);
+            getLoggerOld().critical("Failed to allocate string of size: %lu", newLength);
             return 0;
         }
         return newLength;
@@ -156,7 +158,7 @@ static class BeatSaverRegionManager {
                     auto res = curl_easy_perform(curl);
                     /* Check for errors */
                     if (res != CURLE_OK) {
-                        getLogger().critical("curl_easy_perform() failed: %u: %s", res, curl_easy_strerror(res));
+                        getLoggerOld().critical("curl_easy_perform() failed: %u: %s", res, curl_easy_strerror(res));
                     }
                     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
                     curl_easy_cleanup(curl);
@@ -176,6 +178,15 @@ static class BeatSaverRegionManager {
                  },
                  [](float progress){}
         );
+    }
+
+    static void GetSongDescription(std::string key, std::function<void(std::string)> finished) {
+        GetJSONAsync(detailsDownloadUrl + key, [finished](long status, bool error, rapidjson::Document const& result){
+            if (status == 200) {
+                std::string description = result["description"].GetString();
+                finished(description);
+            }
+        });
     }
 
     static void RegionLookup(bool force = false) {

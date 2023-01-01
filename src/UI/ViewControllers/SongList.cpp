@@ -1,227 +1,195 @@
 #include "UI/ViewControllers/SongList.hpp"
-#include "main.hpp"
-#include "BeatSaverRegionManager.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
-
-#include "CustomComponents.hpp"
-#include "questui_components/shared/components/Button.hpp"
-#include "questui_components/shared/components/list/CustomCelledList.hpp"
-#include "questui_components/shared/components/layouts/VerticalLayoutGroup.hpp"
-#include "questui_components/shared/components/layouts/HorizontalLayoutGroup.hpp"
-#include "questui_components/shared/components/settings/StringSetting.hpp"
-#include "questui_components/shared/components/settings/DropdownSetting.hpp"
-
-#include "songloader/shared/API.hpp"
-
-#include "config-utils/shared/config-utils.hpp"
-
+#include "UnityEngine/WaitForSeconds.hpp"
+#include "UnityEngine/AudioClip.hpp"
+#include "UnityEngine/AudioType.hpp"
+#include "UnityEngine/Networking/DownloadHandlerAudioClip.hpp"
+#include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
+#include "UnityEngine/Networking/UnityWebRequest.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "UnityEngine/Transform.hpp"
-#include "UnityEngine/Events/UnityAction.hpp"
-
-#include "HMUI/Touchable.hpp"
-#include "HMUI/ScrollView.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
+#include "HMUI/InputFieldView.hpp"
+#include "HMUI/InputFieldViewChangeBinder.hpp"
+#include "HMUI/InputFieldView_InputFieldChanged.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableView_ScrollPositionType.hpp"
-#include "HMUI/VerticalScrollIndicator.hpp"
-#include "GlobalNamespace/IVRPlatformHelper.hpp"
+#include "songloader/shared/API.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "System/StringComparison.hpp"
-#include "System/Action_2.hpp"
-#include "PluginConfig.hpp"
-#include <iomanip>
-#include <sstream>
+#include "System/Nullable_1.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "questui/shared/BeatSaberUI.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include "fmt/fmt/include/fmt/core.h"
 
+#include <iterator>
 #include <chrono>
 #include <string>
 #include <algorithm>
 #include <functional>
 #include <regex>
+#include <future>
 
-using namespace BetterSongSearch::UI;
+#include "PluginConfig.hpp"
+#include "assets.hpp"
+#include "main.hpp"
+#include "BeatSaverRegionManager.hpp"
+#include "Util/BSMLStuff.hpp"
+#include "Util/CurrentTimeMs.hpp"
+#include "Util/Random.hpp"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/ViewControllers/SongListCell.hpp"
+#include "UI/Manager.hpp"
+#include "Util/TextUtil.hpp"
+#include "Util/BSMLStuff.hpp"
+#include "System/Threading/Tasks/Task.hpp"
+#include "System/Threading/Tasks/Task_1.hpp"
+#include "Util/Debug.hpp"
+#include <cmath>
+
+#define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
+
 using namespace QuestUI;
-using namespace QUC;
+using namespace BetterSongSearch::UI;
+using namespace BetterSongSearch::Util;
+using namespace BetterSongSearch::UI::Util::BSMLStuff;
+using namespace GlobalNamespace;
 
-DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, SongListViewController);
+#define SONGDOWNLOADER
 
-// Source
-DEFINE_QUC_CUSTOMLIST_TABLEDATA(BetterSongSearch::UI, QUCObjectTableData);
-DEFINE_QUC_CUSTOMLIST_CELL(BetterSongSearch::UI, QUCObjectTableCell)
 
-double GetMinStarValue(const SDC_wrapper::BeatStarSong* song)
-{
+UnityEngine::GameObject* backButton = nullptr;
+UnityEngine::GameObject* soloButton = nullptr;
+SongPreviewPlayer* songPreviewPlayer = nullptr;
+BeatmapLevelsModel* beatmapLevelsModel = nullptr;
+LevelCollectionViewController* levelCollectionViewController = nullptr;
+
+DEFINE_TYPE(ViewControllers::SongListController, SongListController);
+
+
+//////////// Utils
+
+double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
     auto diffVec = song->GetDifficultyVector();
     double min = song->GetMaxStarValue();
-    for (auto diff : diffVec)
-    {
+    for (auto diff: diffVec) {
         if (diff->stars > 0.0 && diff->stars < min) min = diff->stars;
     }
     return min;
 }
 
+
+
+const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"};
 const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
 const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+
 const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
+
+
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 int currentSelectedSong = 0;
-BetterSongSearch::UI::ViewControllers::SongListViewController* songListController;
 
 using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
 
-static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
-        {SortMode::Newest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
-                           {
-                               return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
-                           }},
-        {SortMode::Oldest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
-                           {
-                               return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
-                           }},
-        {SortMode::Latest_Ranked, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
-                           {
-                               int struct1RankedUpdateTime;
-                               auto struct1DiffVec = struct1->GetDifficultyVector();
-                               for(auto const& i : struct1DiffVec)
-                               {
-                                   struct1RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
-                               }
-
-                               int struct2RankedUpdateTime;
-                               auto struct2DiffVec = struct2->GetDifficultyVector();
-                               for(auto const& i : struct2DiffVec)
-                               {
-                                   struct2RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
-                               }
-                               return (struct1RankedUpdateTime > struct2RankedUpdateTime);
-                           }},
-        {SortMode::Most_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
-                           {
-                               return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
-                           }},
-        {SortMode::Least_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
-                           {
-                               return GetMinStarValue(struct1) < GetMinStarValue(struct2);
-                           }},
-        {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
-                           {
-                               return (struct1->rating > struct2->rating);
-                           }},
-        {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
-                           {
-                               return (struct1->rating < struct2->rating);
-                           }}
-};
-
-void BetterSongSearch::UI::QUCObjectTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)
+//////////////////// UTILS //////////////////////
+bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 {
-    RefreshVisuals();
-}
+    auto const& filterOptions = DataHolder::filterOptionsCache;
+    std::string songHash = song->hash.string_data;
 
-void QUCObjectTableCell::HighlightDidChange(HMUI::SelectableCell::TransitionType transitionType) {
-    RefreshVisuals();
-}
-
-void QUCObjectTableCell::render(CellData const &cellData, RenderContext &ctx, CellComponent &cellComp) {
-    this->cellComp = &cellComp;
-}
-
-void QUCObjectTableCell::RefreshVisuals() {
-    if (cellComp && cellComp->setBgColor) {
-        bool isSelected = get_selected();
-        bool isHighlighted = get_highlighted();
-
-        CRASH_UNLESS(cellComp->setBgColor);
-        cellComp->setBgColor(UnityEngine::Color(0, 0, 0, isSelected ? 0.9f : isHighlighted ? 0.6f : 0.45f));
-    }
-}
-
-// this hurts
-std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter = " ") {
-    std::vector<std::string> ret{};
-    std::decay_t<decltype(std::string::npos)> pos{};
-    while ((pos = buffer.find(delimeter)) != std::string::npos) {
-        const auto match = buffer.substr(0, pos);
-        if (!match.empty()) ret.emplace_back(match);
-        buffer = buffer.substr(pos + delimeter.size());
-    }
-    if (!buffer.empty()) ret.emplace_back(buffer);
-    return ret;
-}
-
-std::string removeSpecialCharacter(std::string_view const s) {
-    std::string stringy(s);
-    for (int i = 0; i < stringy.size(); i++) {
-
-        if (stringy[i] < 'A' || stringy[i] > 'Z' &&
-                                stringy[i] < 'a' || stringy[i] > 'z')
-        {
-            stringy.erase(i, 1);
-            i--;
-        }
-    }
-    return stringy;
-}
-
-inline std::string toLower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}
-
-inline std::string toLower(std::string_view s) {
-    return toLower(std::string(s));
-}
-
-inline std::string toLower(char const* s) {
-    return toLower(std::string(s));
-}
+    if(filterOptions.uploaders.size() != 0) {
+		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions.uploaders.end()) {
+            if(filterOptions.uploadersBlackList)
+                return false;
+		} else if (!filterOptions.uploadersBlackList) {
+			return false;
+		}
+	}
 
 
+    if(song->uploaded_unix_time < filterOptions.minUploadDate)
+        return false;
 
-bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
-{
-    int words = 0;
-    int matches = 0;
-    std::string songName = removeSpecialCharacter(toLower(song->GetName()));
-    std::string songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
-    std::string songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
-    std::string levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
-    std::string songKey = toLower(song->key.string_data);
-
-    for (int i = 0; i < searchTexts.size(); i++)
+    float songRating = std::isnan(song->GetRating())? 0: song->GetRating();
+    if(songRating < filterOptions.minRating) return false;
+    
+    if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
+    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+    if(downloaded)
     {
-        words++;
-        std::string searchTerm = toLower(searchTexts[i]);
-        if (i == searchTexts.size() - 1)
-        {
-            searchTerm.resize(searchTerm.length()-1);
-        }
-
-
-        if (songName.find(searchTerm) != std::string::npos ||
-            songSubName.find(searchTerm) != std::string::npos ||
-            songAuthorName.find(searchTerm) != std::string::npos ||
-            levelAuthorName.find(searchTerm) != std::string::npos ||
-            songKey.find(searchTerm) != std::string::npos)
-        {
-            matches++;
-        }
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+            return false;
+    }
+    else
+    {
+        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+            return false;
     }
 
-    return matches == words;
+    bool hasLocalScore = false;
+
+    if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
+        hasLocalScore = true;
+    if (hasLocalScore) {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
+            return false;
+    } else {
+        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
+            return false;
+    }
+
+    bool passesDiffFilter = true;
+
+    for(auto diff : song->GetDifficultyVector())
+    {
+        if(DifficultyCheck(diff, song)) {
+            passesDiffFilter = true;
+            break;
+        }
+        else
+            passesDiffFilter = false;
+    }
+
+    if(!passesDiffFilter)
+        return false;
+
+    if(song->duration_secs < filterOptions.minLength) return false;
+    if(song->duration_secs > filterOptions.maxLength) return false;
+
+
+    return true;
 }
 
-bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
-    auto const& currentFilter = DataHolder::filterOptions;
+bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
+    auto const& currentFilter = DataHolder::filterOptionsCache;
+
 
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
         if(!diff->ranked)
             return false;
+
+    // If we have a ranked sort, we force ranked filter
+    if (currentFilter.isRankedSort) {
+        if (!diff->ranked)
+            return false;
+    }
 
     if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
         if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
@@ -297,366 +265,867 @@ bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const
     return true;
 }
 
-bool MeetsFilter(const SDC_wrapper::BeatStarSong* song)
+
+static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
+        {SortMode::Newest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
+                           {
+                               return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
+                           }},
+        {SortMode::Oldest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
+                           {
+                               return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
+                           }},
+        {SortMode::Latest_Ranked, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
+                           {
+                               int struct1RankedUpdateTime;
+                               auto struct1DiffVec = struct1->GetDifficultyVector();
+                               for(auto const& i : struct1DiffVec)
+                               {
+                                   struct1RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
+                               }
+
+                               int struct2RankedUpdateTime;
+                               auto struct2DiffVec = struct2->GetDifficultyVector();
+                               for(auto const& i : struct2DiffVec)
+                               {
+                                   struct2RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
+                               }
+                               return (struct1RankedUpdateTime > struct2RankedUpdateTime);
+                           }},
+        {SortMode::Most_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
+                           {
+                               return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
+                           }},
+        {SortMode::Least_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
+                           {
+                               return GetMinStarValue(struct1) < GetMinStarValue(struct2);
+                           }},
+        {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
+                           {
+                                // Move nan to the end
+                               float v1 = std::isnan(struct1->rating)? 0: struct1->rating;
+                               float v2 = std::isnan(struct2->rating)? 0: struct2->rating;
+                               return (v1 > v2);
+                           }},
+        {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
+                            {
+                                // Move nan to the end
+                                float v1 = std::isnan(struct1->rating)? 9999: struct1->rating;
+                                float v2 = std::isnan(struct2->rating)? 9999: struct2->rating;
+                                return (v1 < v2);
+                           }}
+};
+
+
+bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
 {
-    auto const& filterOptions = DataHolder::filterOptions;
-    std::string songHash = song->hash.string_data;
+    int words = 0;
+    int matches = 0;
 
-    /*if(filterOptions->uploaders.size() != 0) {
-		if(std::find(filterOptions->uploaders.begin(), filterOptions->uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions->uploaders.end()) {
-		} else {
-			return false;
-		}
-	}*/
+    std::string songName = removeSpecialCharacter(toLower(song->GetName()));
+    std::string songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
+    std::string songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
+    std::string levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
+    std::string songKey = toLower(song->key.string_data);
 
-    if(song->uploaded_unix_time < filterOptions.minUploadDate)
-        return false;
-
-    if(song->GetRating() < filterOptions.minRating) return false;
-    if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
-    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
-    if(downloaded)
+    for (int i = 0; i < searchTexts.size(); i++)
     {
-        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
-            return false;
-    }
-    else
-    {
-        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
-            return false;
-    }
-
-    bool hasLocalScore = false;
-
-    if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
-        hasLocalScore = true;
-    //getLogger().info("Checking %s, songs with scores: %u", songHash.c_str(), DataHolder::songsWithScores.size());
-    if (hasLocalScore) {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
-            return false;
-    } else {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
-            return false;
-    }
-
-    bool passesDiffFilter = true;
-
-    for(auto diff : song->GetDifficultyVector())
-    {
-        if(DifficultyCheck(diff, song)) {
-            passesDiffFilter = true;
-            break;
+        words++;
+        std::string searchTerm = toLower(searchTexts[i]);
+        if (i == searchTexts.size() - 1)
+        {
+            searchTerm.resize(searchTerm.length()-1);
         }
-        else
-            passesDiffFilter = false;
+
+
+        if (songName.find(searchTerm) != std::string::npos ||
+            songSubName.find(searchTerm) != std::string::npos ||
+            songAuthorName.find(searchTerm) != std::string::npos ||
+            levelAuthorName.find(searchTerm) != std::string::npos ||
+            songKey.find(searchTerm) != std::string::npos)
+        {
+            matches++;
+        }
     }
 
-    if(!passesDiffFilter)
-        return false;
-
-    if(song->duration_secs < filterOptions.minLength) return false;
-    if(song->duration_secs > filterOptions.maxLength) return false;
-
-
-    return true;
+    return matches == words;
 }
 
-void ResetTable() {
-    std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
-    songListController->table.child.getStatefulVector(*songListController->table.ctx) = std::move(filteredCells);
-    QuestUI::MainThreadScheduler::Schedule([]() {
-        songListController->table.update();
-    });
-}
 
-void SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable)
-{
-    if(songListController != nullptr && songListController->tablePtr)
+void ViewControllers::SongListController::_UpdateSearchedSongsList() {
+    DEBUG("_UpdateSearchedSongsList");
+    // Skip if not active 
+    if (get_isActiveAndEnabled() == false || IsSearching) {
+        return;
+    }
+    
+    // Skip if we have no songs
+    int totalSongs = DataHolder::songList.size();
+    if (totalSongs == 0) {
+        return;
+    }
+
+
+    IsSearching = true;
+
+    // Check if sort is ranked and set the filter
+    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+    DataHolder::filterOptions.isRankedSort = isRankedSort;
+    // Detect changes
+    bool currentFilterChanged = this->filterChanged;
+    bool currentSortChanged = prevSort != sort;
+    bool currentSearchChanged = prevSearch != search;
+    bool rankedSortChanged = DataHolder::filterOptionsCache.isRankedSort != isRankedSort;
+
+    // Take a snapshot of current filter options
+    DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
+
+    DEBUG("SEARCHING Cache");
+    DEBUG("Sort: {}", SortToString((int) sort));
+    DEBUG("Requirement: {}", RequirementTypeToString((int) DataHolder::filterOptionsCache.modRequirement));
+    DEBUG("Char: {}", CharFilterTypeToString((int) DataHolder::filterOptionsCache.charFilter));
+    DEBUG("Difficulty: {}", DifficultyFilterTypeToString((int) DataHolder::filterOptionsCache.difficultyFilter));
+    DEBUG("Ranked: {}", RankedFilterTypeToString((int) DataHolder::filterOptionsCache.rankedType));
+    DEBUG("LocalScore: {}", LocalScoreFilterTypeToString((int) DataHolder::filterOptionsCache.localScoreType));
+    DEBUG("Download: {}", DownloadFilterTypeToString((int) DataHolder::filterOptionsCache.downloadType));
+    DEBUG("MinNJS: {}", DataHolder::filterOptionsCache.minNJS);
+    DEBUG("MaxNJS: {}", DataHolder::filterOptionsCache.maxNJS);
+    DEBUG("MinNPS: {}", DataHolder::filterOptionsCache.minNPS);
+    DEBUG("MaxNPS: {}", DataHolder::filterOptionsCache.maxNPS);
+    DEBUG("MinStars: {}", DataHolder::filterOptionsCache.minStars);
+    DEBUG("MaxStars: {}", DataHolder::filterOptionsCache.maxStars);
+    DEBUG("MinLength: {}", DataHolder::filterOptionsCache.minLength);
+    DEBUG("MaxLength: {}", DataHolder::filterOptionsCache.maxLength);
+    DEBUG("MinRating: {}", DataHolder::filterOptionsCache.minRating);
+    DEBUG("MinVotes: {}",  DataHolder::filterOptionsCache.minVotes);
+    DEBUG("Uploaders number: {}",  DataHolder::filterOptionsCache.uploaders.size());
+    DEBUG("IsRankedSort: {}", DataHolder::filterOptionsCache.isRankedSort);
+    DEBUG("RankedSortChanged: {}", rankedSortChanged);
+
+    this->searchInProgress->get_gameObject()->set_active(true);
+
+    DEBUG("SortAndFilterSongs runs");
+    if(songListTable() != nullptr)
     {
-        songListController->tablePtr->tableView->ClearSelection();
-        songListController->tablePtr->tableView->ClearHighlights();
+        songListTable()->ClearSelection();
+        songListTable()->ClearHighlights();
     }
+ 
+
+    // Grab current values for sort and search
+    auto currentSort = sort;
+    auto currentSearch = search;
+
+    // Reset values
     prevSort = sort;
     prevSearch = search;
-    // std::thread([&]{
+    this->filterChanged = false;
 
-    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
+    auto searchQuery = split(currentSearch, " ");
 
-    //filteredSongList = songList;
-    DataHolder::filteredSongList.clear();
-    for(auto song : DataHolder::songList)
-    {
-        bool songMeetsSearch = SongMeetsSearch(song, split(search, " "));
-        bool meetsFilter = MeetsFilter(song);
-        if(songMeetsSearch && meetsFilter)
-        {
-            DataHolder::filteredSongList.emplace_back(song);
+
+    std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
+        long long before = 0;
+        long long after = 0;
+        before = CurrentTimeMs();
+
+        // Prolly need 4 but gotta go fast
+        const int num_threads = 8;
+        std::thread t[num_threads];
+        
+      
+        // Filter songs if needed
+        if (currentFilterChanged || rankedSortChanged) {
+            DEBUG("Filtering");
+            DataHolder::filteredSongList.clear();
+            // Set up variables for threads
+            int totalSongs = DataHolder::songList.size();
+
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
+
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](){
+                    int i = index++;
+                    while(i < totalSongs) {
+                        auto item = DataHolder::songList[i];
+                        bool meetsFilter = MeetsFilter(item);
+                        if (meetsFilter) {
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::filteredSongList.push_back(item);
+                        }
+                        i = index++;
+                    }
+                });
+            }
+
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
         }
-    }
-    std::stable_sort(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end(),
-                     sortFunctionMap.at(sort)
-    );
 
-    if(resetTable) {
-        ResetTable();
-        //getLogger().info("first song ranked: %s", DataHolder::filteredSongList[0]->GetMaxStarValue() > 0 ? "true" : "false");
-        getLogger().info("table reset");
-    }
-    //}).detach();
+
+        if (currentFilterChanged || rankedSortChanged || currentSearchChanged) {
+            DEBUG("Searching");
+            DataHolder::searchedSongList.clear();
+            // Set up variables for threads
+            int totalSongs = DataHolder::filteredSongList.size();
+            
+            std::mutex valuesMutex;
+            std::atomic_int index = 0;
+
+            //Launch a group of threads
+            for (int i = 0; i < num_threads; ++i) {
+                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
+                    int i = index++;
+                    while(i < totalSongs) {
+                        auto item = DataHolder::filteredSongList[i];
+                        bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
+                        if (songMeetsSearch) {
+                            std::lock_guard<std::mutex> lock(valuesMutex);
+                            DataHolder::searchedSongList.push_back(item);
+                        }
+                        i = index++;
+                    }
+                }, searchQuery);
+            }
+
+            //Join the threads with the main thread
+            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+        }
+
+        // Sort has to change?
+        if (currentFilterChanged  || rankedSortChanged || currentSearchChanged || currentSortChanged) {
+            DEBUG("Sorting");
+            std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
+                sortFunctionMap.at(currentSort)
+            );
+        }
+
+        after = CurrentTimeMs();
+        DEBUG("Search time: {}ms", after-before);
+        QuestUI::MainThreadScheduler::Schedule([this]{
+            long long before = 0;
+            long long after = 0;
+            before = CurrentTimeMs();
+            
+            // Copy the list to the displayed one
+            DataHolder::sortedSongList.clear();
+            DataHolder::sortedSongList = DataHolder::searchedSongList;
+            this->ResetTable();
+
+            after = CurrentTimeMs();
+            INFO("table reset in {} ms",  after-before);
+
+            if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr.m_value) {
+                if(DataHolder::filteredSongList.size() == DataHolder::songList.size()) {
+                    songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+                } else {
+                    songSearchPlaceholder->set_text(fmt::format("Search {} songs", DataHolder::filteredSongList.size()));
+                }
+            }
+            if(!currentSong) {
+                SelectSong(songListTable(), 0);
+            } else {
+                // Always un-select in the list to prevent wrong-selections on resorting, etc.
+                songListTable()->ClearSelection();
+            }
+
+            this->searchInProgress->get_gameObject()->set_active(false);
+            
+
+            // Run search again if something wants to
+            bool currentSortChanged = prevSort != sort;
+            bool currentSearchChanged = prevSearch != search;
+            bool currentFilterChanged = this->filterChanged;
+
+            IsSearching = false;
+
+            // Queue another search at the end of this one
+            if (currentSearchChanged || currentSortChanged || currentFilterChanged) {    
+                this->UpdateSearchedSongsList();
+            }
+        });
+    }).detach();
+}
+void ViewControllers::SongListController::UpdateSearchedSongsList() {
+    coro(limitedUpdateSearchedSongsList->CallNextFrame());
 }
 
-void Sort(bool resetTable)
+void ViewControllers::SongListController::PostParse() {
+    // Steal search box from the base game
+    static SafePtrUnity<HMUI::InputFieldView> gameSearchBox;
+    if (!gameSearchBox) {
+        gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>().First(
+        [](HMUI::InputFieldView *x) {
+            return x->get_name() == "SearchInputField";
+        });
+    }
+
+    if (gameSearchBox) {
+        // Cleanup the old search
+        if (searchBox && searchBox->m_CachedPtr.m_value) {
+            DestroyImmediate(searchBox);
+        }
+        searchBox = Instantiate(gameSearchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
+        auto songSearchInput = searchBox->GetComponent<HMUI::InputFieldView *>();
+        songSearchPlaceholder = searchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
+        songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+        songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
+
+        std::function<void(HMUI::InputFieldView * view)> onValueChanged = [this](HMUI::InputFieldView * view) {
+            DEBUG("Input is: {}", (std::string) view->get_text());
+            this->SortAndFilterSongs(this->sort, (std::string) view->get_text(), true);
+        };
+        
+        songSearchInput->onValueChanged->AddListener(BSML::MakeUnityAction(onValueChanged));
+    }
+
+    // Get the default cover image
+    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
+
+    // Get song preview player 
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>().FirstOrDefault();
+    beatmapLevelsModel = QuestUI::ArrayUtil::First(
+        UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>(),
+        [](BeatmapLevelsModel *x) {
+            return x->customLevelPackCollection != nullptr;
+        });
+
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
+    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    if (platformHelper == nullptr) {
+    } else {
+        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
+            x->platformHelper=platformHelper;
+        }
+    }
+
+    // Make the sort dropdown bigger
+    auto c = std::min(9, this->get_sortModeSelections()->size);
+    sortDropdown->dropdown->numberOfVisibleCells = c;
+    sortDropdown->dropdown->ReloadData();
+    auto m = sortDropdown->dropdown->modalView;
+    reinterpret_cast<RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
+}
+
+void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
-    if(!DataHolder::loadedSDC)
+    fromBSS = false;
+
+    // Retry if failed to dl
+    this->RetryDownloadSongList();
+
+    if (!firstActivation)
         return;
-    SortAndFilterSongs(prevSort, prevSearch, resetTable);
+
+    // Get coordinators
+    soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator*>();
+    multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator*>();
+
+    // Get regional beat saver urls
+    BeatSaverRegionManager::RegionLookup();
+    
+    limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+        { 
+            this->_UpdateSearchedSongsList();
+        }, 0.1f);
+
+    IsSearching = false;
+    getLoggerOld().info("Song list contoller activated");
+
+    // Get sort setting from config
+    auto sortMode = getPluginConfig().SortMode.GetValue();
+    if (sortMode < get_sortModeSelections()->size ) {
+        selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
+        sort = (SortMode) sortMode;
+    }
+
+    BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
+
+    if (this->songList != nullptr && this->songList->m_CachedPtr.m_value != nullptr)
+    {
+        getLoggerOld().info("Table exists");
+        songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
+    }
+
+    multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
+    settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
+    uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
+
+    // Reset table the first time and load data
+    if (DataHolder::loadedSDC == true) {
+        ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
+    } else {
+        this->DownloadSongList();
+    }
+
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/SongList.bsml";
+    #endif
 }
 
-inline auto SortDropdownContainer() {
-    std::array<std::string, 7> sortModes(
-            {"Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated"});
-
-    SongListDropDown<std::tuple_size_v<decltype(sortModes)>> sortDropdown("", "Newest", [sortModes](
-            auto &, std::string const &input,
-            UnityEngine::Transform *, RenderContext &ctx) {
-        getLogger().debug("DropDown! %s", input.c_str());
-        auto itr = std::find(sortModes.begin(), sortModes.end(), input);
-        SortAndFilterSongs((SortMode)std::distance(sortModes.begin(), itr), prevSearch, true);
-    }, sortModes);
-
-    detail::VerticalLayoutGroup layout(sortDropdown);
-    layout.padding = std::array<float, 4>{1,1,1,1};
-
-    ModifyLayoutElement layoutElement(layout);
-    layoutElement.preferredWidth = 44;
-
-    return layoutElement;
+void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
+    for(auto song : DataHolder::songList) {
+        if(song->hash.string_data == hash) {
+            SetSelectedSong(song);
+            return;
+        }
+    }
+    DEBUG("Uh oh, you somehow downloaded a song that was only a figment of your imagination");
 }
 
-inline void onRenderTable(ViewControllers::SongListViewController* view, decltype(ViewControllers::SongListViewController::TableType::child)::RenderState& tableState) {
-    view->tablePtr = tableState.dataSource;
-    getLogger().info("Rendering table! %p", view->tablePtr);
 
-    if (view->table.renderedAllowed.getData()) {
-        CRASH_UNLESS(tableState.dataSource);
-        CRASH_UNLESS(view->tablePtr);
-        CRASH_UNLESS(view->tablePtr->tableView);
+void ViewControllers::SongListController::SelectSong(HMUI::TableView *table, int id)
+{
+    if(!table)
+        return;
+    DEBUG("Cell clicked {}", id);
+    if (DataHolder::sortedSongList.size() <= id) {
+        // Return if the id is invalid
+        return;
+    }
+    auto song  = DataHolder::sortedSongList[id];
+    DEBUG("Selecting song {}", id);
+    this->SetSelectedSong(song);
+    
+}
 
-        //Make Lists
-        auto click = std::function([view](HMUI::TableView *tableView, int row) {
-            getLogger().info("selected %i", row);
-            currentSelectedSong = row;
-            // Get song list actually inside the table
-            auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(tableView->dataSource)->descriptors;
-            view->selectedSongController.child.SetSong(songList[row].song);
-        });
-        auto yes = il2cpp_utils::MakeDelegate<System::Action_2<HMUI::TableView *, int> *>(
-                classof(System::Action_2<HMUI::TableView *, int>*), click);
+float ViewControllers::SongListController::CellSize()
+{
+    // TODO: Different font sizes
+    bool smallFont = getPluginConfig().SmallerFontSize.GetValue();
+    return smallFont ? 11.66f : 14.0f;
+}
 
+void ViewControllers::SongListController::ResetTable()
+{
 
-
-        getLogger().debug("Adding table event");
-
-        view->tablePtr->tableView->add_didSelectCellWithIdxEvent(yes);
-
-        getLogger().debug("Set sibling");
-        view->tablePtr->get_transform()->get_parent()->SetAsFirstSibling();
-
-        // queue for next frame
-        QuestUI::MainThreadScheduler::Schedule([]{
-            //fix scrolling lol
-            // doesn't work - Fern :(
-            GlobalNamespace::IVRPlatformHelper* mewhen;
-            auto scrolls = UnityEngine::Resources::FindObjectsOfTypeAll<HMUI::ScrollView*>();
-            for (int i = 0; i < scrolls.Length(); i++)
-            {
-                mewhen = scrolls.get(i)->platformHelper;
-                if(mewhen != nullptr)
-                    break;
-            }
-            for (int i = 0; i < scrolls.Length(); i++)
-            {
-                if(scrolls.get(i)->platformHelper == nullptr) scrolls.get(i)->platformHelper = mewhen;
-            }
-        });
+    if(songListTable() != nullptr)
+    {
+        DEBUG("Songs size: {}", DataHolder::sortedSongList.size());
+        DEBUG("TABLE RESET");
+        songListTable()->ReloadData();
+        songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, false);
     }
 }
 
-inline auto SelectedSongControllerLayout(ViewControllers::SongListViewController* view) {
-    auto defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
+int ViewControllers::SongListController::NumberOfCells()
+{
+    return DataHolder::sortedSongList.size();
+}
 
-    auto& controller = view->selectedSongController;
-    controller.child.defaultImage = defaultImage;
+void ViewControllers::SongListController::ctor()
+{
+    INVOKE_CTOR();
+    selectedSortMode = StringW("Newest");
+    this->cellSize = 8.05f;
+}
 
-    QUC::RefComp selectedSongControllerRefComp(controller);
+void ViewControllers::SongListController::SelectRandom() {
+    DEBUG("SelectRandom");
+    auto cellsNumber = this->NumberOfCells();
+    if (cellsNumber < 2) {
+        return;
+    }
+    auto id = BetterSongSearch::Util::random(0, cellsNumber - 1);
+    songListTable()->SelectCellWithIdx(id, true);
+    songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, true);
+    
+};
 
-#pragma region table
-    if (view->table.renderedAllowed.getData()) {
-        std::vector<CellData> filteredSongs(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
+void ViewControllers::SongListController::ShowMoreModal() {
+    this->moreModal->Show(false, false, nullptr);
+    DEBUG("ShowMoreModal");
+};
+void ViewControllers::SongListController::HideMoreModal() {
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("HideMoreModal");
+};
 
-        view->table.child.initCellDatas = filteredSongs;
+void ViewControllers::SongListController::ShowCloseConfirmation() {
+    this->downloadCancelConfirmModal->Show();
+    DEBUG("ShowCloseConfirmation");
+};
+void ViewControllers::SongListController::ForcedUIClose() {
+    fcInstance->ConfirmCancelCallback(true);
+    this->downloadCancelConfirmModal->Hide();
+};
+void ViewControllers::SongListController::ForcedUICloseCancel() {
+    fcInstance->ConfirmCancelCallback(false);
+    this->downloadCancelConfirmModal->Hide();
+};
+
+
+
+custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateDataAndFiltersCoro() {
+    // Wait
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+
+    // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
+    bool filtersChanged = false;
+    
+
+    SortMode sort = prevSort;
+    if (selectedSortMode != nullptr) {
+        int index = get_sortModeSelections()->IndexOf(selectedSortMode);
+        if (index < 0 ) {} else {
+            if (index != getPluginConfig().SortMode.GetValue()) {
+                filtersChanged = true;
+                getPluginConfig().SortMode.SetValue(index);
+                sort = (SortMode)index;
+            }
+        }
     }
 
-    OnRenderCallback tableRender(
-            QUC::detail::refComp(view->table),
-            [view](auto& self, RenderContext &ctx, RenderContextChildData& data) {
-                auto& tableState = ctx.getChildDataOrCreate(self.child.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-                onRenderTable(view, tableState);
+    if (filtersChanged) {
+        DEBUG("Sort changed");
+        this->SortAndFilterSongs(sort, this->prevSearch, true);
+    }
+}
+
+void ViewControllers::SongListController::UpdateDataAndFilters () {
+    coro(UpdateDataAndFiltersCoro());
+    DEBUG("UpdateDataAndFilters");
+}
+
+
+void ViewControllers::SongListController::ShowPlaylistCreation() {
+    // Hide modal cause bsml does not support automagic hiding of it
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("ShowPlaylistCreation");
+};
+
+void ViewControllers::SongListController::ShowSettings () {
+    
+    this->settingsModal->OpenModal();
+    // Hide modal cause bsml does not support automagic hiding of it
+    this->moreModal->Hide(false, nullptr);
+    DEBUG("ShowSettings");
+}
+
+// Song buttons
+void ViewControllers::SongListController::Download () {
+    #ifdef SONGDOWNLOADER
+
+    auto songData = this->currentSong;
+
+    if (songData != nullptr) {
+        fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
+        downloadButton->set_interactable(false);
+        // downloadButton->upda;
+    }  else {
+        WARNING("Current song is null, doing nothing");
+    }
+    #endif
+}
+
+void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
+    BeatSaverRegionManager::GetAsync(url,
+           [finished](long httpCode, std::string data) {
+            if (httpCode == 200) {
+                std::vector<uint8_t> bytes(data.begin(), data.end());
+                finished(true, bytes);
+            }  else {
+                std::vector<uint8_t> bytes;
+                finished(false,  bytes);
             }
-    );
-
-    ModifyLayoutElement tableContainer(VerticalLayoutGroup(tableRender));
-    tableContainer.preferredWidth = 70.0f;
-
-#pragma endregion
-
-    view->loadingIndicatorContainer.emplace(QUC::detail::refComp(view->loadingIndicator));
-
-    return SongListHorizontalLayout(
-            tableContainer,
-            QUC::detail::refComp(*view->loadingIndicatorContainer),
-            selectedSongControllerRefComp
+           }, [](float progress){}
     );
 }
 
-custom_types::Helpers::Coroutine checkIfLoaded(ViewControllers::SongListViewController* view) {
-    if (view->table.renderedAllowed.getData())
+custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip*)> finished) {
+    auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
+    if(webRequest->get_isNetworkError()) {
+        INFO("Network error");
+        finished(nullptr);   
         co_return;
-
-    while (true) {
-        view->table.renderedAllowed = DataHolder::loadedSDC;
-        view->loadingIndicator.enabled = !DataHolder::loadedSDC;
-
-        co_yield nullptr;
-
-        if (view->table.renderedAllowed.getData()) {
-            getLogger().debug("Showing table now");
-
-            std::vector<CellData> filteredCells(DataHolder::filteredSongList.begin(), DataHolder::filteredSongList.end());
-            view->table.child.initCellDatas = std::move(filteredCells);
-
-            view->table.update();
-            view->loadingIndicatorContainer->update();
-
-            auto& tableState = view->table.ctx->getChildDataOrCreate(view->table.child.key).template getData<decltype(ViewControllers::SongListViewController::TableType::child)::RenderState>();
-
-            onRenderTable(view, tableState);
-            view->tablePtr->tableView->SelectCellWithIdx(0, false);
-            auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(view->tablePtr->tableView->dataSource)->descriptors;
-            view->selectedSongController.child.SetSong(songList[0].song);
-            co_return;
-        }
+    } else {
+        while(webRequest->GetDownloadProgress() < 1.0f);
+        INFO("Download complete");
+        UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+        finished(clip);
     }
-
+    co_return;
 }
 
-//SongListViewController
-void ViewControllers::SongListViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
-    songListController = this;
+custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level) {
+    fcInstance->Close(true, false);
+    
+    auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
+    auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
+    
+    auto state = LevelSelectionFlowCoordinator::State::New_ctor(
+        System::Nullable_1(category, true),
+        (IBeatmapLevelPack*) customLevelsPack->CustomLevelsPack ,
+        level,
+        nullptr
+    );
+    multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
+    soloFreePlayFlowCoordinator->Setup(state);
 
-    if (firstActivation) {
-        this->ctx = RenderContext(get_transform());
-    }
+    manager.GoToSongSelect();
+    co_return;
+}
 
-    getLogger().info("Checking for local scores...");
-    auto playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
-    if(playerDataModel) {
-        for(int i = 0; i < playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
-            auto x = playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
-            if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40 || !x->levelID->StartsWith("custom_level_"))
-                continue;
-            auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
-            //getLogger().info("Song hash: %s", sh.c_str());
-            auto song = SDC_wrapper::BeatStarSong::GetSong(sh);
-            if(!song)
-                continue;
-            if(!song->GetDifficulty(x->difficulty)) continue;
 
-            DataHolder::songsWithScores.push_back(sh);
 
+void ViewControllers::SongListController::Play () {
+    this->PlaySong();
+}
+void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarSong* songToPlay) {
+    if (songToPlay == nullptr) {
+        songToPlay = currentSong;
+        if (currentSong == nullptr) {
+            return;
         }
-        getLogger().info("local scores checked. found %u", DataHolder::songsWithScores.size());
     }
 
+    if(fcInstance->ConfirmCancelOfPending([this, songToPlay](){PlaySong(songToPlay);} ))
+        return;
 
-    table.renderedAllowed = DataHolder::loadedSDC;
-    loadingIndicator.enabled = !DataHolder::loadedSDC;
+    // Hopefully not leaking any memory
+    auto fun = [this, songToPlay](std::vector<CustomPreviewBeatmapLevel*> const& = std::vector<CustomPreviewBeatmapLevel*>()){
+        QuestUI::MainThreadScheduler::Schedule(
+        [this, songToPlay]
+        {
+            backButton = UnityEngine::GameObject::Find("BackButton");
+            auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->GetHash()));
+            if(level.has_value())
+            {
+                currentLevel = reinterpret_cast<IPreviewBeatmapLevel*>(level.value());
+            } else {
+                ERROR("Song somehow is not downloaded, pls fix");
+                return;
+            }
 
-    //getLogger().debug("Is loading: %s", loadingIndicator.enabled.getData() ? "true" : "false");
+            fromBSS = true;
+            openToCustom = true;
+            coro(EnterSolo(currentLevel));
+        });
+    };
 
-    // Periodically check if SDC loaded and update the view
-    if (firstActivation && loadingIndicator.enabled.getData()) {
-        this->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(checkIfLoaded(this)));
+    if (fcInstance->DownloadHistoryViewController->hasUnloadedDownloads) {
+        RuntimeSongLoader::API::RefreshSongs(false, fun);
+    } else {
+        fun();
     }
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    if (firstActivation) {
+}
 
 
-        auto songListControllerView = SongListVerticalLayoutGroup(
-                SongListHorizontalFilterBar(
-                        Button("RANDOM", [](Button &button, UnityEngine::Transform *transform, RenderContext &ctx) {
-                            int random = rand() % DataHolder::filteredSongList.size();
-                            songListController->tablePtr->tableView->ScrollToCellWithIdx(random,
-                                                                                         HMUI::TableView::ScrollPositionType::Beginning,
-                                                                                         true);
-                            songListController->tablePtr->tableView->SelectCellWithIdx(random, false);
-                            QuestUI::MainThreadScheduler::Schedule([&random]() {
-                                auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(songListController->tablePtr->tableView->dataSource)->descriptors;
-                                songListController->selectedSongController.child.SetSong(songList[random].song);
-                            });
-                            currentSelectedSong = random;
-                        }),
-                        StringSetting("Search by Song, Key, Mapper...",
-                                      [](StringSetting &, std::string const &input, UnityEngine::Transform *,
-                                         RenderContext &ctx) {
-                                          getLogger().debug("Input! %s", input.c_str());
-                                          std::thread([input]{
-                                              SortAndFilterSongs(prevSort, input, true);
-                                              /*songListController->table.child.getStatefulVector(songListController->ctx) = std::vector<CellData>(DataHolder::filteredSongList.begin(),DataHolder::filteredSongList.end());
-                                              QuestUI::MainThreadScheduler::Schedule([]() {
-                                                  songListController->table.update();
-                                              });*/
-                                          }).detach();
-                                      }),
-                        SortDropdownContainer()
-                ),
-                SelectedSongControllerLayout(this)
+void ViewControllers::SongListController::ShowBatchDownload () {
+    this->multiDlModal->OpenModal();
+    this->HideMoreModal();
+}
+
+void ViewControllers::SongListController::ShowSongDetails () {
+    if (this->currentSong) {
+        uploadDetailsModal->OpenModal(this->currentSong);
+    }
+}
+
+void ViewControllers::SongListController::UpdateDetails () {  
+    if (currentSong == nullptr) {
+        return;
+    }
+    
+    auto song = currentSong;
+    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
+    bool loaded = beatmap.has_value();
+    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->GetHash()));
+    #ifdef SONGDOWNLOADER
+    
+    // if beatmap is loaded
+    if (loaded) {
+        System::Threading::Tasks::Task_1<UnityEngine::Sprite*>* coverTask = beatmap.value()->GetCoverImageAsync(System::Threading::CancellationToken::get_None());
+        auto action = il2cpp_utils::MakeDelegate<System::Action_1<System::Threading::Tasks::Task*>*>(classof(System::Action_1<System::Threading::Tasks::Task*>*), (std::function<void()>)[coverTask, this, beatmap] {
+                UnityEngine::Sprite* cover = coverTask->get_ResultOnSuccess();
+                if (cover) {
+                    this->coverImage->set_sprite(cover);
+                    coverLoading->set_enabled(false);
+                }
+            }
         );
-
-        auto end = std::chrono::high_resolution_clock::now();
-        auto difference = end - start;
-        auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
-        getLogger().debug("QUC UI construction for SongList took %lldms", millisElapsed);
-
-        getLogger().debug("Rendering layout");
-        detail::renderSingle(songListControllerView, ctx);
-        getLogger().debug("Rendered layout");
-
-        BeatSaverRegionManager::RegionLookup();
+        reinterpret_cast<System::Threading::Tasks::Task*>(coverTask)->ContinueWith(action);
+    } else {
+        this->coverImage->set_sprite(defaultImage);
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+        DEBUG("{}", newUrl.c_str());
+        coverLoading->set_enabled(true);
+        GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
+            QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success] {
+                if (success) {
+                    std::vector<uint8_t> data = bytes;
+                    if (song->GetHash() != this->currentSong->GetHash()) return;
+                    Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
+                    this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
+                    coverLoading->set_enabled(false);
+                } else {
+                    coverLoading->set_enabled(false);
+                }
+            });
+        });
     }
 
-    if (!firstActivation &&
-        DataHolder::loadedSDC && table.renderedAllowed.isRenderDiffModified(*table.ctx) // returns true if it's the state isn't updated
-            ) {
-        table.update();
-        loadingIndicatorContainer->update();
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto difference = end - start;
-    auto millisElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(difference).count();
-    getLogger().debug("UI rendering for SongList took %lldms", millisElapsed);
+    // If the song is loaded then get it from local sources
+    if(loaded) {
+        //Get preview from beatmap
+        if(!beatmapLevelsModel)
+            return;
+        if(!levelCollectionViewController)
+            return;
 
-    getLogger().debug("Finished song list view controller");
-
-    if(!firstActivation && DataHolder::loadedSDC) {
-        songListController->tablePtr->tableView->ScrollToCellWithIdx(currentSelectedSong,
-                                                                     HMUI::TableView::ScrollPositionType::Beginning,
-                                                                     false);
-        songListController->tablePtr->tableView->SelectCellWithIdx(currentSelectedSong, false);
-        auto const &songList = *reinterpret_cast<BetterSongSearch::UI::QUCObjectTableData *>(songListController->tablePtr->tableView->dataSource)->descriptors;
-        songListController->selectedSongController.child.SetSong(songList[currentSelectedSong].song);
+        auto preview = beatmapLevelsModel->GetLevelPreviewForLevelId(beatmap.value()->levelID);
+        if(preview)
+            levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(preview);
     }
-    songListController->selectedSongController->DidActivate(firstActivation);
+    else {
+        if (!getPluginConfig().LoadSongPreviews.GetValue()) {
+        } else {
+            if(!songPreviewPlayer)
+                return;
+
+            auto ssp = songPreviewPlayer;
+            
+            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+
+            coro(GetPreview(
+                newUrl, 
+                [ssp](UnityEngine::AudioClip* clip) {
+                    if (clip == nullptr) {
+                        return;
+                    }
+                    ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
+                }
+            ));
+        }
+    }
+
+    #endif
+    float minNPS = 500000, maxNPS = 0;
+    float minNJS = 500000, maxNJS = 0;
+    for (auto diff: song->GetDifficultyVector()) {
+        float nps = (float) diff->notes / (float) song->duration_secs;
+        float njs = diff->njs;
+        minNPS = std::min(nps, minNPS);
+        maxNPS = std::max(nps, maxNPS);
+
+        minNJS = std::min(njs, minNJS);
+        maxNJS = std::max(njs, maxNJS);
+    }
+
+    // downloadButton.set.text = "Download";
+    SetIsDownloaded(downloaded);
+    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongName->set_text(song->GetName());
+    selectedSongAuthor->set_text(song->GetSongAuthor());
+}
+
+void ViewControllers::SongListController::FilterByUploader () {
+    if (!this->currentSong) {
+        return;
+    }
+    
+    fcInstance->FilterViewController->uploadersString = this->currentSong->GetAuthor();
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->GetAuthor());
+    fcInstance->FilterViewController->UpdateFilterSettings();
+    DEBUG("FilterByUploader");
+}
+
+// BSML::CustomCellInfo
+HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView *tableView, int idx)
+{
+    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(DataHolder::sortedSongList[idx]);
+}
+
+void ViewControllers::SongListController::UpdateSearch() {
+    
+}
+
+void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable) {
+    // Skip if not active 
+    if (get_isActiveAndEnabled() == false) {
+        return;
+    }
+    this->sort = sort;
+    this->search = search;
+
+    this->UpdateSearchedSongsList();
+}
+
+void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong* song) {
+    // TODO: Fill all fields, download image, activate buttons
+    if (currentSong != nullptr && currentSong->GetHash() == song->GetHash()) {
+        return;
+    }
+    currentSong = song;
+    
+    DEBUG("Updating details");
+    this->UpdateDetails();
+}
+
+void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded,  bool downloadable) {
+    playButton->get_gameObject()->set_active(isDownloaded);
+    playButton->set_interactable(isDownloaded);
+    downloadButton->get_gameObject()->set_active(!isDownloaded);
+    downloadButton->set_interactable(!isDownloaded);
+    infoButton->set_interactable(true);
+}
+
+
+void ViewControllers::SongListController::DownloadSongList() {
+    if (DataHolder::loadingSDC) {
+        return;
+    }
+
+    fcInstance->FilterViewController->datasetInfoLabel->set_text("Loading dataset...");
+
+    std::thread([this]{
+        DataHolder::loadingSDC = true;
+        try {
+            auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
+
+            getLoggerOld().info("Successfully got songs!");
+            DataHolder::songList = songs;
+            
+            INFO("Finished loading songs.");
+            DataHolder::loadedSDC = true;
+            DataHolder::loadingSDC = false;
+            DataHolder::failedSDC = false;
+            
+            // Initial search
+            if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
+                fcInstance->SongListController->filterChanged = true;
+                fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
+            }
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr && this->get_isActiveAndEnabled() ) {
+                    this->filterChanged = true;
+                    fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+                    // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
+                    fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songList.size()));
+                }
+            });
+        } catch (...) {
+            DataHolder::loadingSDC = false;
+            DataHolder::failedSDC = true;
+            DataHolder::loadedSDC = false;
+            
+            QuestUI::MainThreadScheduler::Schedule([this]{
+                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr ) {  
+                    fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
+                }
+            });
+            getLoggerOld().info("Failed to get songs");
+        }
+    }).detach();
+}
+
+void ViewControllers::SongListController::RetryDownloadSongList() {
+    if (DataHolder::failedSDC && !DataHolder::loadingSDC && !DataHolder::loadedSDC) {
+        this->DownloadSongList();
+    }
 }

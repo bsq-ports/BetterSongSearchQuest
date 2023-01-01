@@ -5,20 +5,20 @@
     "name": "BetterSongSearch",
     "id": "BetterSongSearch",
     "version": "0.1.0",
-    "url": null,
+    "url": "https://github.com/FrozenAlex/BetterSongSearchQuest",
     "additionalData": {
-      "overrideSoName": "libbettersongsearch.so"
+      "overrideSoName": "libBetterSongSearch.so"
     }
   },
   "dependencies": [
     {
       "id": "modloader",
-      "versionRange": "*",
+      "versionRange": "^1.2.3",
       "additionalData": {}
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^3.10.0",
+      "versionRange": "=3.14.0",
       "additionalData": {
         "extraFiles": [
           "src/inline-hook"
@@ -27,27 +27,22 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.25.0",
+      "versionRange": "^0.32.0",
       "additionalData": {}
     },
     {
       "id": "questui",
-      "versionRange": "^0.16.4",
+      "versionRange": "^0.17.10",
       "additionalData": {}
     },
     {
       "id": "sombrero",
-      "versionRange": "^0.1.30",
-      "additionalData": {}
-    },
-    {
-      "id": "questui_components",
-      "versionRange": "^2.5.3",
+      "versionRange": "^0.1.37",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.15.18",
+      "versionRange": "^0.15.21",
       "additionalData": {}
     },
     {
@@ -57,17 +52,17 @@
     },
     {
       "id": "sdc-wrapper",
-      "versionRange": "^0.1.4",
+      "versionRange": "^0.1.6",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "*",
+      "versionRange": "^0.8.0",
       "additionalData": {}
     },
     {
       "id": "songloader",
-      "versionRange": "^0.10.3",
+      "versionRange": "^0.10.14",
       "additionalData": {}
     },
     {
@@ -77,12 +72,22 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.4.10",
+      "versionRange": "^0.5.5",
       "additionalData": {}
     },
     {
       "id": "libcurl",
       "versionRange": "^7.78.0",
+      "additionalData": {}
+    },
+    {
+      "id": "bsml",
+      "versionRange": "^0.2.10",
+      "additionalData": {}
+    },
+    {
+      "id": "paper",
+      "versionRange": "^1.2.9",
       "additionalData": {}
     }
   ],

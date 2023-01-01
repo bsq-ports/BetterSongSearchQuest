@@ -16,6 +16,7 @@
         "unordered_set": "cpp",
         "variant": "cpp",
         "vector": "cpp",
+        "*.bsml": "xml",
         "__bit_reference": "cpp",
         "__debug": "cpp",
         "__errc": "cpp",
@@ -115,6 +116,8 @@
         "xutility": "cpp",
         "format": "cpp",
         "stop_token": "cpp",
-        "resumable": "cpp"
+        "resumable": "cpp",
+        "source_location": "cpp",
+        "__std_stream": "cpp"
     }
 }

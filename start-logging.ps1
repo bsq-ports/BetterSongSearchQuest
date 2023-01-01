@@ -53,7 +53,7 @@ if ($self -eq $true) {
     $command += " | Select-String -pattern `"$pattern`""
 }
 elseif ($all -eq $false) {
-    $command += " | Select-String -pattern `"(QuestHook|modloader|AndroidRuntime|CRASH)`""
+    $command += " | Select-String -pattern `"(BetterSongSearch|QuestHook|modloader|AndroidRuntime|CRASH)`""
 }
 
 if ($file -eq $true) {
@@ -61,4 +61,7 @@ if ($file -eq $true) {
 }
 
 echo "Logging using Command `"$command`""
+
+# Set log size to reduce unexpected EOF
+adb logcat -G 200mb;
 Invoke-Expression $command
