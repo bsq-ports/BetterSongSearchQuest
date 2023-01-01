@@ -46,7 +46,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     cancelConfirmCallback = nullptr;
     
     // Trigger refresh of songs cause why not xD
-    RuntimeSongLoader::API::RefreshSongs(false);
+    // RuntimeSongLoader::API::RefreshSongs(false);
 
     // Hide all modals
     for(auto modal: SongListController->GetComponentsInChildren<HMUI::ModalView*>()) {
@@ -54,7 +54,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     }
 
     
-    this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, false);
+    this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
 };
 bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){
     if (DownloadHistoryViewController->HasPendingDownloads()) {

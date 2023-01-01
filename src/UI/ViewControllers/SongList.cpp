@@ -25,6 +25,7 @@
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "System/StringComparison.hpp"
 #include "System/Nullable_1.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
@@ -33,7 +34,6 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
-#include "songloader/shared/CustomTypes/"
 
 #include <iterator>
 #include <chrono>
@@ -60,22 +60,23 @@
 #include "Util/Debug.hpp"
 #include <cmath>
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 
 using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI::Util::BSMLStuff;
+using namespace GlobalNamespace;
 
 #define SONGDOWNLOADER
 
 
 UnityEngine::GameObject* backButton = nullptr;
 UnityEngine::GameObject* soloButton = nullptr;
-GlobalNamespace::SongPreviewPlayer* songPreviewPlayer = nullptr;
-GlobalNamespace::BeatmapLevelsModel* beatmapLevelsModel = nullptr;
-GlobalNamespace::LevelCollectionViewController* levelCollectionViewController = nullptr;
+SongPreviewPlayer* songPreviewPlayer = nullptr;
+BeatmapLevelsModel* beatmapLevelsModel = nullptr;
+LevelCollectionViewController* levelCollectionViewController = nullptr;
 
 DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
@@ -585,16 +586,16 @@ void ViewControllers::SongListController::PostParse() {
     defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
 
     // Get song preview player 
-    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::SongPreviewPlayer*>().FirstOrDefault();
-    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionViewController*>().FirstOrDefault();
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>().FirstOrDefault();
     beatmapLevelsModel = QuestUI::ArrayUtil::First(
-        UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::BeatmapLevelsModel *>(),
-        [](GlobalNamespace::BeatmapLevelsModel *x) {
+        UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>(),
+        [](BeatmapLevelsModel *x) {
             return x->customLevelPackCollection != nullptr;
         });
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
     if (platformHelper == nullptr) {
     } else {
         for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
@@ -621,8 +622,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         return;
 
     // Get coordinators
-    soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<GlobalNamespace::SoloFreePlayFlowCoordinator*>();
-    multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator*>();
+    soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator*>();
+    multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator*>();
 
     // Get regional beat saver urls
     BeatSaverRegionManager::RegionLookup();
@@ -851,33 +852,23 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     co_return;
 }
 
-custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level) {
-    // backButton->GetComponent<UnityEngine::UI::Button *>()->Press();
-    // co_yield reinterpret_cast<System::manager.GoToSongSelect();
-    // GlobalNamespace::LevelCollectionNavigationController* levelCollectionNavigationController = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionNavigationController*>().FirstOrDefault();
-    // if(levelCollectionNavigationController) {
-    //     co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(UnityEngine::WaitForSeconds::New_ctor(0.3)));
-    //     levelCollectionNavigationController->SelectLevel(level);
-    // }
-
-    auto songloaderpack = UnityEngine::Object::FindObjectOfType<RuntimeSongLoader::SongLoaderCustomBeatmapLevelPack*>();
-
-    auto category = GlobalNamespace::SelectLevelCategoryViewController::LevelCategory();
-    category.value = GlobalNamespace::SelectLevelCategoryViewController::LevelCategory::All;
-
-    auto state = GlobalNamespace::LevelSelectionFlowCoordinator::State::New_ctor(
+custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level) {
+    fcInstance->Close(true, false);
+    
+    auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
+    auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
+    
+    auto state = LevelSelectionFlowCoordinator::State::New_ctor(
         System::Nullable_1(category, true),
-        reinterpret_cast<GlobalNamespace::IBeatmapLevelPack*> (songloaderpack->CustomLevelsPack),
+        (IBeatmapLevelPack*) customLevelsPack->CustomLevelsPack ,
         level,
         nullptr
     );
-
     multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
     soloFreePlayFlowCoordinator->Setup(state);
 
     manager.GoToSongSelect();
-    
-    
+    co_return;
 }
 
 
@@ -897,7 +888,7 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
         return;
 
     // Make sure to load all downloaded songs before going to the next step (Allows us not to do song refresh every time)
-    RuntimeSongLoader::API::RefreshSongs(false, [this, songToPlay](std::vector<GlobalNamespace::CustomPreviewBeatmapLevel*> const&){
+    RuntimeSongLoader::API::RefreshSongs(false, [this, songToPlay](std::vector<CustomPreviewBeatmapLevel*> const&){
         QuestUI::MainThreadScheduler::Schedule(
         [this, songToPlay]
         {
@@ -905,7 +896,7 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
             auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->GetHash()));
             if(level.has_value())
             {
-                currentLevel = reinterpret_cast<GlobalNamespace::IPreviewBeatmapLevel*>(level.value());
+                currentLevel = reinterpret_cast<IPreviewBeatmapLevel*>(level.value());
             } else {
                 ERROR("Song somehow is not downloaded, pls fix");
                 return;
@@ -913,7 +904,7 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
 
             fromBSS = true;
             openToCustom = true;
-            GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(EnterSolo(currentLevel)));
+            coro(EnterSolo(currentLevel));
         });
     });
 }
