@@ -45,8 +45,12 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
 
     cancelConfirmCallback = nullptr;
     
-    // Trigger refresh of songs cause why not xD
-    // RuntimeSongLoader::API::RefreshSongs(false);
+    // Trigger refresh of songs only if needed
+    if (DownloadHistoryViewController->hasUnloadedDownloads) {
+        RuntimeSongLoader::API::RefreshSongs(false);
+        DownloadHistoryViewController->hasUnloadedDownloads = false;
+    }
+
 
     // Hide all modals
     for(auto modal: SongListController->GetComponentsInChildren<HMUI::ModalView*>()) {

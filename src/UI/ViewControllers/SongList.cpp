@@ -887,8 +887,8 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
     if(fcInstance->ConfirmCancelOfPending([this, songToPlay](){PlaySong(songToPlay);} ))
         return;
 
-    // Make sure to load all downloaded songs before going to the next step (Allows us not to do song refresh every time)
-    RuntimeSongLoader::API::RefreshSongs(false, [this, songToPlay](std::vector<CustomPreviewBeatmapLevel*> const&){
+    // Hopefully not leaking any memory
+    auto fun = [this, songToPlay](std::vector<CustomPreviewBeatmapLevel*> const& = std::vector<CustomPreviewBeatmapLevel*>()){
         QuestUI::MainThreadScheduler::Schedule(
         [this, songToPlay]
         {
@@ -906,7 +906,13 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
             openToCustom = true;
             coro(EnterSolo(currentLevel));
         });
-    });
+    };
+
+    if (fcInstance->DownloadHistoryViewController->hasUnloadedDownloads) {
+        RuntimeSongLoader::API::RefreshSongs(false, fun);
+    } else {
+        fun();
+    }
 }
 
 

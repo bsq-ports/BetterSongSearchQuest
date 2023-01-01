@@ -260,6 +260,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                     firstEntry->downloadProgress = 1.0f;
                                     DEBUG("Success downloading the song");
                                     RefreshTable(true);
+                                    hasUnloadedDownloads = true;
                                     this->ProcessDownloads(forceTableReload);
                                 }
                                 // If has no more dls left, refresh songs
@@ -267,6 +268,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                     // Do not refresh songs if not active anymore
                                     if (this->get_isActiveAndEnabled()) {
                                         RuntimeSongLoader::API::RefreshSongs(false);
+                                        hasUnloadedDownloads = false;
                                     }
                                 }
                                 if (fcInstance->SongListController->currentSong != nullptr) {
