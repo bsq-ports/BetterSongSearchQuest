@@ -26,7 +26,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Aw
 }
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling) {
-    //if (!firstActivation) return;
+    if (!firstActivation) return;
 
     SetTitle(il2cpp_utils::newcsstr("Better Song Search"), HMUI::ViewController::AnimationType::In);
     showBackButton = true;
