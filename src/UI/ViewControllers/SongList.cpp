@@ -276,22 +276,22 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                                return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
                            }},
         {SortMode::Latest_Ranked, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
-                           {
-                               int struct1RankedUpdateTime;
-                               auto struct1DiffVec = struct1->GetDifficultyVector();
-                               for(auto const& i : struct1DiffVec)
-                               {
-                                   struct1RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
-                               }
+            {
+                song_data_core::UnixTime struct1RankedUpdateTime = 0;
+                auto struct1DiffVec = struct1->GetDifficultyVector();
+                for(auto const& i : struct1DiffVec)
+                {
+                    struct1RankedUpdateTime = std::max(i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
+                }
 
-                               int struct2RankedUpdateTime;
-                               auto struct2DiffVec = struct2->GetDifficultyVector();
-                               for(auto const& i : struct2DiffVec)
-                               {
-                                   struct2RankedUpdateTime = std::max((int)i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
-                               }
-                               return (struct1RankedUpdateTime > struct2RankedUpdateTime);
-                           }},
+                song_data_core::UnixTime struct2RankedUpdateTime = 0;
+                auto struct2DiffVec = struct2->GetDifficultyVector();
+                for(auto const& i : struct2DiffVec)
+                {
+                    struct2RankedUpdateTime = std::max(i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
+                }
+                return (struct1RankedUpdateTime > struct2RankedUpdateTime);
+            }},
         {SortMode::Most_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
                            {
                                return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
@@ -1062,7 +1062,9 @@ void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::Bea
         return;
     }
     currentSong = song;
-    
+
+    // LogSongInfo(song);
+
     DEBUG("Updating details");
     this->UpdateDetails();
 }
