@@ -666,7 +666,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     } else {
         this->DownloadSongList();
     }
-
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/SongList.bsml";
     #endif
@@ -737,8 +736,7 @@ void ViewControllers::SongListController::SelectRandom() {
     }
     auto id = BetterSongSearch::Util::random(0, cellsNumber - 1);
     songListTable()->SelectCellWithIdx(id, true);
-    songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, true);
-    
+    songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, false);
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
@@ -762,8 +760,6 @@ void ViewControllers::SongListController::ForcedUICloseCancel() {
     fcInstance->ConfirmCancelCallback(false);
     this->downloadCancelConfirmModal->Hide();
 };
-
-
 
 custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateDataAndFiltersCoro() {
     // Wait
@@ -852,12 +848,13 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
         while(webRequest->GetDownloadProgress() < 1.0f);
         INFO("Download complete");
         UnityEngine::AudioClip* clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+        DEBUG("Clip size: {}", pretty_bytes(webRequest->get_downloadedBytes()));
         finished(clip);
     }
     co_return;
 }
 
-custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level) {
+void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level) {
     fcInstance->Close(true, false);
     
     auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
@@ -873,7 +870,6 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::EnterSolo(
     soloFreePlayFlowCoordinator->Setup(state);
 
     manager.GoToSongSelect();
-    co_return;
 }
 
 
@@ -893,11 +889,10 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
         return;
 
     // Hopefully not leaking any memory
-    auto fun = [this, songToPlay](std::vector<CustomPreviewBeatmapLevel*> const& = std::vector<CustomPreviewBeatmapLevel*>()){
+    auto fun = [this, songToPlay](){
         QuestUI::MainThreadScheduler::Schedule(
         [this, songToPlay]
         {
-            backButton = UnityEngine::GameObject::Find("BackButton");
             auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->GetHash()));
             if(level.has_value())
             {
@@ -909,12 +904,16 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
 
             fromBSS = true;
             openToCustom = true;
-            coro(EnterSolo(currentLevel));
+            EnterSolo(currentLevel);
         });
     };
 
     if (fcInstance->DownloadHistoryViewController->hasUnloadedDownloads) {
-        RuntimeSongLoader::API::RefreshSongs(false, fun);
+        RuntimeSongLoader::API::RefreshSongs(false, 
+        [fun](std::vector<CustomPreviewBeatmapLevel*> const&){
+            fun();
+        });
+
     } else {
         fun();
     }
@@ -943,20 +942,26 @@ void ViewControllers::SongListController::UpdateDetails () {
     bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->GetHash()));
     #ifdef SONGDOWNLOADER
     
+    if (songAssetLoadCanceller != nullptr) {
+        songAssetLoadCanceller->Cancel();
+    }
+	songAssetLoadCanceller = System::Threading::CancellationTokenSource::New_ctor();
     // if beatmap is loaded
     if (loaded) {
-        System::Threading::Tasks::Task_1<UnityEngine::Sprite*>* coverTask = beatmap.value()->GetCoverImageAsync(System::Threading::CancellationToken::get_None());
-        auto action = il2cpp_utils::MakeDelegate<System::Action_1<System::Threading::Tasks::Task*>*>(classof(System::Action_1<System::Threading::Tasks::Task*>*), (std::function<void()>)[coverTask, this, beatmap] {
-                UnityEngine::Sprite* cover = coverTask->get_ResultOnSuccess();
-                if (cover) {
-                    this->coverImage->set_sprite(cover);
-                    coverLoading->set_enabled(false);
-                }
+        using Task = System::Threading::Tasks::Task_1<UnityEngine::Sprite*>*;
+        using Action = System::Action_1<System::Threading::Tasks::Task*>*;
+
+        Task coverTask = beatmap.value()->GetCoverImageAsync(songAssetLoadCanceller->get_Token());     
+        auto action = custom_types::MakeDelegate<Action>(classof(Action), static_cast<std::function<void(Task)>>([this](Task resultTask) {
+            UnityEngine::Sprite* cover = resultTask->get_ResultOnSuccess();
+            if (cover) {
+                this->coverImage->set_sprite(cover);
+                coverLoading->set_enabled(false);
             }
-        );
+        }));
         reinterpret_cast<System::Threading::Tasks::Task*>(coverTask)->ContinueWith(action);
     } else {
-        this->coverImage->set_sprite(defaultImage);
+        
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
@@ -964,6 +969,7 @@ void ViewControllers::SongListController::UpdateDetails () {
             QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success] {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
+                    DEBUG("Image size: {}", pretty_bytes(bytes.size()));
                     if (song->GetHash() != this->currentSong->GetHash()) return;
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
                     this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));

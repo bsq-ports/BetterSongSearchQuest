@@ -25,7 +25,11 @@
 #include "HMUI/TextSegmentedControlCell.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "Util/TextUtil.hpp"
+#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
 #include <regex>
+#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 using namespace QuestUI;
 using namespace BetterSongSearch::Util;
@@ -97,8 +101,19 @@ extern "C" void setup(ModInfo& info) {
         } else {
             filterOptions.uploaders.clear();
         }
-    }).detach();
+    }).detach();   
 }
+
+// MAKE_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoordinator::DidActivate, void, GlobalNamespace::MainFlowCoordinator* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+//     MainFlowCoordinator_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+//     static bool debugstarted = false; 
+//     // if (!debugstarted) {
+//     //     debugstarted = true;
+//     //     QuestUI::MainThreadScheduler::Schedule([]{
+//     //         coro(manager.Debug());
+//     //     });
+//     // }
+// }
 
 MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, void, HMUI::FlowCoordinator* self, HMUI::FlowCoordinator* flowCoordinator, HMUI::ViewController::AnimationDirection animationDirection, System::Action* finishedCallback, bool immediately) {
     if(!getPluginConfig().ReturnToBSS.GetValue()) {
@@ -185,6 +200,7 @@ extern "C" void load() {
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
     INSTALL_HOOK(getLoggerOld(), LevelFilteringNavigationController_Setup);
+    // INSTALL_HOOK(getLoggerOld(), MainFlowCoordinator_DidActivate);
     
 
     custom_types::Register::AutoRegister();

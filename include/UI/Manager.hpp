@@ -9,45 +9,30 @@
 #include "UnityEngine/UI/Button_ButtonClickedEvent.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
+using namespace QuestUI;
+using namespace BetterSongSearch::UI;
+using namespace BetterSongSearch::Util;
+using namespace GlobalNamespace;
 
 namespace BetterSongSearch::UI {
     class Manager
     {
         HMUI::FlowCoordinator* parentFlow;
         SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
+        BSML::MenuButton * menuButton;
 
         public:
             Manager(Manager const&) = delete; // no accidental copying
             Manager() = default;
 
-            void Init(){
-                BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this](){
-                    DEBUG("MenuButtonClick");
-                    ShowFlow(false);
-                } );
-            }
+            void Init();
 
-            
+            custom_types::Helpers::Coroutine Debug();
 
-            void ShowFlow(bool immediately) {
-                if (!flow) {
-                    flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
-                }
 
-                parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-                parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
-            }
+            void ShowFlow(bool immediately);
 
-            void GoToSongSelect() {
-                SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
-                if (!songSelectButton) {
-                    songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
-                }
-                if (!songSelectButton) {
-                    return;
-                }
-                songSelectButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
-            }
+            void GoToSongSelect();
     };
 
 

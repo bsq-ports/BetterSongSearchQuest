@@ -32,7 +32,8 @@
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-
+#include "System/Threading/CancellationToken.hpp"
+#include "System/Threading/CancellationTokenSource.hpp"
 #include "main.hpp"
 #include "FilterOptions.hpp"
 #include "Util/RatelimitCoroutine.hpp"
@@ -119,6 +120,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     
 
     DECLARE_CTOR(ctor);
+    DECLARE_SIMPLE_DTOR();
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
 
@@ -197,13 +199,12 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator*, multiplayerLevelSelectionFlowCoordinator);
 
 
+    DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);
+
 public:
     HMUI::TableView* songListTable() {
         if(songList) {return songList->tableView;} else return nullptr;
     }
-        
-    std::vector<std::string> songsWithScores;
-    FilterOptions filterOptions;
 
     void SelectSongByHash(std::string hash);
     void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
@@ -230,10 +231,11 @@ public:
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 
+
     void PlaySong(const SDC_wrapper::BeatStarSong* song = nullptr);
     void DownloadSongList();
     void RetryDownloadSongList();
 
-    custom_types::Helpers::Coroutine EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level);
+    void EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level);
 )
 

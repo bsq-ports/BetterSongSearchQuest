@@ -116,6 +116,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
     DECLARE_CTOR(ctor);
+    DECLARE_SIMPLE_DTOR();
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
