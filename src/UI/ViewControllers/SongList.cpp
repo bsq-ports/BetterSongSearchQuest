@@ -658,6 +658,11 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     // Reset table the first time and load data
     if (DataHolder::loadedSDC == true) {
         ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
+
+        // Reinitialize the label to show number of songs
+        if (fcInstance->FilterViewController != nullptr && fcInstance->FilterViewController->m_CachedPtr.m_value != nullptr) {
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songList.size()));
+        }
     } else {
         this->DownloadSongList();
     }
