@@ -1013,19 +1013,19 @@ void ViewControllers::SongListController::UpdateDetails () {
     #endif
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
-    // for (auto diff: song->GetDifficultyVector()) {
-    //     float nps = (float) diff->notes / (float) song->duration_secs;
-    //     float njs = diff->njs;
-    //     minNPS = std::min(nps, minNPS);
-    //     maxNPS = std::max(nps, maxNPS);
+    for (const auto &diff: *song) {
+        float nps = (float) diff.notes / (float) song->songDurationSeconds;
+        float njs = diff.njs;
+        minNPS = std::min(nps, minNPS);
+        maxNPS = std::max(nps, maxNPS);
 
-    //     minNJS = std::min(njs, minNJS);
-    //     maxNJS = std::max(njs, maxNJS);
-    // }
+        minNJS = std::min(njs, minNJS);
+        maxNJS = std::max(njs, maxNJS);
+    }
 
     // downloadButton.set.text = "Download";
     SetIsDownloaded(downloaded);
-    // selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
     selectedSongName->set_text(song->songName());
     selectedSongAuthor->set_text(song->songAuthorName());
 }
