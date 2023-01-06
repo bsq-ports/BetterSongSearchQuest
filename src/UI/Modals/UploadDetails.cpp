@@ -19,22 +19,22 @@ using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
-const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"};
+const std::vector<std::string> CHAR_GROUPING = {"Custom", "Standard", "OneSaber", "NoArrows", "NinetyDegree", "ThreeSixtyDegree", "LightShow", "Lawless"};
 
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, UploadDetails);
 
 //name and count
-// std::unordered_map<std::string, int> GroupCharByDiff(std::vector<const SDC_wrapper::BeatStarSongDifficultyStats *> diffs) {
-//     std::unordered_map<std::string, int> groupedChars;
-//     for(auto diff : diffs) {
-//         auto key = CHAR_GROUPING[(int)diff->diff_characteristics];
-//         if(!groupedChars.contains(key))
-//             groupedChars.emplace(key, 1);
-//         else groupedChars[key] += 1;
-//     }
-//     return groupedChars;
-// }
+std::unordered_map<std::string, int> GroupCharByDiff(const SongDetailsCache::Song * song) {
+    std::unordered_map<std::string, int> groupedChars;
+    for(const auto& diff : *song) {
+        auto key = CHAR_GROUPING[(int)diff.characteristic];
+        if(!groupedChars.contains(key))
+            groupedChars.emplace(key, 1);
+        else groupedChars[key] += 1;
+    }
+    return groupedChars;
+}
 
 void Modals::UploadDetails::OnEnable()
 {
@@ -60,18 +60,16 @@ void Modals::UploadDetails::OpenModal(const SongDetailsCache::Song* song)
     }
 
     // Fill data
-    // this->selec
-    // auto diffs = song->GetDifficulty();
-    // auto groupedDiffs = GroupCharByDiff(diffs);
+    auto groupedDiffs = GroupCharByDiff(song);
     std::string characteristicsText = "";
     int loopCount = 1;
-    // for(auto& it: groupedDiffs) {
-    //     if(loopCount < groupedDiffs.size())
-    //         characteristicsText.append(fmt::format("{}x {}, ", it.second, it.first));
-    //     else
-    //         characteristicsText.append(fmt::format("{}x {}", it.second, it.first));
-    //     loopCount++;
-    // }
+    for(auto& it: groupedDiffs) {
+        if(loopCount < groupedDiffs.size())
+            characteristicsText.append(fmt::format("{}x {}, ", it.second, it.first));
+        else
+            characteristicsText.append(fmt::format("{}x {}", it.second, it.first));
+        loopCount++;
+    }
     selectedCharacteristics->set_text(characteristicsText);
     selectedSongKey->set_text(song->key());
     selectedRating->set_text(fmt::format("{:.1f}%", song->rating() * 100));
