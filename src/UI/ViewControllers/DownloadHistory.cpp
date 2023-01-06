@@ -113,14 +113,14 @@ HMUI::TableCell *ViewControllers::DownloadHistoryViewController::CellForIdx(HMUI
     return ViewControllers::DownloadListTableData::GetCell(tableView)->PopulateWithSongData(downloadEntryList[idx]);
 }
 
-bool ViewControllers::DownloadHistoryViewController::TryAddDownload(const SDC_wrapper::BeatStarSong *song, bool isBatch)
+bool ViewControllers::DownloadHistoryViewController::TryAddDownload(const SongDetailsCache::Song *song, bool isBatch)
 {
     DownloadHistoryEntry *existingDLHistoryEntry = nullptr;
 
     for (auto entry : downloadEntryList)
     {
 
-        if (entry->key == song->key.string_data)
+        if (entry->key == song->key())
         {
             existingDLHistoryEntry = entry;
             break;
@@ -274,12 +274,12 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 if (fcInstance->SongListController->currentSong != nullptr) {
                                     if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
                                         // NESTING HELLLL      
-                                        if (fcInstance->SongListController->currentSong->GetHash() == firstEntry->hash) {
+                                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
                                             fcInstance->SongListController->SetIsDownloaded(true);
                                         }
                                         fcInstance->SongListController->songListTable()->RefreshCells(false, true);
                                     } else {
-                                        if (fcInstance->SongListController->currentSong->GetHash() == firstEntry->hash) {
+                                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
                                             fcInstance->SongListController->SetIsDownloaded(false);
                                         }
                                     }

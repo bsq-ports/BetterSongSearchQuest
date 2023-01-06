@@ -59,6 +59,7 @@
 #include "System/Threading/Tasks/Task_1.hpp"
 #include "Util/Debug.hpp"
 #include <cmath>
+#include "song-details/shared/SongDetails.hpp"
 
 #define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -83,15 +84,6 @@ DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
 //////////// Utils
 
-double GetMinStarValue(const SDC_wrapper::BeatStarSong* song) {
-    auto diffVec = song->GetDifficultyVector();
-    double min = song->GetMaxStarValue();
-    for (auto diff: diffVec) {
-        if (diff->stars > 0.0 && diff->stars < min) min = diff->stars;
-    }
-    return min;
-}
-
 
 
 const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"};
@@ -106,16 +98,16 @@ std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 int currentSelectedSong = 0;
 
-using SortFunction = std::function<bool(SDC_wrapper::BeatStarSong const*, SDC_wrapper::BeatStarSong const*)>;
+using SortFunction = std::function<bool(SongDetailsCache::Song const* , SongDetailsCache::Song const*)>;
 
 //////////////////// UTILS //////////////////////
-bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
+bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
 {
     auto const& filterOptions = DataHolder::filterOptionsCache;
-    std::string songHash = song->hash.string_data;
+    std::string songHash = song->hash();
 
     if(filterOptions.uploaders.size() != 0) {
-		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->GetAuthor()))) != filterOptions.uploaders.end()) {
+		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->levelAuthorName()))) != filterOptions.uploaders.end()) {
             if(filterOptions.uploadersBlackList)
                 return false;
 		} else if (!filterOptions.uploadersBlackList) {
@@ -124,10 +116,10 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 	}
 
 
-    if(song->uploaded_unix_time < filterOptions.minUploadDate)
+    if(song->uploadTimeUnix < filterOptions.minUploadDate)
         return false;
 
-    float songRating = std::isnan(song->GetRating())? 0: song->GetRating();
+    float songRating = std::isnan(song->rating())? 0: song->rating();
     if(songRating < filterOptions.minRating) return false;
     
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
@@ -157,37 +149,37 @@ bool BetterSongSearch::UI::MeetsFilter(const SDC_wrapper::BeatStarSong* song)
 
     bool passesDiffFilter = true;
 
-    for(auto diff : song->GetDifficultyVector())
-    {
-        if(DifficultyCheck(diff, song)) {
-            passesDiffFilter = true;
-            break;
-        }
-        else
-            passesDiffFilter = false;
-    }
+    // for(const auto& diff : *song)
+    // {
+    //     if(DifficultyCheck(diff, song)) {
+    //         passesDiffFilter = true;
+    //         break;
+    //     }
+    //     else
+    //         passesDiffFilter = false;
+    // }
 
     if(!passesDiffFilter)
         return false;
 
-    if(song->duration_secs < filterOptions.minLength) return false;
-    if(song->duration_secs > filterOptions.maxLength) return false;
+    if(song->songDurationSeconds < filterOptions.minLength) return false;
+    if(song->songDurationSeconds > filterOptions.maxLength) return false;
 
 
     return true;
 }
 
-bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song) {
+bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficulty* diff, const SongDetailsCache::Song* song) {
     auto const& currentFilter = DataHolder::filterOptionsCache;
 
 
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
-        if(!diff->ranked)
+        if(!diff->ranked())
             return false;
 
     // If we have a ranked sort, we force ranked filter
     if (currentFilter.isRankedSort) {
-        if (!diff->ranked)
+        if (!diff->ranked())
             return false;
     }
 
@@ -200,19 +192,19 @@ bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDiffic
         case FilterOptions::DifficultyFilterType::All:
             break;
         case FilterOptions::DifficultyFilterType::Easy:
-            if(diff->GetName() != "Easy") return false;
+            if(diff->difficulty != SongDetailsCache::MapDifficulty::Easy) return false;
             break;
         case FilterOptions::DifficultyFilterType::Normal:
-            if(diff->GetName() != "Normal") return false;
+            if(diff->difficulty != SongDetailsCache::MapDifficulty::Normal) return false;
             break;
         case FilterOptions::DifficultyFilterType::Hard:
-            if(diff->GetName() != "Hard") return false;
+            if(diff->difficulty != SongDetailsCache::MapDifficulty::Hard) return false;
             break;
         case FilterOptions::DifficultyFilterType::Expert:
-            if(diff->GetName() != "Expert") return false;
+            if(diff->difficulty != SongDetailsCache::MapDifficulty::Expert) return false;
             break;
         case FilterOptions::DifficultyFilterType::ExpertPlus:
-            if(diff->GetName() != "ExpertPlus") return false;
+            if(diff->difficulty != SongDetailsCache::MapDifficulty::ExpertPlus) return false;
             break;
     }
 
@@ -221,42 +213,46 @@ bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDiffic
         case FilterOptions::CharFilterType::All:
             break;
         case FilterOptions::CharFilterType::Custom:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Unknown) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Custom) return false;
             break;
         case FilterOptions::CharFilterType::Standard:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Standard) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Standard) return false;
             break;
         case FilterOptions::CharFilterType::OneSaber:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::OneSaber) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::OneSaber) return false;
             break;
         case FilterOptions::CharFilterType::NoArrows:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::NoArrows) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::NoArrows) return false;
             break;
         case FilterOptions::CharFilterType::NinetyDegrees:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree90) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::NinetyDegree) return false;
             break;
         case FilterOptions::CharFilterType::ThreeSixtyDegrees:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Degree360) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::ThreeSixtyDegree) return false;
             break;
         case FilterOptions::CharFilterType::LightShow:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lightshow) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::LightShow) return false;
             break;
         case FilterOptions::CharFilterType::Lawless:
-            if(diff->diff_characteristics != song_data_core::BeatStarCharacteristics::Lawless) return false;
+            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Lawless) return false;
             break;
     }
 
     if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    auto requirements = diff->GetRequirementVector();
-    if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
-        if(std::find(requirements.begin(), requirements.end(), REQUIREMENTS[(int)currentFilter.modRequirement]) == requirements.end())
-            return false;
-    }
+    // auto requirements = diff->mods;
+    // if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
+    //     [(int)currentFilter.modRequirement])
+    //     if () {
 
-    if(song->duration_secs > 0) {
-        float nps = (float)diff->notes / (float)song->duration_secs;
+    //     }
+    //     if(std::find(requirements.begin(), requirements.end(), REQUIREMENTS[(int)currentFilter.modRequirement]) == requirements.end())
+    //         return false;
+    // }
+
+    if(song->songDurationSeconds > 0) {
+        float nps = (float)diff->notes / (float)song->songDurationSeconds;
 
         if(nps < currentFilter.minNPS || nps > currentFilter.maxNPS)
             return false;
@@ -267,66 +263,54 @@ bool BetterSongSearch::UI::DifficultyCheck(const SDC_wrapper::BeatStarSongDiffic
 
 
 static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
-        {SortMode::Newest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Newest
+        {SortMode::Newest, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Newest
                            {
-                               return (struct1->uploaded_unix_time > struct2->uploaded_unix_time);
+                               return (struct1->uploadTimeUnix > struct2->uploadTimeUnix);
                            }},
-        {SortMode::Oldest, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Oldest
+        {SortMode::Oldest, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Oldest
                            {
-                               return (struct1->uploaded_unix_time < struct2->uploaded_unix_time);
+                               return (struct1->uploadTimeUnix < struct2->uploadTimeUnix);
                            }},
-        {SortMode::Latest_Ranked, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Latest Ranked
+        {SortMode::Latest_Ranked, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Latest Ranked
             {
-                song_data_core::UnixTime struct1RankedUpdateTime = 0;
-                auto struct1DiffVec = struct1->GetDifficultyVector();
-                for(auto const& i : struct1DiffVec)
-                {
-                    struct1RankedUpdateTime = std::max(i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
-                }
-
-                song_data_core::UnixTime struct2RankedUpdateTime = 0;
-                auto struct2DiffVec = struct2->GetDifficultyVector();
-                for(auto const& i : struct2DiffVec)
-                {
-                    struct2RankedUpdateTime = std::max(i->ranked_update_time_unix_epoch, struct2RankedUpdateTime);
-                }
-                return (struct1RankedUpdateTime > struct2RankedUpdateTime);
+         
+                return (struct1->rankedChangeUnix > struct2->rankedChangeUnix);
             }},
-        {SortMode::Most_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Most Stars
+        {SortMode::Most_Stars, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Most Stars
                            {
-                               return struct1->GetMaxStarValue() > struct2->GetMaxStarValue();
+                               return struct1->maxStar() > struct2->maxStar();
                            }},
-        {SortMode::Least_Stars, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Least Stars
+        {SortMode::Least_Stars, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Least Stars
                            {
-                               return GetMinStarValue(struct1) < GetMinStarValue(struct2);
+                               return struct1->minStar() < struct2->minStar();
                            }},
-        {SortMode::Best_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Best rated
+        {SortMode::Best_rated, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Best rated
                            {
                                 // Move nan to the end
-                               float v1 = std::isnan(struct1->rating)? 0: struct1->rating;
-                               float v2 = std::isnan(struct2->rating)? 0: struct2->rating;
+                               float v1 = std::isnan(struct1->rating())? 0: struct1->rating();
+                               float v2 = std::isnan(struct2->rating())? 0: struct2->rating();
                                return (v1 > v2);
                            }},
-        {SortMode::Worst_rated, [] (const SDC_wrapper::BeatStarSong* struct1, const SDC_wrapper::BeatStarSong* struct2)//Worst rated
+        {SortMode::Worst_rated, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Worst rated
                             {
                                 // Move nan to the end
-                                float v1 = std::isnan(struct1->rating)? 9999: struct1->rating;
-                                float v2 = std::isnan(struct2->rating)? 9999: struct2->rating;
+                                float v1 = std::isnan(struct1->rating())? 9999: struct1->rating();
+                                float v2 = std::isnan(struct2->rating())? 9999: struct2->rating();
                                 return (v1 < v2);
                            }}
 };
 
 
-bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::string> searchTexts)
+bool SongMeetsSearch(const SongDetailsCache::Song* song, std::vector<std::string> searchTexts)
 {
     int words = 0;
     int matches = 0;
 
-    std::string songName = removeSpecialCharacter(toLower(song->GetName()));
-    std::string songSubName = removeSpecialCharacter(toLower(song->GetSubName()));
-    std::string songAuthorName = removeSpecialCharacter(toLower(song->GetSongAuthor()));
-    std::string levelAuthorName = removeSpecialCharacter(toLower(song->GetAuthor()));
-    std::string songKey = toLower(song->key.string_data);
+    std::string songName = removeSpecialCharacter(toLower(song->songName()));
+    // std::string songSubName = removeSpecialCharacter(toLower(song->son));
+    std::string songAuthorName = removeSpecialCharacter(toLower(song->songAuthorName()));
+    std::string levelAuthorName = removeSpecialCharacter(toLower(song->levelAuthorName()));
+    std::string songKey = toLower(song->key());
 
     for (int i = 0; i < searchTexts.size(); i++)
     {
@@ -339,7 +323,7 @@ bool SongMeetsSearch(const SDC_wrapper::BeatStarSong* song, std::vector<std::str
 
 
         if (songName.find(searchTerm) != std::string::npos ||
-            songSubName.find(searchTerm) != std::string::npos ||
+            // songSubName.find(searchTerm) != std::string::npos ||
             songAuthorName.find(searchTerm) != std::string::npos ||
             levelAuthorName.find(searchTerm) != std::string::npos ||
             songKey.find(searchTerm) != std::string::npos)
@@ -359,8 +343,13 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         return;
     }
     
+    // Skip if song details is null
+    if (DataHolder::songDetails == nullptr) {
+        return;
+    }
+
     // Skip if we have no songs
-    int totalSongs = DataHolder::songList.size();
+    int totalSongs = DataHolder::songDetails->songs.size();
     if (totalSongs == 0) {
         return;
     }
@@ -439,7 +428,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             DEBUG("Filtering");
             DataHolder::filteredSongList.clear();
             // Set up variables for threads
-            int totalSongs = DataHolder::songList.size();
+            int totalSongs = DataHolder::songDetails->songs.size();
 
             std::mutex valuesMutex;
             std::atomic_int index = 0;
@@ -449,11 +438,11 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 t[i] = std::thread([&index, &valuesMutex, totalSongs](){
                     int i = index++;
                     while(i < totalSongs) {
-                        auto item = DataHolder::songList[i];
-                        bool meetsFilter = MeetsFilter(item);
+                        const SongDetailsCache::Song & item = DataHolder::songDetails->songs.at(i);
+                        bool meetsFilter = MeetsFilter(&item);
                         if (meetsFilter) {
                             std::lock_guard<std::mutex> lock(valuesMutex);
-                            DataHolder::filteredSongList.push_back(item);
+                            DataHolder::filteredSongList.push_back(&item);
                         }
                         i = index++;
                     }
@@ -519,7 +508,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             INFO("table reset in {} ms",  after-before);
 
             if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr.m_value) {
-                if(DataHolder::filteredSongList.size() == DataHolder::songList.size()) {
+                if(DataHolder::filteredSongList.size() == DataHolder::songDetails->songs.size()) {
                     songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
                 } else {
                     songSearchPlaceholder->set_text(fmt::format("Search {} songs", DataHolder::filteredSongList.size()));
@@ -661,7 +650,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         // Reinitialize the label to show number of songs
         if (fcInstance->FilterViewController != nullptr && fcInstance->FilterViewController->m_CachedPtr.m_value != nullptr) {
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songList.size()));
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
         }
     } else {
         this->DownloadSongList();
@@ -672,13 +661,19 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 }
 
 void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
-    for(auto song : DataHolder::songList) {
-        if(song->hash.string_data == hash) {
-            SetSelectedSong(song);
-            return;
-        }
+    if (DataHolder::songDetails == nullptr) {
+        DEBUG("Song details is not loaded yet");
+        return;
     }
-    DEBUG("Uh oh, you somehow downloaded a song that was only a figment of your imagination");
+
+    DEBUG("Song hash: {}", hash);
+    auto & song = DataHolder::songDetails->songs.FindByHash(hash);
+    if (song == SongDetailsCache::Song::none) {
+        DEBUG("Uh oh, you somehow downloaded a song that was only a figment of your imagination");
+        return;
+    }
+
+    SetSelectedSong(&song);
 }
 
 
@@ -877,7 +872,7 @@ void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level)
 void ViewControllers::SongListController::Play () {
     this->PlaySong();
 }
-void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarSong* songToPlay) {
+void ViewControllers::SongListController::PlaySong (const SongDetailsCache::Song* songToPlay) {
     if (songToPlay == nullptr) {
         songToPlay = currentSong;
         if (currentSong == nullptr) {
@@ -893,7 +888,7 @@ void ViewControllers::SongListController::PlaySong (const SDC_wrapper::BeatStarS
         QuestUI::MainThreadScheduler::Schedule(
         [this, songToPlay]
         {
-            auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->GetHash()));
+            auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->hash()));
             if(level.has_value())
             {
                 currentLevel = reinterpret_cast<IPreviewBeatmapLevel*>(level.value());
@@ -937,9 +932,9 @@ void ViewControllers::SongListController::UpdateDetails () {
     }
     
     auto song = currentSong;
-    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->GetHash()));
+    auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap.has_value();
-    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->GetHash()));
+    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->hash()));
     #ifdef SONGDOWNLOADER
     
     if (songAssetLoadCanceller != nullptr) {
@@ -962,7 +957,7 @@ void ViewControllers::SongListController::UpdateDetails () {
         reinterpret_cast<System::Threading::Tasks::Task*>(coverTask)->ContinueWith(action);
     } else {
         
-        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
         GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
@@ -970,7 +965,7 @@ void ViewControllers::SongListController::UpdateDetails () {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
-                    if (song->GetHash() != this->currentSong->GetHash()) return;
+                    if (song->hash() != this->currentSong->hash()) return;
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
                     this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
                     coverLoading->set_enabled(false);
@@ -1001,7 +996,7 @@ void ViewControllers::SongListController::UpdateDetails () {
 
             auto ssp = songPreviewPlayer;
             
-            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->GetHash()));
+            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
 
             coro(GetPreview(
                 newUrl, 
@@ -1018,21 +1013,21 @@ void ViewControllers::SongListController::UpdateDetails () {
     #endif
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
-    for (auto diff: song->GetDifficultyVector()) {
-        float nps = (float) diff->notes / (float) song->duration_secs;
-        float njs = diff->njs;
-        minNPS = std::min(nps, minNPS);
-        maxNPS = std::max(nps, maxNPS);
+    // for (auto diff: song->GetDifficultyVector()) {
+    //     float nps = (float) diff->notes / (float) song->duration_secs;
+    //     float njs = diff->njs;
+    //     minNPS = std::min(nps, minNPS);
+    //     maxNPS = std::max(nps, maxNPS);
 
-        minNJS = std::min(njs, minNJS);
-        maxNJS = std::max(njs, maxNJS);
-    }
+    //     minNJS = std::min(njs, minNJS);
+    //     maxNJS = std::max(njs, maxNJS);
+    // }
 
     // downloadButton.set.text = "Download";
     SetIsDownloaded(downloaded);
-    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
-    selectedSongName->set_text(song->GetName());
-    selectedSongAuthor->set_text(song->GetSongAuthor());
+    // selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongName->set_text(song->songName());
+    selectedSongAuthor->set_text(song->songAuthorName());
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
@@ -1040,8 +1035,8 @@ void ViewControllers::SongListController::FilterByUploader () {
         return;
     }
     
-    fcInstance->FilterViewController->uploadersString = this->currentSong->GetAuthor();
-    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->GetAuthor());
+    fcInstance->FilterViewController->uploadersString = this->currentSong->levelAuthorName();
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->levelAuthorName());
     fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }
@@ -1067,9 +1062,9 @@ void ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std:
     this->UpdateSearchedSongsList();
 }
 
-void ViewControllers::SongListController::SetSelectedSong(const SDC_wrapper::BeatStarSong* song) {
+void ViewControllers::SongListController::SetSelectedSong(const SongDetailsCache::Song* song) {
     // TODO: Fill all fields, download image, activate buttons
-    if (currentSong != nullptr && currentSong->GetHash() == song->GetHash()) {
+    if (currentSong != nullptr && currentSong->hash() == song->hash()) {
         return;
     }
     currentSong = song;
@@ -1099,11 +1094,8 @@ void ViewControllers::SongListController::DownloadSongList() {
     std::thread([this]{
         DataHolder::loadingSDC = true;
         try {
-            auto songs = SDC_wrapper::BeatStarSong::GetAllSongs();
-
-            getLoggerOld().info("Successfully got songs!");
-            DataHolder::songList = songs;
-            
+            auto songDetails = SongDetailsCache::SongDetails::Init().get();
+            DataHolder::songDetails = songDetails;
             INFO("Finished loading songs.");
             DataHolder::loadedSDC = true;
             DataHolder::loadingSDC = false;
@@ -1114,12 +1106,12 @@ void ViewControllers::SongListController::DownloadSongList() {
                 fcInstance->SongListController->filterChanged = true;
                 fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
             }
-            QuestUI::MainThreadScheduler::Schedule([this]{
+            QuestUI::MainThreadScheduler::Schedule([this, songDetails]{
                 if (this!= nullptr && this->m_CachedPtr.m_value != nullptr && this->get_isActiveAndEnabled() ) {
                     this->filterChanged = true;
                     fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
                     // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
-                    fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songList.size()));
+                    fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", songDetails->songs.size()));
                 }
             });
         } catch (...) {

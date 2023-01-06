@@ -13,9 +13,9 @@
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "Util/RatelimitCoroutine.hpp"
-#include "sdc-wrapper/shared/BeatStarSong.hpp"
-#include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
-#include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
+#include "song-details/shared/Data/Song.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
@@ -36,5 +36,5 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::
 
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, rootModal);
     public: 
-        void OpenModal(const SDC_wrapper::BeatStarSong* song);
+        void OpenModal(const SongDetailsCache::Song* song);
 )

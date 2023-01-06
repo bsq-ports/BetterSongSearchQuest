@@ -13,7 +13,9 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "sdc-wrapper/shared/BeatStarSong.hpp"
+#include "song-details/shared/Data/Song.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
@@ -34,8 +36,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTable
 
 
 public:
-    CustomSongListTableCell* PopulateWithSongData(const SDC_wrapper::BeatStarSong* entry);
-    const SDC_wrapper::BeatStarSong* entry;
+    CustomSongListTableCell* PopulateWithSongData(const SongDetailsCache::Song* entry);
+    const SongDetailsCache::Song* entry;
 
     
     void SetFontSizes();

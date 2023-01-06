@@ -39,7 +39,7 @@ void Modals::MultiDL::StartMultiDownload()
     {   
         auto song = DataHolder::sortedSongList[i];
         // Skip if can't dl or already downloading
-        if (dlController->CheckIsDownloaded(std::string(song->GetHash())) || !dlController->CheckIsDownloadable(std::string(song->GetHash()))) 
+        if (dlController->CheckIsDownloaded(std::string(song->hash())) || !dlController->CheckIsDownloadable(std::string(song->hash()))) 
             continue;
             
         dlController->TryAddDownload(song, true);

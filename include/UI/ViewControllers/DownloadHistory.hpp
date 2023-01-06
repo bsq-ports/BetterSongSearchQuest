@@ -10,7 +10,9 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
 #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "sdc-wrapper/shared/BeatStarSong.hpp"
+#include "song-details/shared/Data/Song.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
@@ -100,11 +102,11 @@ public:
         retries = 0;
     }
 
-    DownloadHistoryEntry(const SDC_wrapper::BeatStarSong* song) {
-        songName = song->song_name.string_data;
-        levelAuthorName = song->level_author_name.string_data;
-        key = song->key.string_data;
-        hash = song->hash.string_data;
+    DownloadHistoryEntry(const SongDetailsCache::Song* song) {
+        songName = song->songName();
+        levelAuthorName = song->levelAuthorName();
+        key = song->key();
+        hash = song->hash();
     }
 
     std::function<void()> UpdateProgressHandler;
@@ -134,7 +136,7 @@ public:
     void ProcessDownloads(bool forceTableReload = false);
     void RefreshTable(bool fullReload = true);
     BetterSongSearch::Util::RatelimitCoroutine* limitedFullTableReload = nullptr;
-    bool TryAddDownload(const SDC_wrapper::BeatStarSong* song, bool isBatch = false);
+    bool TryAddDownload(const SongDetailsCache::Song* song, bool isBatch = false);
     DownloadHistoryEntry* GetDownloadByHash(std::string hash);
     bool CheckIsDownloadedAndLoaded(std::string songHash);
     bool CheckIsDownloadable(std::string songHash);

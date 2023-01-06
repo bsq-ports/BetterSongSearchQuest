@@ -2,9 +2,10 @@
 
 #include <string>
 #include "main.hpp"
-#include "sdc-wrapper/shared/BeatStarSong.hpp"
-#include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
-#include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
+#include "song-details/shared/Data/Song.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
+#include "song-details/shared/Data/MapDifficulty.hpp"
+
 using namespace std;
 
 
@@ -24,7 +25,7 @@ namespace BetterSongSearch::Util
     string DownloadFilterTypeToString(int downloadFilterType);
 
     // Logs song info for checking sort and options
-    void LogSongInfo(const SDC_wrapper::BeatStarSong* song);
+    void LogSongInfo(const SongDetailsCache::Song* song);
 
     // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
     string pretty_bytes(int64_t bytes);

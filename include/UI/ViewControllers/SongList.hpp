@@ -26,9 +26,9 @@
 #include "songloader/shared/API.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
-#include "sdc-wrapper/shared/BeatStarSong.hpp"
-#include "sdc-wrapper/shared/BeatStarCharacteristic.hpp"
-#include "sdc-wrapper/shared/BeatStarSongDifficultyStats.hpp"
+#include "song-details/shared/Data/Song.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
@@ -40,7 +40,8 @@
 #include "UI/Modals/MultiDL.hpp"
 #include "UI/Modals/Settings.hpp"
 #include "UI/Modals/UploadDetails.hpp"
-
+#include "song-details/shared/SongDetails.hpp"
+#include "song-details/shared/Data/Song.hpp"
 #include <fmt/chrono.h>
 
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
@@ -55,19 +56,19 @@ namespace BetterSongSearch::UI {
     inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
     inline bool fromBSS = false;
     inline bool openToCustom = false;
-    bool MeetsFilter(const SDC_wrapper::BeatStarSong* song);
-    bool DifficultyCheck(const SDC_wrapper::BeatStarSongDifficultyStats* diff, const SDC_wrapper::BeatStarSong* song);
+    bool MeetsFilter(const SongDetailsCache::Song* song);
+    bool DifficultyCheck(const SongDetailsCache::SongDifficulty* diff, const SongDetailsCache::Song* song);
 
     // Global variables
     struct DataHolder {
-        // Source songs
-        inline static std::vector<const SDC_wrapper::BeatStarSong*> songList;
+        // Song details ref
+        inline static SongDetailsCache::SongDetails* songDetails;
         // Filtered songs
-        inline static std::vector<const SDC_wrapper::BeatStarSong*> filteredSongList;
+        inline static std::vector<const SongDetailsCache::Song*> filteredSongList;
         // Searched songs
-        inline static std::vector<const SDC_wrapper::BeatStarSong*> searchedSongList;
+        inline static std::vector<const SongDetailsCache::Song*> searchedSongList;
         // Sorted songs (actually displayed)
-        inline static std::vector<const SDC_wrapper::BeatStarSong*> sortedSongList;
+        inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
         
         inline static std::vector<std::string> songsWithScores;
         inline static bool loadedSDC = false;
@@ -207,14 +208,14 @@ public:
     }
 
     void SelectSongByHash(std::string hash);
-    void SetSelectedSong(const SDC_wrapper::BeatStarSong*);
+    void SetSelectedSong(const SongDetailsCache::Song* song);
 
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;
 
     void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
-    const SDC_wrapper::BeatStarSong* currentSong = nullptr;
+    const SongDetailsCache::Song* currentSong = nullptr;
     void UpdateDetails();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
@@ -232,7 +233,7 @@ public:
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 
 
-    void PlaySong(const SDC_wrapper::BeatStarSong* song = nullptr);
+    void PlaySong(const SongDetailsCache::Song* song = nullptr);
     void DownloadSongList();
     void RetryDownloadSongList();
 

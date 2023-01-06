@@ -175,17 +175,10 @@ using namespace std;
     }
 
     // Logs song info for checking sort and options
-    void BetterSongSearch::Util::LogSongInfo(const SDC_wrapper::BeatStarSong* song) {
+    void BetterSongSearch::Util::LogSongInfo(const SongDetailsCache::Song* song) {
         // DEBUG info
-        song_data_core::UnixTime struct1RankedUpdateTime = 0;
-        auto struct1DiffVec = song->GetDifficultyVector();
-        for(auto const& i : struct1DiffVec)
-        {
-            DEBUG("Diff ranked time {}, unix {}", i->ranked_update_time.string_data, i->ranked_update_time_unix_epoch);
-        
-            struct1RankedUpdateTime = std::max( i->ranked_update_time_unix_epoch, struct1RankedUpdateTime);
-        }
-        DEBUG("Ranked time: {}", struct1RankedUpdateTime);
+        auto struct1DiffVec = song->rankedChangeUnix;
+        DEBUG("Ranked time: {}", struct1DiffVec);
     }
 
     // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
