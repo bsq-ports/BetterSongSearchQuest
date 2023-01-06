@@ -149,15 +149,15 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
 
     bool passesDiffFilter = true;
 
-    // for(const auto& diff : *song)
-    // {
-    //     if(DifficultyCheck(diff, song)) {
-    //         passesDiffFilter = true;
-    //         break;
-    //     }
-    //     else
-    //         passesDiffFilter = false;
-    // }
+    for(const auto& diff : *song)
+    {
+        if(DifficultyCheck(&diff, song)) {
+            passesDiffFilter = true;
+            break;
+        }
+        else
+            passesDiffFilter = false;
+    }
 
     if(!passesDiffFilter)
         return false;
