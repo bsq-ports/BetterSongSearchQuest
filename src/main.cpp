@@ -2,7 +2,9 @@
 
 #include "questui/shared/QuestUI.hpp"
 #include "System/Action.hpp"
-#include "System/String.hpp"
+#include "System/Func_1.hpp"
+#include "System/Func_2.hpp"
+#include "System/Action_1.hpp"
 #include "custom-types/shared/register.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/ViewController_AnimationType.hpp"
@@ -20,6 +22,7 @@
 #include "GlobalNamespace/IBeatmapLevelPack.hpp"
 #include "GlobalNamespace/IBeatmapLevel.hpp"
 #include "GlobalNamespace/StandardLevelDetailView.hpp"
+#include "GlobalNamespace/ISpriteAsyncLoader.hpp"
 #include "System/Threading/Tasks/Task_1.hpp"
 #include "System/IO/Path.hpp"
 #include "System/IO/File.hpp"
@@ -109,46 +112,72 @@ MAKE_HOOK_MATCH(CustomPreviewBeatmapLevel_GetCoverImageAsync, &CustomPreviewBeat
         return System::Threading::Tasks::Task_1<UnityEngine::Sprite *>::FromResult(self->defaultCoverImage);
     }
 
-    // UnityEngine::Sprite* image = UnityEngine::Sprite::
-
-    auto sprite = QuestUI::BeatSaberUI::FileToSprite((std::string) path);
-    // fix
-    if (sprite == nullptr  || sprite->m_CachedPtr.m_value == nullptr) {
-        return System::Threading::Tasks::Task_1<UnityEngine::Sprite *>::FromResult(self->defaultCoverImage);
-    }
     if (cancellationToken.get_IsCancellationRequested()) {
         DEBUG("Fix tis");
         // return System::Threading::Tasks::Task_1<UnityEngine::Sprite *>::FromException(System::Exception::New_ctor("Cancelled"));
     }
-    self->coverImage = sprite;
-
-    manager.coverCacheInvalidator.push_back({
-        reinterpret_cast<GlobalNamespace::IBeatmapLevel*>(self), self->coverImage
-    });
-
-    for(int i = manager.coverCacheInvalidator.size() - MAX_CACHED_COVERS; i-- > 0;) {
-        auto songToInvalidate = manager.coverCacheInvalidator[i];
-        
-        // Skip selected level
-        if(manager.lastSelectedLevel == songToInvalidate.level)
-			continue;
-
-        manager.coverCacheInvalidator.erase(manager.coverCacheInvalidator.begin()+i);
-
-        if(songToInvalidate.level != nullptr && songToInvalidate.cover != nullptr && songToInvalidate.cover->m_CachedPtr.m_value != nullptr) {
-            auto song = reinterpret_cast<CustomPreviewBeatmapLevel*>(songToInvalidate.level);
-
-            song->coverImage = nullptr;
-            UnityEngine::Object::DestroyImmediate(songToInvalidate.cover->get_texture());
-            UnityEngine::Object::DestroyImmediate(songToInvalidate.cover);
-        }
-
-    }
-						
-
-    return System::Threading::Tasks::Task_1<UnityEngine::Sprite *>::FromResult(self->coverImage);
     
+    using Task = System::Threading::Tasks::Task_1<UnityEngine::Sprite*>*;
+    using Action = System::Func_2<Task, UnityEngine::Sprite*>*;
 
+    auto middleware = custom_types::MakeDelegate<Action>(classof(Action), static_cast<std::function<UnityEngine::Sprite* (Task)>>([self](Task resultTask) {
+        bool cancelled = resultTask->get_IsCanceled();
+        if (cancelled) {
+            DEBUG("Task cancelled");
+            return nullptr;
+        }
+        UnityEngine::Sprite* cover = resultTask->get_ResultOnSuccess();
+        if (cover != nullptr && cover->m_CachedPtr.m_value != nullptr) {
+            self->coverImage = cover;
+            manager.coverCacheInvalidator.push_back({
+                reinterpret_cast<GlobalNamespace::IBeatmapLevel*>(self), self->coverImage
+            });
+
+            QuestUI::MainThreadScheduler::Schedule([]{
+                for(int i = manager.coverCacheInvalidator.size() - MAX_CACHED_COVERS; i-- > 0;) {
+
+                auto songToInvalidate = manager.coverCacheInvalidator[i];
+                // Skip selected level
+                if(manager.lastSelectedLevel == songToInvalidate.level)
+            		continue;
+                manager.coverCacheInvalidator.erase(manager.coverCacheInvalidator.begin()+i);
+                if(songToInvalidate.level != nullptr && songToInvalidate.cover != nullptr && songToInvalidate.cover->m_CachedPtr.m_value != nullptr) {
+                    auto song = reinterpret_cast<CustomPreviewBeatmapLevel*>(songToInvalidate.level);
+                    song->coverImage = nullptr;
+                    DEBUG("DeletingCover {}", std::string(song->songName) );
+                    if (songToInvalidate.cover != nullptr && songToInvalidate.cover->get_texture() != nullptr) {
+                    UnityEngine::Object::DestroyImmediate(songToInvalidate.cover->get_texture());    
+                    }
+                    if (songToInvalidate.cover != nullptr) {
+                        UnityEngine::Object::DestroyImmediate(songToInvalidate.cover);
+                    }
+                    
+                }
+            }     
+            });
+        } else {
+            DEBUG("No cover found");
+        }
+        return nullptr;
+    }));
+    // self->get_spriteAsyncLoader()->LoadSpriteAsync(path, cancellationToken);
+
+
+// System.Threading.Tasks.Task<TNewResult> ContinueWith(System.Func<System.Threading.Tasks.Task<UnityEngine.Sprite>,TNewResult> continuationFunction);
+// System.Threading.Tasks.Task<TNewResult> ContinueWith(System.Func<System.Threading.Tasks.Task<UnityEngine.Sprite>,TNewResult> continuationFunction, System.Threading.Tasks.TaskScheduler scheduler, System.Threading.CancellationToken cancellationToken, System.Threading.Tasks.TaskContinuationOptions continuationOptions, out/ref System.Threading.StackCrawlMark& stackMark);
+
+
+    auto lol = self->get_spriteAsyncLoader()->LoadSpriteAsync(path, System::Threading::CancellationToken::get_None());
+
+    static auto ___internal__logger = ::Logger::get().WithContext("::System::Threading::Tasks::Task_1::ContinueWith");
+    // static auto* ___internal__method = THROW_UNLESS((::il2cpp_utils::FindMethod(lol, "ContinueWith", std::vector<Il2CppClass*>{::il2cpp_utils::il2cpp_type_check::il2cpp_gen_struct_no_arg_class<UnityEngine::Sprite*>::get()}, ::std::vector<const Il2CppType*>{::il2cpp_utils::ExtractType(middleware)})));
+    static auto* ___internal__method = ::il2cpp_utils::FindMethodUnsafe(lol, "ContinueWith", 1);
+    static auto* ___generic__method = THROW_UNLESS(::il2cpp_utils::MakeGenericMethod(___internal__method, std::vector<Il2CppClass*>{::il2cpp_utils::il2cpp_type_check::il2cpp_no_arg_class<UnityEngine::Sprite*>::get()}));
+    return ::il2cpp_utils::RunMethodRethrow<::System::Threading::Tasks::Task_1<UnityEngine::Sprite*>*, false>(lol, ___generic__method, middleware);
+
+
+
+    // return lol->ContinueWith(action);
     // return CustomPreviewBeatmapLevel_GetCoverImageAsync(self, cancellationToken);
     // postfix
    
