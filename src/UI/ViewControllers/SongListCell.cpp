@@ -68,30 +68,30 @@ namespace BetterSongSearch::UI::ViewControllers
         int diffsLeft = entry->diffCount;
         int i = 0;
 
-        for (const SongDetailsCache::SongDifficulty &diff: *entry)
-        {
-            i++;
-            bool isActive = diffsLeft != 0;
+        // for (const SongDetailsCache::SongDifficulty &diff: *entry)
+        // {
+        //     i++;
+        //     bool isActive = diffsLeft != 0;
 
-            diffs[i]->get_gameObject()->set_active(isActive);
+        //     diffs[i]->get_gameObject()->set_active(isActive);
 
-            if (!isActive)
-                continue;
+        //     if (!isActive)
+        //         continue;
 
-            if (diffsLeft != 1 && i == diffs.size() - 1)
-            {
-                diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
-            }
-            else
-            {
-                bool passesFilter = DifficultyCheck(&diff, entry);
-                diffs[i]->SetText(fmt::format("<color=#{}>{}</color>{}",
-                                              (passesFilter ? "EEE" : "888"),
-                                              GetCombinedShortDiffName(entry->diffCount, &diff),
-                                              ((diff.stars > 0 && diff.characteristic == SongDetailsCache::MapCharacteristic::Standard) ? fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", diff.stars, 1)) : "")));
-                diffsLeft--;
-            }
-        }
+        //     if (diffsLeft != 1 && i == diffs.size() - 1)
+        //     {
+        //         diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
+        //     }
+        //     else
+        //     {
+        //         bool passesFilter = DifficultyCheck(&diff, entry);
+        //         diffs[i]->SetText(fmt::format("<color=#{}>{}</color>{}",
+        //                                       (passesFilter ? "EEE" : "888"),
+        //                                       GetCombinedShortDiffName(entry->diffCount, &diff),
+        //                                       ((diff.stars > 0 && diff.characteristic == SongDetailsCache::MapCharacteristic::Standard) ? fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", diff.stars, 1)) : "")));
+        //         diffsLeft--;
+        //     }
+        // }
 
         SetFontSizes();
         return this;
