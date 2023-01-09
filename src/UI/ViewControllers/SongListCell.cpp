@@ -25,6 +25,7 @@ namespace BetterSongSearch::UI::ViewControllers
         {SongDetailsCache::MapDifficulty::ExpertPlus, "Ex+"}};
 
     static std::map<SongDetailsCache::MapCharacteristic, std::string> customCharNames = {
+        {SongDetailsCache::MapCharacteristic::Standard, ""},
         {SongDetailsCache::MapCharacteristic::NinetyDegree, "90"},
         {SongDetailsCache::MapCharacteristic::ThreeSixtyDegree, "360"},
         {SongDetailsCache::MapCharacteristic::Lawless, "LL"},
@@ -55,43 +56,71 @@ namespace BetterSongSearch::UI::ViewControllers
         {
             songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
         }
-        // if (ranked) {
-        //     songColor = UnityEngine::Color(1, 0.647f, 0, 1);
-        // }
 
         this->fullFormattedSongName->set_text(fmt::format("{} - {}",  entry->songAuthorName(), entry->songName()));
         this->fullFormattedSongName->set_color(songColor);
 
         this->entry = entry;
 
-        // auto sortedDiffs = entry->GetDifficultyVector();
-        int diffsLeft = entry->diffCount;
-        int i = 0;
+        std::vector<const SongDetailsCache::SongDifficulty*>  sortedDiffs;
+        for (const SongDetailsCache::SongDifficulty &diff: *entry) {
+            sortedDiffs.push_back(&diff);
+        };
 
-        // for (const SongDetailsCache::SongDifficulty &diff: *entry)
-        // {
-        //     i++;
-        //     bool isActive = diffsLeft != 0;
+        // TODO: Actually sort diffs..
+        // std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
+        //     bool passesFilter = DifficultyCheck(a, entry);
+        //     return (passesFilter? 1:-3) + (a->characteristic == SongDetailsCache::MapCharacteristic::Standard? 1:0);
 
-        //     diffs[i]->get_gameObject()->set_active(isActive);
-
-        //     if (!isActive)
-        //         continue;
-
-        //     if (diffsLeft != 1 && i == diffs.size() - 1)
-        //     {
-        //         diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
-        //     }
-        //     else
-        //     {
-        //         bool passesFilter = DifficultyCheck(&diff, entry);
-        //         diffs[i]->SetText(fmt::format("<color=#{}>{}</color>{}",
-        //                                       (passesFilter ? "EEE" : "888"),
-        //                                       GetCombinedShortDiffName(entry->diffCount, &diff),
-        //                                       ((diff.stars > 0 && diff.characteristic == SongDetailsCache::MapCharacteristic::Standard) ? fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", diff.stars, 1)) : "")));
-        //         diffsLeft--;
-        //     }
+        //     return 1;
+        // });
+        // if (fcInstance->SongListController->sort == SortMode::Most_Stars) {
+        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
+        //         return -a->stars;
+        //     });
         // }
+        // if (fcInstance->SongListController->sort == SortMode::Least_Stars) {
+        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
+        //         return (a->ranked()) ? a->ranked() : -420;
+        //     });
+        // }
+        // if (fcInstance->SongListController->sort == SortMode::Least_Stars) {
+        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
+        //         return (a->ranked()) ? 1 : 0;
+        //     });
+        // }
+
+        int diffsLeft = sortedDiffs.size();
+
+        for (int i = 0; i < diffs.size(); i++)
+        {
+            bool isActive = diffsLeft != 0;
+            diffs[i]->get_gameObject()->set_active(isActive);
+            if (!isActive)
+                continue;
+            if (diffsLeft != 1 && i == diffs.size() - 1)
+            {
+                diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
+            }
+            else
+            {
+                bool passesFilter = DifficultyCheck(sortedDiffs[i], entry);
+                auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i]);
+                std::string stars = ""; 
+                if (sortedDiffs[i]->stars > 0 && sortedDiffs[i]->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
+                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i]->stars, 1));
+                };
+                
+                diffs[i]->SetText(
+                    fmt::format("<color=#{}>{}</color>{}",
+                        (passesFilter ? "EEE" : "888"),
+                        diffname,
+                        stars
+                    )
+                );
+                diffsLeft--;
+            }
+        }
 
         SetFontSizes();
         return this;
