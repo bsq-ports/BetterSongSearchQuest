@@ -182,8 +182,8 @@ using namespace std;
         DEBUG("Ranked time: {}", struct1DiffVec);
         for (const SongDetailsCache::SongDifficulty &diff: *song) {
             DEBUG(
-                "Diff: {}, Ranked: {}, stars: {}, notes: {}, characteristic: {}, njs: {} ",
-                diff.difficulty, diff.ranked(), diff.stars, diff.notes, diff.characteristic, diff.njs
+                "Diff: {}, Ranked: {}, stars: {}, notes: {}, characteristic: {}, njs: {}, mods: {} ",
+                diff.difficulty, diff.ranked(), diff.stars, diff.notes, diff.characteristic, diff.njs, diff.mods
             );
 
         }
