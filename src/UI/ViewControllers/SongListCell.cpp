@@ -27,6 +27,7 @@ namespace BetterSongSearch::UI::ViewControllers
     static std::map<SongDetailsCache::MapCharacteristic, std::string> customCharNames = {
         {SongDetailsCache::MapCharacteristic::Standard, ""},
         {SongDetailsCache::MapCharacteristic::NinetyDegree, "90"},
+        {SongDetailsCache::MapCharacteristic::OneSaber, "SS"},
         {SongDetailsCache::MapCharacteristic::ThreeSixtyDegree, "360"},
         {SongDetailsCache::MapCharacteristic::Lawless, "LL"},
         {SongDetailsCache::MapCharacteristic::Custom, "?"},

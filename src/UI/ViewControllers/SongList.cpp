@@ -241,15 +241,29 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    // auto requirements = diff->mods;
-    // if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
-    //     [(int)currentFilter.modRequirement])
-    //     if () {
-
-    //     }
-    //     if(std::find(requirements.begin(), requirements.end(), REQUIREMENTS[(int)currentFilter.modRequirement]) == requirements.end())
-    //         return false;
-    // }
+    
+    if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
+        if (currentFilter.modRequirement == FilterOptions::RequirementType::Chroma) {
+            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::Chroma)) {
+                return false;
+            }
+        }
+        if (currentFilter.modRequirement == FilterOptions::RequirementType::Cinema) {
+            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::Cinema)) {
+                return false;
+            }
+        }
+        if (currentFilter.modRequirement == FilterOptions::RequirementType::MappingExtensions) {
+            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::MappingExtensions)) {
+                return false;
+            }
+        }
+        if (currentFilter.modRequirement == FilterOptions::RequirementType::NoodleExtensions) {
+            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::NoodleExtensions)) {
+                return false;
+            }
+        }
+    }
 
     if(song->songDurationSeconds > 0) {
         float nps = (float)diff->notes / (float)song->songDurationSeconds;
