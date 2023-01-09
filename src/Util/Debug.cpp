@@ -178,7 +178,15 @@ using namespace std;
     void BetterSongSearch::Util::LogSongInfo(const SongDetailsCache::Song* song) {
         // DEBUG info
         auto struct1DiffVec = song->rankedChangeUnix;
+        DEBUG("Name: {}, bpm {}, upvotes: {}, downvotes: {}, diffCount: {}, rankedStatus: {} ", (std::string)song->songName(), song->bpm, song->upvotes, song->downvotes, song->diffCount, song->rankedStatus  );
         DEBUG("Ranked time: {}", struct1DiffVec);
+        for (const SongDetailsCache::SongDifficulty &diff: *song) {
+            DEBUG(
+                "Diff: {}, Ranked: {}, stars: {}, notes: {}, characteristic: {}, njs: {} ",
+                diff.difficulty, diff.ranked(), diff.stars, diff.notes, diff.characteristic, diff.njs
+            );
+
+        }
     }
 
     // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)

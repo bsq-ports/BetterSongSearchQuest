@@ -1069,7 +1069,7 @@ void ViewControllers::SongListController::SetSelectedSong(const SongDetailsCache
     }
     currentSong = song;
 
-    // LogSongInfo(song);
+    LogSongInfo(song);
 
     DEBUG("Updating details");
     this->UpdateDetails();
