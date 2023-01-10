@@ -5,8 +5,10 @@
 #include "HMUI/ViewController_AnimationType.hpp"
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/QuestUI.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
 
 using namespace QuestUI;
+using namespace GlobalNamespace;
 
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);
 
@@ -44,7 +46,13 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
 		return;
 
     cancelConfirmCallback = nullptr;
-    
+
+    // Stop song preview on exit
+    auto songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
+    if (songPreviewPlayer != nullptr && songPreviewPlayer->m_CachedPtr.m_value != nullptr) {
+        songPreviewPlayer->FadeOut(0.1f);
+    }
+
     // Trigger refresh of songs only if needed
     if (DownloadHistoryViewController->hasUnloadedDownloads) {
         RuntimeSongLoader::API::RefreshSongs(false);
