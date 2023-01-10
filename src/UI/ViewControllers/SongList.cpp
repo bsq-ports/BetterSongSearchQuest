@@ -25,6 +25,7 @@
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "System/StringComparison.hpp"
 #include "System/Nullable_1.hpp"
@@ -51,6 +52,7 @@
 #include "Util/CurrentTimeMs.hpp"
 #include "Util/Random.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
@@ -879,6 +881,9 @@ void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level)
     soloFreePlayFlowCoordinator->Setup(state);
 
     manager.GoToSongSelect();
+
+    // For some reason setup does not work for multiplayer so I have to use this method to workaround
+    multiplayerLevelSelectionFlowCoordinator->levelSelectionNavigationController->levelCollectionNavigationController->SelectLevel(level);
 }
 
 
