@@ -41,7 +41,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
 
     // Wait for songs to load
-    while (!DataHolder::loadedSDC) {
+    while (!DataHolder::loaded) {
         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2f));
     }
 

@@ -71,11 +71,22 @@ namespace BetterSongSearch::UI {
         inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
         
         inline static std::vector<std::string> songsWithScores;
-        inline static bool loadedSDC = false;
-        inline static bool failedSDC = false;
-        inline static bool loadingSDC = false;
+
         inline static FilterOptions filterOptions;
         inline static FilterOptionsCache filterOptionsCache;
+
+
+        /// @brief Song data is loaded
+        inline static bool loaded = false;
+        /// @brief Song data failed to load
+        inline static bool failed = false;
+        // Song data is loading 
+        inline static bool loading = false;
+        /// @brief Flag to say that the song list needs a refresh when the user opens the BSS because the data got updated
+        inline static bool needsRefresh = false;
+        // Song list is invalid (means that we should not touch anything in the song list rn)
+        inline static bool invalid = false;
+
     };
 
 #define PROP_GET(jsonName, varName)                                \
@@ -121,7 +132,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     
 
     DECLARE_CTOR(ctor);
-    DECLARE_SIMPLE_DTOR();
+    DECLARE_DTOR(dtor);
     DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
 
@@ -238,5 +249,9 @@ public:
     void RetryDownloadSongList();
 
     void EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level);
+
+    // Event receivers
+    void SongDataDone();
+    void SongDataError();
 )
 

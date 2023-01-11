@@ -623,6 +623,14 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     // Retry if failed to dl
     this->RetryDownloadSongList();
 
+    // If needs a refresh, refresh when shown
+    if (DataHolder::loaded && DataHolder::needsRefresh) {
+        // Initial search
+        this->filterChanged = true;
+        fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+        fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
+    }
+
     if (!firstActivation)
         return;
 
@@ -660,17 +668,17 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
     uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
 
-    // Reset table the first time and load data
-    if (DataHolder::loadedSDC == true) {
-        ViewControllers::SongListController::SortAndFilterSongs(this->sort, "", true);
-
-        // Reinitialize the label to show number of songs
-        if (fcInstance->FilterViewController != nullptr && fcInstance->FilterViewController->m_CachedPtr.m_value != nullptr) {
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
-        }
+    // If loaded, refresh
+    if (DataHolder::loaded) {
+        DEBUG("Loaded is true");
+        // Initial search
+        this->filterChanged = true;
+        fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+        fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
     } else {
         this->DownloadSongList();
     }
+
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/SongList.bsml";
     #endif
@@ -736,7 +744,17 @@ void ViewControllers::SongListController::ctor()
 {
     INVOKE_CTOR();
     selectedSortMode = StringW("Newest");
-    this->cellSize = 8.05f;
+    
+    // Sub to events
+    SongDetailsCache::SongDetails::dataAvailableOrUpdated += {&ViewControllers::SongListController::SongDataDone ,this};
+    SongDetailsCache::SongDetails::dataLoadFailed += {&ViewControllers::SongListController::SongDataError ,this};
+}
+
+void ViewControllers::SongListController::dtor()
+{
+    // Unsub from events
+    SongDetailsCache::SongDetails::dataAvailableOrUpdated -= {&ViewControllers::SongListController::SongDataDone ,this};
+    SongDetailsCache::SongDetails::dataLoadFailed -= {&ViewControllers::SongListController::SongDataError ,this};
 }
 
 void ViewControllers::SongListController::SelectRandom() {
@@ -1104,52 +1122,71 @@ void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded,  bo
 
 
 void ViewControllers::SongListController::DownloadSongList() {
-    if (DataHolder::loadingSDC) {
+    DEBUG("DownloadSongList");
+    if (DataHolder::loading) {
         return;
     }
 
     fcInstance->FilterViewController->datasetInfoLabel->set_text("Loading dataset...");
 
     std::thread([this]{
-        DataHolder::loadingSDC = true;
-        try {
-            auto songDetails = SongDetailsCache::SongDetails::Init().get();
-            DataHolder::songDetails = songDetails;
-            INFO("Finished loading songs.");
-            DataHolder::loadedSDC = true;
-            DataHolder::loadingSDC = false;
-            DataHolder::failedSDC = false;
-            
-            // Initial search
-            if (fcInstance != nullptr && fcInstance->SongListController != nullptr) {
-                fcInstance->SongListController->filterChanged = true;
-                fcInstance->SongListController->SortAndFilterSongs(fcInstance->SongListController->sort, "", true);
-            }
-            QuestUI::MainThreadScheduler::Schedule([this, songDetails]{
-                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr && this->get_isActiveAndEnabled() ) {
-                    this->filterChanged = true;
-                    fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
-                    // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
-                    fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", songDetails->songs.size()));
-                }
-            });
-        } catch (...) {
-            DataHolder::loadingSDC = false;
-            DataHolder::failedSDC = true;
-            DataHolder::loadedSDC = false;
-            
-            QuestUI::MainThreadScheduler::Schedule([this]{
-                if (this!= nullptr && this->m_CachedPtr.m_value != nullptr ) {  
-                    fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
-                }
-            });
-            getLoggerOld().info("Failed to get songs");
+        DataHolder::loading = true;
+        DEBUG("Getting songdetails");
+        DataHolder::songDetails = SongDetailsCache::SongDetails::Init().get();
+        DEBUG("Got songdetails");
+
+
+        if (!DataHolder::songDetails->songs.get_isDataAvailable()) {
+            this->SongDataError();
+        } else {
+            this->SongDataDone();
         }
     }).detach();
 }
 
 void ViewControllers::SongListController::RetryDownloadSongList() {
-    if (DataHolder::failedSDC && !DataHolder::loadingSDC && !DataHolder::loadedSDC) {
+    if (DataHolder::failed && !DataHolder::loading && !DataHolder::loaded) {
         this->DownloadSongList();
     }
+}
+
+
+// Event receivers
+void ViewControllers::SongListController::SongDataDone() {
+    DEBUG("SongDataDone");
+    // Set state flags
+    DataHolder::loading = false;
+    DataHolder::failed = false;
+    DataHolder::loaded = true;
+    DataHolder::invalid = false;
+    DataHolder::needsRefresh = false;
+
+    QuestUI::MainThreadScheduler::Schedule([this]{
+        if (this->get_isActiveAndEnabled()) {
+            // Initial search
+            this->filterChanged = true;
+            fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+            // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
+        } else {
+            DataHolder::needsRefresh = true;
+        }
+    });
+}
+
+void ViewControllers::SongListController::SongDataError() {
+    DEBUG("SongDataError");
+
+    // Set state flags
+    DataHolder::loading = false;
+    DataHolder::failed = true;
+    DataHolder::loaded = false;
+    DataHolder::invalid = true;
+    DataHolder::needsRefresh = false;
+    
+    QuestUI::MainThreadScheduler::Schedule([this]{
+        if (this!= nullptr && this->m_CachedPtr.m_value != nullptr ) {  
+            fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
+        }
+    });
 }
