@@ -5,7 +5,7 @@
   "author": "FernTheDev, FutureMapper, and Christoffyw",
   "version": "${version}",
   "description": "${mod_id}, version ${version}!",
-  "packageVersion": "1.25.1",
+  "packageVersion": "1.26.2",
   "dependencies": [],
   "modFiles": [],
   "libraryFiles": [],
