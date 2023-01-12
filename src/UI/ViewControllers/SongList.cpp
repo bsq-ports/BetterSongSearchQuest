@@ -35,7 +35,7 @@
 #include "questui/shared/BeatSaberUI.hpp"
 #include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
-
+#include "Util/SongUtil.hpp"
 #include <iterator>
 #include <chrono>
 #include <string>
@@ -968,6 +968,9 @@ void ViewControllers::SongListController::UpdateDetails () {
         return;
     }
     
+    // Get old sprite if it exists
+    UnityEngine::Sprite* oldSprite = this->coverImage->get_sprite();
+
     auto song = currentSong;
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap.has_value();
@@ -980,34 +983,62 @@ void ViewControllers::SongListController::UpdateDetails () {
 	songAssetLoadCanceller = System::Threading::CancellationTokenSource::New_ctor();
     // if beatmap is loaded
     if (loaded) {
-        using Task = System::Threading::Tasks::Task_1<UnityEngine::Sprite*>*;
-        using Action = System::Action_1<System::Threading::Tasks::Task*>*;
-
-        Task coverTask = beatmap.value()->GetCoverImageAsync(songAssetLoadCanceller->get_Token());     
-        auto action = custom_types::MakeDelegate<Action>(classof(Action), static_cast<std::function<void(Task)>>([this](Task resultTask) {
-            UnityEngine::Sprite* cover = resultTask->get_ResultOnSuccess();
-            if (cover) {
-                this->coverImage->set_sprite(cover);
-                coverLoading->set_enabled(false);
+        auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap.value());
+        if (cover != nullptr) {
+            this->coverImage->set_sprite(cover);
+        } else {
+            this->coverImage->set_sprite(defaultImage);
+            
+            // Cleanup old sprite
+            if (
+                // Don't delete defaultImage
+                oldSprite != defaultImage && 
+                this->coverImage->get_sprite() != oldSprite)
+            {
+                    if (oldSprite != nullptr && oldSprite->m_CachedPtr.m_value != nullptr) {
+                        DEBUG("REMOVING OLD SPRITE");
+                        auto texture = oldSprite->get_texture();
+                        if (texture != nullptr && texture->m_CachedPtr.m_value != nullptr) {
+                            UnityEngine::Object::DestroyImmediate(texture);
+                        }
+                        UnityEngine::Object::DestroyImmediate(oldSprite);
+                    } 
             }
-        }));
-        reinterpret_cast<System::Threading::Tasks::Task*>(coverTask)->ContinueWith(action);
+        }
+        coverLoading->set_enabled(false);
     } else {
         
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
-        GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
-            QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success] {
+        GetByURLAsync(newUrl, [this, song, oldSprite](bool success, std::vector<uint8_t> bytes) {
+            QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success, oldSprite] {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
                     if (song->hash() != this->currentSong->hash()) return;
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
                     this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
-                    coverLoading->set_enabled(false);
                 } else {
-                    coverLoading->set_enabled(false);
+                    this->coverImage->set_sprite(defaultImage);
+                }
+                coverLoading->set_enabled(false);
+
+                // Cleanup old sprite
+                if (
+                    // Don't delete old image if it's a default image
+                    oldSprite != defaultImage && 
+                    this->coverImage->get_sprite() != oldSprite)
+                {
+                    
+                    if (oldSprite != nullptr && oldSprite->m_CachedPtr.m_value != nullptr) {
+                        DEBUG("REMOVING OLD SPRITE");
+                        auto texture = oldSprite->get_texture();
+                        if (texture != nullptr && texture->m_CachedPtr.m_value != nullptr) {
+                            UnityEngine::Object::DestroyImmediate(texture);
+                        }
+                        UnityEngine::Object::DestroyImmediate(oldSprite);
+                    } 
                 }
             });
         });

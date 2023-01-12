@@ -109,12 +109,12 @@ extern "C" void setup(ModInfo& info) {
 // MAKE_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoordinator::DidActivate, void, GlobalNamespace::MainFlowCoordinator* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
 //     MainFlowCoordinator_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
 //     static bool debugstarted = false; 
-//     // if (!debugstarted) {
-//     //     debugstarted = true;
-//     //     QuestUI::MainThreadScheduler::Schedule([]{
-//     //         coro(manager.Debug());
-//     //     });
-//     // }
+//     if (!debugstarted) {
+//         debugstarted = true;
+//         QuestUI::MainThreadScheduler::Schedule([]{
+//             coro(manager.Debug());
+//         });
+//     }
 // }
 
 MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, void, HMUI::FlowCoordinator* self, HMUI::FlowCoordinator* flowCoordinator, HMUI::ViewController::AnimationDirection animationDirection, System::Action* finishedCallback, bool immediately) {

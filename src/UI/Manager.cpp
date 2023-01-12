@@ -45,49 +45,49 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2f));
     }
 
-    co_return;
+    // co_return;
 
     while(true) {
         
        
         // Tests for the fcinstance
         if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
-            // Select random song go into the play menu and go back
-            {
-                auto* songlist = fcInstance->SongListController;
-                co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.5f));
-                songlist->SelectRandom();
-                if (songlist->currentSong) {
-                    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
+        //     // Select random song go into the play menu and go back
+        //     {
+        //         auto* songlist = fcInstance->SongListController;
+        //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.5f));
+        //         songlist->SelectRandom();
+        //         if (songlist->currentSong) {
+        //             co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
 
-                    if (songlist->playButton->get_gameObject()->get_active()) {
-                        songlist->PlaySong(songlist->currentSong);
-                        co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(2.5f));
-                        // Press back button
-                        UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("BackButton"))->GetComponent<HMUI::NoTransitionsButton*>()->Press();
-                    }
+        //             if (songlist->playButton->get_gameObject()->get_active()) {
+        //                 songlist->PlaySong(songlist->currentSong);
+        //                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(2.5f));
+        //                 // Press back button
+        //                 UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("BackButton"))->GetComponent<HMUI::NoTransitionsButton*>()->Press();
+        //             }
                     
                     
 
                    
                     
+        //             ++iterations_count;
+        //         }
+        //     }
+
+            // Pick random song, show details, close details
+            {
+                auto* songlist = fcInstance->SongListController;
+                co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+                songlist->SelectRandom();
+                if (songlist->currentSong) {
+                    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+                    songlist->ShowSongDetails();
+                    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+                    songlist->uploadDetailsModal->CloseModal();
                     ++iterations_count;
                 }
             }
-
-            // Pick random song, show details, close details
-            // {
-            //     auto* songlist = fcInstance->SongListController;
-            //     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
-            //     songlist->SelectRandom();
-            //     if (songlist->currentSong) {
-            //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
-            //         songlist->ShowSongDetails();
-            //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
-            //         songlist->uploadDetailsModal->CloseModal();
-            //         ++iterations_count;
-            //     }
-            // }
 
 
 
