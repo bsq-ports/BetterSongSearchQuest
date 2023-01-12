@@ -147,11 +147,10 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
 }
 
 
-void BetterSongSearch::UI::Manager::ShowFlow(bool immediately, bool multiplayer) {
+void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
     if (!flow) {
         flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
     }
-    this->inMultiplayer = multiplayer;
     parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
     parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }

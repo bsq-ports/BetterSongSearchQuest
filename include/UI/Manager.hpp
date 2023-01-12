@@ -23,7 +23,6 @@ namespace BetterSongSearch::UI {
         
 
         public:
-            bool inMultiplayer = false;
             Manager(Manager const&) = delete; // no accidental copying
             Manager() = default;
 
@@ -32,7 +31,7 @@ namespace BetterSongSearch::UI {
             custom_types::Helpers::Coroutine Debug();
 
 
-            void ShowFlow(bool immediately, bool multiplayer = false);
+            void ShowFlow(bool immediately);
 
             void Close(bool immediately = false, bool downloadAbortConfim = true);
 
