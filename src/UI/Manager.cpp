@@ -147,11 +147,11 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
 }
 
 
-void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
+void BetterSongSearch::UI::Manager::ShowFlow(bool immediately, bool multiplayer) {
     if (!flow) {
         flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
     }
-
+    this->inMultiplayer = multiplayer;
     parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
     parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }
@@ -166,3 +166,9 @@ void BetterSongSearch::UI::Manager::GoToSongSelect() {
     }
     songSelectButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
 }
+
+void BetterSongSearch::UI::Manager::Close(bool immediately, bool downloadAbortConfim) {
+    if (flow) {
+        flow->Close(immediately, downloadAbortConfim);
+    }
+};

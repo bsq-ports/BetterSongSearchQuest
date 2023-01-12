@@ -42,6 +42,11 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Ba
 
 //  std::function<void(int)> cancelConfirmCallback; 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Close(bool immediately, bool downloadAbortConfim){
+    // Do nothing if there's no parent flow coordinator (in multiplayer if you never called it it crashed)
+    if (this->parentFlowCoordinator != nullptr && this->parentFlowCoordinator->m_CachedPtr.m_value != nullptr) {
+        return;
+    }
+
     if(downloadAbortConfim && ConfirmCancelOfPending([this, immediately](){this->Close(immediately, false);}))
 		return;
 
@@ -65,7 +70,6 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
         modal->Hide(false, nullptr);
     }
 
-    
     this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
 };
 bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){

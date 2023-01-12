@@ -18,6 +18,7 @@
 #include "GlobalNamespace/IBeatmapLevelPack.hpp"
 #include "GlobalNamespace/SongPackMask.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/MultiplayerResultsViewController.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "PluginConfig.hpp"
@@ -126,7 +127,7 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
     }
 
     ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
-    if (fromBSS) {
+    if (fromBSS && !manager.inMultiplayer) {
         auto currentFlowCoordinator = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
         auto betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>().FirstOrDefault();
         if(betterSongSearchFlowCoordinator)
@@ -169,7 +170,7 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
                 return;
 
             t->set_selected(false);
-            manager.ShowFlow(false);
+            manager.ShowFlow(false, true);
          };
 
         auto action = BSML::MakeSystemAction(fun);
@@ -190,6 +191,23 @@ MAKE_HOOK_MATCH(LevelFilteringNavigationController_Setup, &GlobalNamespace::Leve
         openToCustom = false;
 	}
 }
+MAKE_HOOK_MATCH(
+    MultiplayerResultsViewController_Init,
+    &GlobalNamespace::MultiplayerResultsViewController::Init,
+    void,
+    GlobalNamespace::MultiplayerResultsViewController* self,
+    GlobalNamespace::MultiplayerResultsData *multiplayerResultsData,
+    GlobalNamespace::IPreviewBeatmapLevel *previewBeatmapLevel,
+    GlobalNamespace::BeatmapDifficulty beatmapDifficulty,
+    GlobalNamespace::BeatmapCharacteristicSO *beatmapCharacteristic,
+    bool showBackToLobbyButton,
+    bool showBackToMenuButton
+) {
+    // Close manager first
+    manager.Close(true, false);
+    MultiplayerResultsViewController_Init(self, multiplayerResultsData, previewBeatmapLevel, beatmapDifficulty, beatmapCharacteristic,showBackToLobbyButton, showBackToMenuButton);
+}
+
 	
 // Called later on in the game loading - a good time to install function hooks
 extern "C" void load() {
@@ -201,7 +219,7 @@ extern "C" void load() {
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
     INSTALL_HOOK(getLoggerOld(), LevelFilteringNavigationController_Setup);
     // INSTALL_HOOK(getLoggerOld(), MainFlowCoordinator_DidActivate);
-    
+    INSTALL_HOOK(getLoggerOld(), MultiplayerResultsViewController_Init);
 
     custom_types::Register::AutoRegister();
 

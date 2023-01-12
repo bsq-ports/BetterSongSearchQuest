@@ -20,8 +20,10 @@ namespace BetterSongSearch::UI {
         HMUI::FlowCoordinator* parentFlow;
         SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
         BSML::MenuButton * menuButton;
+        
 
         public:
+            bool inMultiplayer = false;
             Manager(Manager const&) = delete; // no accidental copying
             Manager() = default;
 
@@ -30,7 +32,9 @@ namespace BetterSongSearch::UI {
             custom_types::Helpers::Coroutine Debug();
 
 
-            void ShowFlow(bool immediately);
+            void ShowFlow(bool immediately, bool multiplayer = false);
+
+            void Close(bool immediately = false, bool downloadAbortConfim = true);
 
             void GoToSongSelect();
     };
