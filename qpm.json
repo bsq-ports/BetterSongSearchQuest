@@ -27,17 +27,17 @@
     },
     {
       "id": "codegen",
-      "versionRange": "^0.32.0",
+      "versionRange": "^0.28.0",
       "additionalData": {}
     },
     {
       "id": "questui",
-      "versionRange": "^0.17.10",
+      "versionRange": "^0.17.4",
       "additionalData": {}
     },
     {
       "id": "sombrero",
-      "versionRange": "^0.1.37",
+      "versionRange": "^0.1.30",
       "additionalData": {}
     },
     {
@@ -57,7 +57,7 @@
     },
     {
       "id": "songloader",
-      "versionRange": "^0.10.14",
+      "versionRange": "^0.10.9",
       "additionalData": {}
     },
     {
@@ -67,7 +67,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.5.5",
+      "versionRange": "^0.5.0",
       "additionalData": {}
     },
     {
@@ -77,7 +77,7 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.2.10",
+      "versionRange": "^0.2.1",
       "additionalData": {}
     },
     {

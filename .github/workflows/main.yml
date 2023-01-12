@@ -7,7 +7,7 @@ env:
 
 on:
   push:
-    branches: [ main, dev, BSML-rewrite, song-details ]
+    branches: [ main, dev, BSML-rewrite, song-details, 1.25.1 ]
   pull_request:
     branches: [ main ]
 

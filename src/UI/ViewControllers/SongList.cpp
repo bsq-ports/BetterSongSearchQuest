@@ -1,5 +1,5 @@
 #include "UI/ViewControllers/SongList.hpp"
-
+#include "Util/ResettableStaticPtr.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/AudioType.hpp"
@@ -52,7 +52,7 @@
 #include "Util/CurrentTimeMs.hpp"
 #include "Util/Random.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-
+#include "songloader/shared/CustomTypes/SongLoaderCustomBeatmapLevelPack.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
@@ -886,7 +886,12 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
 void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level) {
     fcInstance->Close(true, false);
     
-    auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
+    // get song loader object
+    STATIC_AUTO(songLoaderObject, UnityEngine::Resources::FindObjectsOfTypeAll(il2cpp_utils::GetSystemType("RuntimeSongLoader", "SongLoader")).First());
+    // get custom levels pack field
+    STATIC_AUTO(customLevelsPack, CRASH_UNLESS(il2cpp_utils::GetFieldValue<RuntimeSongLoader::SongLoaderCustomBeatmapLevelPack*>(songLoaderObject, "CustomLevelsPack")));
+
+    // auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
     auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
     
     auto state = LevelSelectionFlowCoordinator::State::New_ctor(
