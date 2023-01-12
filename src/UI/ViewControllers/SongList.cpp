@@ -310,8 +310,8 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
         {SortMode::Worst_rated, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Worst rated
                             {
                                 // Move nan to the end
-                                float v1 = std::isnan(struct1->rating())? 9999: struct1->rating();
-                                float v2 = std::isnan(struct2->rating())? 9999: struct2->rating();
+                                float v1 = struct1->rating() == 0 ? 9999: struct1->rating();
+                                float v2 = struct2->rating() == 0 ? 9999: struct2->rating();
                                 return (v1 < v2);
                            }}
 };
