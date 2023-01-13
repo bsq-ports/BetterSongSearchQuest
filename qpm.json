@@ -5,7 +5,7 @@
     "name": "BetterSongSearch",
     "id": "BetterSongSearch",
     "version": "0.1.0",
-    "url": "https://github.com/FrozenAlex/BetterSongSearchQuest",
+    "url": "https://github.com/bsq-ports/BetterSongSearchQuest",
     "additionalData": {
       "overrideSoName": "libBetterSongSearch.so"
     }

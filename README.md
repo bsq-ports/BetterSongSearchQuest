@@ -19,6 +19,8 @@ Searching, downloading and playing songs, now with 100% less annoying!
 
 * [FrozenAlex](https://github.com/FrozenAlex) - Rewrote most of the project
 * [Christoffyw](https://github.com/Christoffyw) - Implemented multiple features
+* [RedBrumbler](https://github.com/RedBrumbler) - BSML and SongDetails ports
+* [Mello](https://www.pixiv.net/en/users/27903714) - author of the source art for the cover
 * [Futuremappermydud](https://github.com/Futuremappermydud) - Implemented filtering and sorting logic and some UI
 * [FernTheDev](https://github.com/Fernthedev) - Huge help with UI before the rewrite
 * [zoller27osu](https://github.com/zoller27osu), [Sc2ad](https://github.com/Sc2ad) and [jakibaki](https://github.com/jakibaki) - [beatsaber-hook](https://github.com/sc2ad/beatsaber-hook)
