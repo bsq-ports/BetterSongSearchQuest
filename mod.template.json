@@ -2,13 +2,14 @@
   "_QPVersion": "0.1.2",
   "name": "${mod_name}",
   "id": "${mod_id}",
-  "author": "FernTheDev, FutureMapper, and Christoffyw",
+  "author": "FrozenAlex, FernTheDev, FutureMapper, and Christoffyw",
   "version": "${version}",
-  "description": "${mod_id}, version ${version}!",
+  "description": "Search and download songs with a lot of filtering and sorting options and without frustration!",
   "packageVersion": "1.27.0_3631150051",
   "dependencies": [],
   "modFiles": [],
   "libraryFiles": [],
   "fileCopies": [],
-  "copyExtensions": []
+  "copyExtensions": [],
+  "coverImage": "cover.png"
 }
