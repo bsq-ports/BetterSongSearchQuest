@@ -2,6 +2,8 @@
 
 Searching, downloading and playing songs, now with 100% less annoying!
 
+*This mod is a port of PC vestion of [BetterSongSearch](https://github.com/kinsi55/BeatSaber_BetterSongSearch) for Quest.*
+
 ## Features
 
 - Wide variety of filtering / searching and sorting options
@@ -17,15 +19,16 @@ Searching, downloading and playing songs, now with 100% less annoying!
 
 ## Credits
 
-* [FrozenAlex](https://github.com/FrozenAlex) - Rewrote most of the project
-* [Christoffyw](https://github.com/Christoffyw) - Implemented multiple features
+* [FrozenAlex](https://github.com/FrozenAlex) - rewrote most of the project
+* [Christoffyw](https://github.com/Christoffyw) - implemented multiple features
 * [RedBrumbler](https://github.com/RedBrumbler) - BSML and SongDetails ports
 * [Mello](https://www.pixiv.net/en/users/27903714) - author of the art used for the cover
-* [Futuremappermydud](https://github.com/Futuremappermydud) - Implemented filtering and sorting logic and some UI
-* [FernTheDev](https://github.com/Fernthedev) - Huge help with UI before the rewrite
+* [Futuremappermydud](https://github.com/Futuremappermydud) - implemented filtering and sorting logic and some UI
+* [FernTheDev](https://github.com/Fernthedev) - huge help with UI before the rewrite
 * [zoller27osu](https://github.com/zoller27osu), [Sc2ad](https://github.com/Sc2ad) and [jakibaki](https://github.com/jakibaki) - [beatsaber-hook](https://github.com/sc2ad/beatsaber-hook)
 * [raftario](https://github.com/raftario) 
 * [Lauriethefish](https://github.com/Lauriethefish) and [danrouse](https://github.com/danrouse) for [this template](https://github.com/Lauriethefish/quest-mod-template)
+* [kinsi55](https://github.com/kinsi55) - original mod author
 
 ## Screenshots
 
