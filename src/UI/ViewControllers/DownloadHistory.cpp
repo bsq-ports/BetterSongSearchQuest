@@ -69,7 +69,7 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView *table, int id)
 {
     DEBUG("Cell is clicked");
-    if (id >= CellSize()) {
+    if (id >= NumberOfCells()) {
         WARNING("Non existent song id");
         return;
     } 
