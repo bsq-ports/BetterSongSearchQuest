@@ -31,4 +31,4 @@ Searching, downloading and playing songs, now with 100% less annoying!
 
 Filters | Main Screen | Download History
 :-------------------------:|:-------------------------:|:-------------------------:
-![Main UI](screenshots/filters.jpg)  |  ![Main UI](screenshots/main.jpg) |  ![Main UI](screenshots\dlhistory.jpg)
+![Main UI](screenshots/filters.jpg)  |  ![Main UI](screenshots/main.jpg) |  ![Main UI](screenshots/dlhistory.jpg)
