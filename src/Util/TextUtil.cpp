@@ -25,8 +25,9 @@ namespace BetterSongSearch::Util {
         std::string stringy(s);
         for (int i = 0; i < stringy.size(); i++) {
 
-            if (stringy[i] < 'A' || stringy[i] > 'Z' &&
-                                    stringy[i] < 'a' || stringy[i] > 'z')
+            if (stringy[i] != ' ' && 
+                stringy[i] < 'A' || stringy[i] > 'Z' &&
+                stringy[i] < 'a' || stringy[i] > 'z' )
             {
                 stringy.erase(i, 1);
                 i--;

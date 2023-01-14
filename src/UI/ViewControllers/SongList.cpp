@@ -62,6 +62,7 @@
 #include "Util/Debug.hpp"
 #include <cmath>
 #include "song-details/shared/SongDetails.hpp"
+#include <limits>
 
 #define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -100,7 +101,7 @@ std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
 int currentSelectedSong = 0;
 
-using SortFunction = std::function<bool(SongDetailsCache::Song const* , SongDetailsCache::Song const*)>;
+using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
 
 //////////////////// UTILS //////////////////////
 bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
@@ -279,40 +280,47 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
 
 
 static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
-        {SortMode::Newest, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Newest
+        {SortMode::Newest, [] (const SongDetailsCache::Song* x) // Newest
                            {
-                               return (struct1->uploadTimeUnix > struct2->uploadTimeUnix);
+                               return (x->uploadTimeUnix);
                            }},
-        {SortMode::Oldest, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Oldest
+        {SortMode::Oldest, [] (const SongDetailsCache::Song* x ) // Oldest
                            {
-                               return (struct1->uploadTimeUnix < struct2->uploadTimeUnix);
+                               return (std::numeric_limits<uint32_t>::max() - x->uploadTimeUnix);
                            }},
-        {SortMode::Latest_Ranked, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Latest Ranked
-            {
-         
-                return (struct1->rankedChangeUnix > struct2->rankedChangeUnix);
-            }},
-        {SortMode::Most_Stars, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Most Stars
-                           {
-                               return struct1->maxStar() > struct2->maxStar();
-                           }},
-        {SortMode::Least_Stars, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Least Stars
-                           {
-                               return struct1->minStar() < struct2->minStar();
-                           }},
-        {SortMode::Best_rated, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Best rated
-                           {
-                                // Move nan to the end
-                               float v1 = std::isnan(struct1->rating())? 0: struct1->rating();
-                               float v2 = std::isnan(struct2->rating())? 0: struct2->rating();
-                               return (v1 > v2);
-                           }},
-        {SortMode::Worst_rated, [] (const SongDetailsCache::Song* struct1, const SongDetailsCache::Song* struct2)//Worst rated
+        {SortMode::Latest_Ranked, [] (const SongDetailsCache::Song* x) // Latest Ranked
                             {
-                                // Move nan to the end
-                                float v1 = struct1->rating() == 0 ? 9999: struct1->rating();
-                                float v2 = struct2->rating() == 0 ? 9999: struct2->rating();
-                                return (v1 < v2);
+                                return (x->rankedStatus != SongDetailsCache::RankedStatus::Unranked)? x->rankedChangeUnix: 0.0f;
+                            }},
+        {SortMode::Most_Stars, [] (const SongDetailsCache::Song* x) // Most Stars
+                           {
+                                return x->max([x](const auto& diff){
+                                    bool passesFilter = DifficultyCheck(&diff, x);
+                                    if (passesFilter && diff.ranked()) {
+                                        return diff.stars;
+                                    } else {
+                                        return 0.0f;
+                                    }
+                                });
+                           }},
+        {SortMode::Least_Stars, [] (const SongDetailsCache::Song* x) // Least Stars
+                           {
+                               return 420.0f - x->min([x](const auto& diff){
+                                    bool passesFilter = DifficultyCheck(&diff, x);
+                                    if (passesFilter && diff.ranked()) {
+                                        return diff.stars;
+                                    } else {
+                                        return 420.0f;
+                                    }
+                                });
+                           }},
+        {SortMode::Best_rated, [] (const SongDetailsCache::Song* x) // Best rated
+                           {
+                                return x->rating();
+                           }},
+        {SortMode::Worst_rated, [] (const SongDetailsCache::Song* x)//Worst rated
+                            {
+                                return 420.0f - (x->rating() !=0 ? x->rating(): 420.0f); 
                            }}
 };
 
@@ -351,6 +359,12 @@ bool SongMeetsSearch(const SongDetailsCache::Song* song, std::vector<std::string
     return matches == words;
 }
 
+
+struct xd {
+    const SongDetailsCache::Song * song;
+	float searchWeight;
+	float sortWeight;
+};
 
 void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     DEBUG("_UpdateSearchedSongsList");
@@ -426,10 +440,10 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     prevSearch = search;
     this->filterChanged = false;
 
-    auto searchQuery = split(currentSearch, " ");
+    
 
 
-    std::thread([this, searchQuery, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
+    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
         long long before = 0;
         long long after = 0;
         before = CurrentTimeMs();
@@ -470,42 +484,217 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             for (int i = 0; i < num_threads; ++i) { t[i].join(); }
         }
 
+        
+        if (currentFilterChanged || rankedSortChanged || currentSearchChanged || currentSortChanged) {
+            if (currentSearch.length() > 0) {
+                auto words = split(currentSearch, " ");
+                DEBUG("Words length {}", words.size());
+                for (int i = 0; i < words.size(); i++) {
+                    DEBUG("Search term: '{}'", words[i]);
+                };
 
-        if (currentFilterChanged || rankedSortChanged || currentSearchChanged) {
-            DEBUG("Searching");
-            DataHolder::searchedSongList.clear();
-            // Set up variables for threads
-            int totalSongs = DataHolder::filteredSongList.size();
-            
-            std::mutex valuesMutex;
-            std::atomic_int index = 0;
+                // TODO: Process song key
+                uint32_t possibleSongKey = 0;
+                // Try to parse song key if 1 word from 2 to 7 letters
+                if(words.size() == 1 && currentSearch.length() >= 2 && currentSearch.length() <= 7) {
+                	try {
+                		possibleSongKey = static_cast<uint32_t>(std::stoul(currentSearch, nullptr, 16));
+                	} catch (...) {}
+                }
 
-            //Launch a group of threads
-            for (int i = 0; i < num_threads; ++i) {
-                t[i] = std::thread([&index, &valuesMutex, totalSongs](std::vector<std::string> searchQuery){
-                    int i = index++;
-                    while(i < totalSongs) {
-                        auto item = DataHolder::filteredSongList[i];
-                        bool songMeetsSearch = SongMeetsSearch(item, searchQuery);
-                        if (songMeetsSearch) {
-                            std::lock_guard<std::mutex> lock(valuesMutex);
-                            DataHolder::searchedSongList.push_back(item);
+                float maxSearchWeight = 0.0f;
+                float maxSortWeight = 0.0f;
+                
+                DEBUG("Searching");
+                DataHolder::searchedSongList.clear();
+                // Set up variables for threads
+                int totalSongs = DataHolder::filteredSongList.size();
+                
+                std::mutex valuesMutex;
+                std::atomic_int index = 0;
+
+                // Prefiltered songs
+                std::vector<xd> prefiltered; 
+
+                //Launch a group of threads
+                for (int i = 0; i < num_threads; ++i) {
+                    t[i] = std::thread([&index, &valuesMutex, totalSongs, currentSearch, words, &prefiltered, &maxSearchWeight, &maxSortWeight, currentSort, possibleSongKey](std::vector<std::string> searchQuery){
+                        
+                        int j = index++;
+                        while(j < totalSongs) {
+                            auto songe = DataHolder::filteredSongList[j];
+                            
+
+                            float resultWeight = 0;
+                            bool matchedAuthor = false;
+                            int prevMatchIndex = -1;
+
+
+                            std::string songName = removeSpecialCharacter(toLower(songe->songName()));
+                            std::string songAuthorName = removeSpecialCharacter(toLower(songe->songAuthorName()));
+                            std::string levelAuthorName = removeSpecialCharacter(toLower(songe->levelAuthorName()));
+                            uint32_t songKey = songe->mapId();
+
+                            // If song key is present and mapid == songkey, pull it to the top
+                            if(possibleSongKey != 0 && songKey == possibleSongKey)
+                                resultWeight = 30;
+
+                            // Find full match author name
+                            int authorFullMatch = currentSearch.find(songAuthorName);
+
+                            // set up i for the loop
+                            int i = 0;
+                            
+                            if(songAuthorName.length() > 4 && authorFullMatch != std::string::npos && 
+                                // Checks if there is a space after the supposedly matched author name
+                                (currentSearch.length() == songAuthorName.length() || IsSpace(currentSearch[songAuthorName.length()]))
+                            ) {
+                                matchedAuthor = true;
+                                resultWeight += songAuthorName.length() > 5 ? 25 : 20;
+
+                                // If the author is matched and is the first, then skip first word (i + 1)
+                                // This is super cheapskate - I'd have to replace the author from the filter and recreate the words array otherwise
+                                if(authorFullMatch == 0)
+                                    i = 1;
+                            }
+
+                            // Go over a list of words
+                            for (; i < words.size(); i++) {
+                                // If the word matches the author 1:1 thats cool innit
+                                // If author name is not empty
+                                if (songAuthorName.length() != 0) {
+                                    // If not matched author and author name == word then add weight, skip if author is already matched
+                                    if(!matchedAuthor && songAuthorName == words[i]) {
+                                        matchedAuthor = true;
+                                        // 3*length of the word divided by 2? wtf
+                                        resultWeight += 3 * (words[i].length() / 2);
+
+                                        // Go to next word
+                                        continue;
+                                        // Otherwise we'll have to check if its contained within this word
+                                    } else if(!matchedAuthor && words[i].length() >= 3) {
+                                        int index = songAuthorName.find(words[i]);
+
+                                        // If found in the beginning or is space at the end of author name which means we matched the beginning of a word
+                                        if(index == 0 || (index > 0 && IsSpace(songAuthorName[index - 1]))) {
+                                            
+                                            matchedAuthor = true;
+                                            // Add weight
+                                            resultWeight += (int)round((index == 0 ? 4.0f : 3.0f) * ((float)words[i].length() / songAuthorName.length()));
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                                int matchpos = songName.find(words[i]);
+                                if(matchpos != std::string::npos) {
+                                    DEBUG("Matched word {} in {} at {}", words[i], songName, matchpos);
+                                    // Check if we matched the beginning of a word
+                                    bool wordStart = matchpos == 0 || songName[matchpos - 1] == ' ';
+
+                                    // If it was the beginning add 5 weighting, else 3
+                                    resultWeight += wordStart ? 5 : 3;
+                                    
+                                    // Find the position in the name
+                                    int posInName = matchpos + words[i].length();
+
+                                    /*
+                                    * Check if we are at the end of the song name, but only if it has at least 8 characters
+                                    * We do this because otherwise, when searching for "lowermost revolt", songs where the
+                                    * songName is exactly "lowermost revolt" would have a lower result weight than 
+                                    * "lowermost revolt (JoeBama cover)"
+                                    * 
+                                    * The 8 character limitation for this is so that super short words like "those" dont end
+                                    * up triggering this
+                                    */
+                                    if(songName.length() > 7 && songName.length() == posInName) {
+                                        resultWeight += 3;
+                                    } else {
+                                        // If we did match the beginning, check if we matched an entire word. Get the end index as indicated by our needle
+                                        bool maybeWordEnd = wordStart && posInName < songName.length();
+
+                                        // Check if we actually end up at a non word char, if so add 2 weighting
+                                        if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
+                                            resultWeight += 2;
+                                    }
+
+                                    // If the word we just checked is behind the previous matched, add another 1 weight
+                                    if(prevMatchIndex != -1 && matchpos > prevMatchIndex)
+                                        resultWeight += 1;
+
+                                    prevMatchIndex = matchpos;
+                                }
+                            }
+
+                            for(i = 0; i < words.size(); i++) {
+                                if(words[i].length() > 3 && levelAuthorName.find(words[i]) != std::string::npos) {
+                                    resultWeight += 1;
+
+                                    break;
+                                }
+                            }
+
+                            if(resultWeight > 0) {
+                                float sortWeight = sortFunctionMap.at(currentSort)(songe);
+
+                                std::lock_guard<std::mutex> lock(valuesMutex);
+
+                                prefiltered.push_back({
+                                    songe, resultWeight, sortWeight
+                                });
+
+                                // #if DEBUG
+                                //                         x.sortWeight = sortWeight;
+                                //                         x.resultWeight = resultWeight;
+                                // #endif
+                                if(maxSearchWeight < resultWeight)
+                                    maxSearchWeight = resultWeight;
+
+                                if(maxSortWeight < sortWeight)
+                                    maxSortWeight = sortWeight;
+                            }
+                            j = index++;
                         }
-                        i = index++;
+                    }, words);
+                }
+
+                //Join the threads with the main thread
+                for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+
+                if (prefiltered.size() == 0) {
+                    DataHolder::searchedSongList.clear();
+                } else {
+                    float maxSearchWeightInverse = 1.0f / maxSearchWeight;
+                    float maxSortWeightInverse = 1.0f / maxSortWeight;
+
+
+                    // 
+                    std::stable_sort(prefiltered.begin(), prefiltered.end(),
+                        [maxSearchWeightInverse, maxSortWeightInverse](xd s1, xd s2){
+                            // First elem weight
+                            float searchWeight = s1.searchWeight * maxSearchWeightInverse;
+                            float s1weight = searchWeight + min(searchWeight / 2, s1.sortWeight * maxSortWeightInverse * (searchWeight / 2));
+
+                            // Second elem weight
+                            searchWeight = s2.searchWeight * maxSearchWeightInverse;
+                            float s2weight = searchWeight + min(searchWeight / 2, s2.sortWeight * maxSortWeightInverse * (searchWeight / 2));
+
+                            return s1weight > s2weight;
+                        }
+                    );
+
+                    for (auto x: prefiltered) {
+                        DataHolder::searchedSongList.push_back(x.song);
                     }
-                }, searchQuery);
+                }
+            } else {
+                DataHolder::searchedSongList = DataHolder::filteredSongList;
+                std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
+                    [currentSort](const SongDetailsCache::Song * s1, const SongDetailsCache::Song * s2){
+                        return sortFunctionMap.at(currentSort)(s1) > sortFunctionMap.at(currentSort)(s2);
+                    }
+                );
             }
-
-            //Join the threads with the main thread
-            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
-        }
-
-        // Sort has to change?
-        if (currentFilterChanged  || rankedSortChanged || currentSearchChanged || currentSortChanged) {
-            DEBUG("Sorting");
-            std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
-                sortFunctionMap.at(currentSort)
-            );
         }
 
         after = CurrentTimeMs();
@@ -977,10 +1166,6 @@ void ViewControllers::SongListController::UpdateDetails () {
     bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->hash()));
     #ifdef SONGDOWNLOADER
     
-    if (songAssetLoadCanceller != nullptr) {
-        songAssetLoadCanceller->Cancel();
-    }
-	songAssetLoadCanceller = System::Threading::CancellationTokenSource::New_ctor();
     // if beatmap is loaded
     if (loaded) {
         auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap.value());
