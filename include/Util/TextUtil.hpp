@@ -15,4 +15,6 @@ namespace BetterSongSearch::Util {
     std::string toLower(std::string s);
     std::string toLower(std::string_view s);
     std::string toLower(char const* s);
+
+    bool IsSpace(char x);
 }
