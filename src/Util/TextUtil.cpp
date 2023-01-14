@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-
+#include <cctype> 
 namespace BetterSongSearch::Util { 
     // this hurts
     std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter) {
@@ -48,4 +48,5 @@ namespace BetterSongSearch::Util {
         return toLower(std::string(s));
     }
 
+    bool IsSpace(char x) { return x == ' ' || !isalnum(x); };
 }
