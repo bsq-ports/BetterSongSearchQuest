@@ -99,7 +99,6 @@ const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chro
 
 std::string prevSearch;
 SortMode prevSort = (SortMode) 0;
-int currentSelectedSong = 0;
 
 using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
 
@@ -179,12 +178,6 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
         if(!diff->ranked())
             return false;
-
-    // If we have a ranked sort, we force ranked filter
-    if (currentFilter.isRankedSort) {
-        if (!diff->ranked())
-            return false;
-    }
 
     if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
         if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
@@ -324,42 +317,6 @@ static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }}
 };
 
-
-bool SongMeetsSearch(const SongDetailsCache::Song* song, std::vector<std::string> searchTexts)
-{
-    int words = 0;
-    int matches = 0;
-
-    std::string songName = removeSpecialCharacter(toLower(song->songName()));
-    // std::string songSubName = removeSpecialCharacter(toLower(song->son));
-    std::string songAuthorName = removeSpecialCharacter(toLower(song->songAuthorName()));
-    std::string levelAuthorName = removeSpecialCharacter(toLower(song->levelAuthorName()));
-    std::string songKey = toLower(song->key());
-
-    for (int i = 0; i < searchTexts.size(); i++)
-    {
-        words++;
-        std::string searchTerm = toLower(searchTexts[i]);
-        if (i == searchTexts.size() - 1)
-        {
-            searchTerm.resize(searchTerm.length()-1);
-        }
-
-
-        if (songName.find(searchTerm) != std::string::npos ||
-            // songSubName.find(searchTerm) != std::string::npos ||
-            songAuthorName.find(searchTerm) != std::string::npos ||
-            levelAuthorName.find(searchTerm) != std::string::npos ||
-            songKey.find(searchTerm) != std::string::npos)
-        {
-            matches++;
-        }
-    }
-
-    return matches == words;
-}
-
-
 struct xd {
     const SongDetailsCache::Song * song;
 	float searchWeight;
@@ -387,14 +344,10 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     IsSearching = true;
 
-    // Check if sort is ranked and set the filter
-    bool isRankedSort = sort == SortMode::Most_Stars || sort == SortMode::Least_Stars ||  sort == SortMode::Latest_Ranked;
-    DataHolder::filterOptions.isRankedSort = isRankedSort;
     // Detect changes
     bool currentFilterChanged = this->filterChanged;
     bool currentSortChanged = prevSort != sort;
     bool currentSearchChanged = prevSearch != search;
-    bool rankedSortChanged = DataHolder::filterOptionsCache.isRankedSort != isRankedSort;
 
     // Take a snapshot of current filter options
     DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
@@ -418,8 +371,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     DEBUG("MinRating: {}", DataHolder::filterOptionsCache.minRating);
     DEBUG("MinVotes: {}",  DataHolder::filterOptionsCache.minVotes);
     DEBUG("Uploaders number: {}",  DataHolder::filterOptionsCache.uploaders.size());
-    DEBUG("IsRankedSort: {}", DataHolder::filterOptionsCache.isRankedSort);
-    DEBUG("RankedSortChanged: {}", rankedSortChanged);
 
     this->searchInProgress->get_gameObject()->set_active(true);
 
@@ -443,7 +394,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     
 
 
-    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, rankedSortChanged]{
+    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
         long long before = 0;
         long long after = 0;
         before = CurrentTimeMs();
@@ -454,7 +405,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         
       
         // Filter songs if needed
-        if (currentFilterChanged || rankedSortChanged) {
+        if (currentFilterChanged) {
             DEBUG("Filtering");
             DataHolder::filteredSongList.clear();
             // Set up variables for threads
@@ -485,7 +436,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         }
 
         
-        if (currentFilterChanged || rankedSortChanged || currentSearchChanged || currentSortChanged) {
+        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
             if (currentSearch.length() > 0) {
                 auto words = split(currentSearch, " ");
                 DEBUG("Words length {}", words.size());
@@ -595,6 +546,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                     // If it was the beginning add 5 weighting, else 3
                                     resultWeight += wordStart ? 5 : 3;
                                     
+
+                                    ///////////////// New algo  /////////////////////////
                                     // Find the position in the name
                                     int posInName = matchpos + words[i].length();
 
@@ -617,6 +570,16 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                         if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
                                             resultWeight += 2;
                                     }
+                                    /////////////////////////////////////////////////////
+
+                                    //// Old algo for testing pc compatibility (comment out new algo and uncomment this for comparison with PC) //////////
+                                    // bool maybeWordEnd = wordStart && matchpos + words[i].length() < songName.length();
+
+                                    // // Check if we actually end up at a non word char, if so add 2 weighting
+                                    // if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
+                                    //     resultWeight += 2;
+                                    ////////////////////////////////////////////////////
+
 
                                     // If the word we just checked is behind the previous matched, add another 1 weight
                                     if(prevMatchIndex != -1 && matchpos > prevMatchIndex)
