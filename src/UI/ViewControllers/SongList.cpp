@@ -362,17 +362,50 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     prevSearch = search;
     this->filterChanged = false;
 
-    
-
-
     std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
         long long before = CurrentTimeMs();
+
+
+        // TODO: Actually update the scores
+        // Get scores if we don't have them
+        if (DataHolder::songsWithScores.size() == 0 ) {
+            if(DataHolder::playerDataModel != nullptr && DataHolder::playerDataModel->m_CachedPtr.m_value != nullptr) {
+                for(int i = 0; i < DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
+                    GlobalNamespace::PlayerLevelStatsData* x = DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
+                    if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40)
+                        continue;
+                    std::u16string_view levelid = x->levelID;
+                    if (!levelid.starts_with(u"custom_level_")) {
+                        continue;
+                    };
+                    auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
+
+                    auto& song = DataHolder::songDetails->songs.FindByHash(sh);
+
+                    if(song == SongDetailsCache::Song::none)
+                        continue;
+
+                    bool foundDiff = false;
+
+                    for (auto& diff:song) {
+                        if (diff.difficulty == SongDetailsCache::MapDifficulty((int)x->difficulty)) {
+                            foundDiff = true;
+                            break;
+                        }
+                    }
+                    if(!foundDiff) continue;
+
+                    DataHolder::songsWithScores.push_back(sh);
+                }
+                INFO("local scores checked. found {}", DataHolder::songsWithScores.size());
+            }
+            INFO("Checked local scores in {} ms",  CurrentTimeMs()-before);
+        }
 
         // Prolly need 4 but gotta go fast
         const int num_threads = 8;
         std::thread t[num_threads];
         
-      
         // Filter songs if needed
         if (currentFilterChanged) {
             DEBUG("Filtering");
@@ -788,6 +821,9 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (!firstActivation)
         return;
 
+    if (DataHolder::playerDataModel == nullptr || DataHolder::playerDataModel->m_CachedPtr.m_value == nullptr) {
+        DataHolder::playerDataModel =  UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
+    };
     // Get coordinators
     soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator*>();
     multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator*>();
@@ -1341,35 +1377,6 @@ void ViewControllers::SongListController::SongDataDone() {
     DataHolder::needsRefresh = false;
 
     QuestUI::MainThreadScheduler::Schedule([this]{
-        long long before = CurrentTimeMs();
-        // Err, I kinda forgot about it xD
-        INFO("Checking for local scores...");
-        auto playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
-        if(playerDataModel) {
-            for(int i = 0; i < playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
-                auto x = playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
-                if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40 || !x->levelID->StartsWith("custom_level_"))
-                    continue;
-                auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
-                auto& song = DataHolder::songDetails->songs.FindByHash(sh);
-                if(song == SongDetailsCache::Song::none)
-                    continue;
-
-                bool foundDiff = false;
-
-                for (auto& diff:song) {
-                    if (diff.difficulty == SongDetailsCache::MapDifficulty((int)x->difficulty)) {
-                        foundDiff = true;
-                        break;
-                    }
-                }
-                if(!foundDiff) continue;
-
-                DataHolder::songsWithScores.push_back(sh);
-            }
-            INFO("local scores checked. found {}", DataHolder::songsWithScores.size());
-        }
-        INFO("Checked local scores in {} ms",  CurrentTimeMs()-before);
 
         if (this->get_isActiveAndEnabled()) {
             // Initial search
