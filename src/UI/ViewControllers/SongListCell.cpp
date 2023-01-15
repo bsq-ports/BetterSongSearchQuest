@@ -15,6 +15,11 @@
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
+struct DiffIndex {
+    const SongDetailsCache::SongDifficulty* diff;
+    bool passesFilter;
+};
+
 namespace BetterSongSearch::UI::ViewControllers
 {
     static std::map<const SongDetailsCache::MapDifficulty, std::string> shortMapDiffNames = {
@@ -63,33 +68,56 @@ namespace BetterSongSearch::UI::ViewControllers
 
         this->entry = entry;
 
-        std::vector<const SongDetailsCache::SongDifficulty*>  sortedDiffs;
+        std::vector<DiffIndex>  sortedDiffs;
         for (const SongDetailsCache::SongDifficulty &diff: *entry) {
-            sortedDiffs.push_back(&diff);
+            sortedDiffs.push_back({
+                &diff,
+                DifficultyCheck(&diff, entry)
+            });
         };
 
+        
         // TODO: Actually sort diffs..
-        // std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
-        //     bool passesFilter = DifficultyCheck(a, entry);
-        //     return (passesFilter? 1:-3) + (a->characteristic == SongDetailsCache::MapCharacteristic::Standard? 1:0);
+        std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
+           
+            auto diff1 = (a.passesFilter? 1:-3) + (a.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard? 1:0);
+            auto diff2 = (b.passesFilter? 1:-3) + (b.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard? 1:0);
 
-        //     return 1;
-        // });
-        // if (fcInstance->SongListController->sort == SortMode::Most_Stars) {
-        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
-        //         return -a->stars;
-        //     });
-        // }
-        // if (fcInstance->SongListController->sort == SortMode::Least_Stars) {
-        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
-        //         return (a->ranked()) ? a->ranked() : -420;
-        //     });
-        // }
-        // if (fcInstance->SongListController->sort == SortMode::Least_Stars) {
-        //     std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const SongDetailsCache::SongDifficulty* a) {
-        //         return (a->ranked()) ? 1 : 0;
-        //     });
-        // }
+            // Descending
+            return diff1 > diff2;
+        });
+
+        // If most stars
+        if (DataHolder::currentSort == SortMode::Most_Stars) {
+            std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
+           
+                auto diff1 = - a.diff->stars;
+                auto diff2 = - b.diff->stars;
+
+                // Ascending
+                return diff1 < diff2;
+            });
+        }
+        // If least stars
+        if (DataHolder::currentSort == SortMode::Least_Stars) {
+            std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
+                auto diff1 = a.diff->ranked()? a.diff->stars: -420.0f;
+                auto diff2 = b.diff->ranked()? b.diff->stars: -420.0f;
+                // Ascending
+                return diff1 < diff2;
+            });
+        }
+
+        // By ranked
+        std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
+            auto diff1 = a.diff->ranked()? 1: 0;
+            auto diff2 = b.diff->ranked()? 1: 0;
+            // Descending
+            return diff1 < diff2;
+        });
+
+    
+     
 
         int diffsLeft = sortedDiffs.size();
 
@@ -105,11 +133,11 @@ namespace BetterSongSearch::UI::ViewControllers
             }
             else
             {
-                bool passesFilter = DifficultyCheck(sortedDiffs[i], entry);
-                auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i]);
+                bool passesFilter = sortedDiffs[i].passesFilter;
+                auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i].diff);
                 std::string stars = ""; 
-                if (sortedDiffs[i]->stars > 0 && sortedDiffs[i]->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
-                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i]->stars, 1));
+                if (sortedDiffs[i].diff->stars > 0 && sortedDiffs[i].diff->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
+                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].diff->stars, 1));
                 };
                 
                 diffs[i]->SetText(
