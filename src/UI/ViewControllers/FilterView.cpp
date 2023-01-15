@@ -359,7 +359,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     
     // I hate BSML some times
     auto m = modsRequirementDropdown->dropdown->modalView;
-    modsRequirementDropdown->dropdown->numberOfVisibleCells = get_modOptions()->get_Count();
     reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
 
