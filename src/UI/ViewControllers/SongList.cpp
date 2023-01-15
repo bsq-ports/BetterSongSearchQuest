@@ -145,8 +145,9 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     // Skip if not needed
     if (filterOptions.localScoreType != FilterOptions::LocalScoreFilterType::All ) {
         bool hasLocalScore = false;
-        if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
+        if (DataHolder::songsWithScores.contains(songHash)) {
             hasLocalScore = true;
+        } 
         if (hasLocalScore) {
             if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
                 return false;
@@ -243,7 +244,7 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
 }
 
 
-static const std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
+std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
         {SortMode::Newest, [] (const SongDetailsCache::Song* x) // Newest
                            {
                                return (x->uploadTimeUnix);
@@ -357,6 +358,10 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     auto currentSort = sort;
     auto currentSearch = search;
 
+    // Save for debugging
+    DataHolder::currentSort = sort;
+    DataHolder::currentSearch = search;
+
     // Reset values
     prevSort = sort;
     prevSearch = search;
@@ -395,7 +400,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     }
                     if(!foundDiff) continue;
 
-                    DataHolder::songsWithScores.push_back(sh);
+                    DataHolder::songsWithScores.insert(sh);
                 }
                 INFO("local scores checked. found {}", DataHolder::songsWithScores.size());
             }
@@ -664,26 +669,26 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 }
             } else {
                 long long before = CurrentTimeMs();
-                
-                DataHolder::searchedSongList = DataHolder::filteredSongList;
-                
-                std::vector<xd> prefiltered; 
-                prefiltered.reserve(DataHolder::searchedSongList.size());
 
+                std::vector<xd> prefiltered; 
                 auto sortFunction = sortFunctionMap.at(currentSort);
-                for (auto item :DataHolder::searchedSongList) {
-                    auto score =sortFunction(item); 
-                    // Set sort weight
+                for (auto item : DataHolder::filteredSongList) {
+                    auto score = sortFunction(item);
                     prefiltered.push_back({
                         item, 0 , score 
                     });
                 }
 
-                std::stable_sort(prefiltered.begin(), prefiltered.end(),
-                    [](xd s1, xd s2){
+                std::stable_sort(
+                    prefiltered.begin(),
+                    prefiltered.end(),
+                    [](const xd& s1, const xd& s2){
                         return s1.sortWeight > s2.sortWeight;
                     }
                 );
+
+                DataHolder::searchedSongList.clear();
+                DataHolder::searchedSongList.reserve(DataHolder::filteredSongList.size());
 
                 // Push to searched
                 for (auto x: prefiltered) {
@@ -1401,7 +1406,7 @@ void ViewControllers::SongListController::SongDataError() {
     DataHolder::needsRefresh = false;
     
     QuestUI::MainThreadScheduler::Schedule([this]{
-        if (this!= nullptr && this->m_CachedPtr.m_value != nullptr ) {  
+        if (this->m_CachedPtr.m_value != nullptr ) {  
             fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
         }
     });

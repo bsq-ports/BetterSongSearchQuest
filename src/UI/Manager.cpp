@@ -45,7 +45,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2f));
     }
 
-    // co_return;
+    co_return;
 
     while(true) {
         
