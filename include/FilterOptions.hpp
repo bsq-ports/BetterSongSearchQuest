@@ -3,6 +3,12 @@
 #include <vector>
 #include <limits>
 #include "main.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
+#include "song-details/shared/Data/MapDifficulty.hpp"
+#include "song-details/shared/Data/MapMods.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+
+
 
 class FilterOptions
 {
@@ -55,7 +61,8 @@ public:
         NoodleExtensions,
         MappingExtensions,
         Chroma,
-        Cinema
+        Cinema,
+        None
     };
 
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
@@ -79,6 +86,7 @@ public:
 
     //BeatSaver
     int minUploadDate = BEATSAVER_EPOCH;
+    int minUploadDateInMonths = 0;
     float minRating = 0;
     int minVotes = 0;
     std::vector<std::string> uploaders;
@@ -102,6 +110,28 @@ enum class SortMode {
     Worst_rated
 };
 
+
+
+// Map for characteristics
+static const std::unordered_map<FilterOptions::CharFilterType, SongDetailsCache::MapCharacteristic> charMap = {
+    {FilterOptions::CharFilterType::Custom, SongDetailsCache::MapCharacteristic::Custom},
+    {FilterOptions::CharFilterType::Standard, SongDetailsCache::MapCharacteristic::Standard},
+    {FilterOptions::CharFilterType::OneSaber, SongDetailsCache::MapCharacteristic::OneSaber},
+    {FilterOptions::CharFilterType::NoArrows, SongDetailsCache::MapCharacteristic::NoArrows},
+    {FilterOptions::CharFilterType::NinetyDegrees, SongDetailsCache::MapCharacteristic::NinetyDegree},
+    {FilterOptions::CharFilterType::ThreeSixtyDegrees, SongDetailsCache::MapCharacteristic::ThreeSixtyDegree},
+    {FilterOptions::CharFilterType::LightShow, SongDetailsCache::MapCharacteristic::LightShow},
+    {FilterOptions::CharFilterType::Lawless, SongDetailsCache::MapCharacteristic::Lawless}
+};
+
+// Map for difficulties
+static const std::unordered_map<FilterOptions::DifficultyFilterType, SongDetailsCache::MapDifficulty> diffMap = {
+    {FilterOptions::DifficultyFilterType::Easy, SongDetailsCache::MapDifficulty::Easy},
+    {FilterOptions::DifficultyFilterType::Normal, SongDetailsCache::MapDifficulty::Normal},
+    {FilterOptions::DifficultyFilterType::Hard, SongDetailsCache::MapDifficulty::Hard},
+    {FilterOptions::DifficultyFilterType::Expert, SongDetailsCache::MapDifficulty::Expert},
+    {FilterOptions::DifficultyFilterType::ExpertPlus, SongDetailsCache::MapDifficulty::ExpertPlus}
+};
 
 class FilterOptionsCache
 {
@@ -129,7 +159,41 @@ public:
         difficultyFilter=s.difficultyFilter;
         charFilter=s.charFilter;
         modRequirement=s.modRequirement;
+
+        // Process char filter
+        if (s.charFilter != FilterOptions::CharFilterType::All) {
+            charFilterPreprocessed = charMap.at(s.charFilter);
+        };
+
+        // Map difficulty filter
+        if (s.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
+            difficultyFilterPreprocessed = diffMap.at(s.difficultyFilter);
+        };
+
+        // Check if filter is needed at all
+        skipFilter = false; 
+        skipFilter = (
+            downloadType == FilterOptions::DownloadFilterType::All &&
+            localScoreType ==  FilterOptions::LocalScoreFilterType::All &&
+            (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) && 
+            minNJS == 0 && 
+            s.maxNJS >= NJS_FILTER_MAX &&
+            s.minNPS == 0 &&
+            s.maxNPS >= NPS_FILTER_MAX && 
+            rankedType == FilterOptions::RankedFilterType::All &&
+            minStars == 0 &&
+            s.maxStars >= STAR_FILTER_MAX &&
+            s.minUploadDateInMonths == 0 &&
+            minRating == 0 &&
+            minVotes == 0 &&
+            uploaders.size() == 0 &&
+            difficultyFilter == FilterOptions::DifficultyFilterType::All &&
+            charFilter == FilterOptions::CharFilterType::All &&
+            modRequirement == FilterOptions::RequirementType::Any
+        );
     }
+
+    bool skipFilter = false;
     
     // Prolly need to deduplicate these..
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
@@ -159,7 +223,13 @@ public:
 
     //Difficulty
     FilterOptions::DifficultyFilterType difficultyFilter = FilterOptions::DifficultyFilterType::All;
+    SongDetailsCache::MapDifficulty difficultyFilterPreprocessed;
+
+
+    /// @brief Char filter for gui
     FilterOptions::CharFilterType charFilter = FilterOptions::CharFilterType::All;
+    /// @brief Used to speedup filtering, only if not All
+    SongDetailsCache::MapCharacteristic charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
 
     //Mods
     FilterOptions::RequirementType modRequirement = FilterOptions::RequirementType::Any;
