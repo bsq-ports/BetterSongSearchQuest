@@ -657,14 +657,14 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                         item.searchWeight = searchWeight + min(searchWeight / 2, item.sortWeight * maxSortWeightInverse * (searchWeight / 2));
                     }
                     
-                    
                     std::stable_sort(prefiltered.begin(), prefiltered.end(),
-                        [](xd s1, xd s2){
+                        [](const xd& s1, const xd& s2){
                             return s1.searchWeight > s2.searchWeight;
                         }
                     );
 
-                    for (auto x: prefiltered) {
+                    DataHolder::searchedSongList.reserve(prefiltered.size());
+                    for (auto& x: prefiltered) {
                         DataHolder::searchedSongList.push_back(x.song);
                     }
                     INFO("sorted search results in {} ms",  CurrentTimeMs()-before);
@@ -693,7 +693,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 DataHolder::searchedSongList.reserve(DataHolder::filteredSongList.size());
 
                 // Push to searched
-                for (auto x: prefiltered) {
+                for (auto& x: prefiltered) {
                     DataHolder::searchedSongList.push_back(x.song);
                 }
               
