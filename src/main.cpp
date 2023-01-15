@@ -89,7 +89,7 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
-
+        filterOptions.minUploadDateInMonths = getPluginConfig().MinUploadDateInMonths.GetValue();
         // Custom string loader
         auto uploadersString = getPluginConfig().Uploaders.GetValue();
         if (uploadersString.size() > 0) {
