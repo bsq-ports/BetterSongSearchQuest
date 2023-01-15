@@ -72,6 +72,7 @@ using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI::Util::BSMLStuff;
 using namespace GlobalNamespace;
+using namespace SongDetailsCache;
 
 #define SONGDOWNLOADER
 
@@ -121,33 +122,40 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     if(song->uploadTimeUnix < filterOptions.minUploadDate)
         return false;
 
-    float songRating = std::isnan(song->rating())? 0: song->rating();
+    float songRating = song->rating();
     if(songRating < filterOptions.minRating) return false;
     
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
-    bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
-    if(downloaded)
-    {
-        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
-            return false;
-    }
-    else
-    {
-        if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
-            return false;
+
+    // Skip if not needed
+    if (filterOptions.downloadType != FilterOptions::DownloadFilterType::All) {
+        bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+        if(downloaded)
+        {
+            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+                return false;
+        }
+        else
+        {
+            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+                return false;
+        }
     }
 
-    bool hasLocalScore = false;
-
-    if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
-        hasLocalScore = true;
-    if (hasLocalScore) {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
-            return false;
-    } else {
-        if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
-            return false;
+    // Skip if not needed
+    if (filterOptions.localScoreType != FilterOptions::LocalScoreFilterType::All ) {
+        bool hasLocalScore = false;
+        if(std::find(DataHolder::songsWithScores.begin(), DataHolder::songsWithScores.end(), songHash) != DataHolder::songsWithScores.end())
+            hasLocalScore = true;
+        if (hasLocalScore) {
+            if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
+                return false;
+        } else {
+            if(filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
+                return false;
+        }
     }
+   
 
     bool passesDiffFilter = true;
 
@@ -173,6 +181,9 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
 
 bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficulty* diff, const SongDetailsCache::Song* song) {
     auto const& currentFilter = DataHolder::filterOptionsCache;
+    if (currentFilter.skipFilter) {
+        return true;
+    }
 
 
     if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
@@ -183,85 +194,45 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
         if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
             return false;
 
-    switch(currentFilter.difficultyFilter)
-    {
-        case FilterOptions::DifficultyFilterType::All:
-            break;
-        case FilterOptions::DifficultyFilterType::Easy:
-            if(diff->difficulty != SongDetailsCache::MapDifficulty::Easy) return false;
-            break;
-        case FilterOptions::DifficultyFilterType::Normal:
-            if(diff->difficulty != SongDetailsCache::MapDifficulty::Normal) return false;
-            break;
-        case FilterOptions::DifficultyFilterType::Hard:
-            if(diff->difficulty != SongDetailsCache::MapDifficulty::Hard) return false;
-            break;
-        case FilterOptions::DifficultyFilterType::Expert:
-            if(diff->difficulty != SongDetailsCache::MapDifficulty::Expert) return false;
-            break;
-        case FilterOptions::DifficultyFilterType::ExpertPlus:
-            if(diff->difficulty != SongDetailsCache::MapDifficulty::ExpertPlus) return false;
-            break;
+    if (currentFilter.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
+        if (diff->difficulty != currentFilter.difficultyFilterPreprocessed) {
+            return false;
+        }
     }
-
-    switch(currentFilter.charFilter) //"Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
-    {
-        case FilterOptions::CharFilterType::All:
-            break;
-        case FilterOptions::CharFilterType::Custom:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Custom) return false;
-            break;
-        case FilterOptions::CharFilterType::Standard:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Standard) return false;
-            break;
-        case FilterOptions::CharFilterType::OneSaber:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::OneSaber) return false;
-            break;
-        case FilterOptions::CharFilterType::NoArrows:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::NoArrows) return false;
-            break;
-        case FilterOptions::CharFilterType::NinetyDegrees:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::NinetyDegree) return false;
-            break;
-        case FilterOptions::CharFilterType::ThreeSixtyDegrees:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::ThreeSixtyDegree) return false;
-            break;
-        case FilterOptions::CharFilterType::LightShow:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::LightShow) return false;
-            break;
-        case FilterOptions::CharFilterType::Lawless:
-            if(diff->characteristic != SongDetailsCache::MapCharacteristic::Lawless) return false;
-            break;
+    
+    if (currentFilter.charFilter != FilterOptions::CharFilterType::All) {
+        if (diff->characteristic != currentFilter.charFilterPreprocessed) {
+            return false;
+        }
     }
 
     if(diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
-
     
     if(currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
-        if (currentFilter.modRequirement == FilterOptions::RequirementType::Chroma) {
-            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::Chroma)) {
-                return false;
-            }
-        }
-        if (currentFilter.modRequirement == FilterOptions::RequirementType::Cinema) {
-            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::Cinema)) {
-                return false;
-            }
-        }
-        if (currentFilter.modRequirement == FilterOptions::RequirementType::MappingExtensions) {
-            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::MappingExtensions)) {
-                return false;
-            }
-        }
-        if (currentFilter.modRequirement == FilterOptions::RequirementType::NoodleExtensions) {
-            if (!SongDetailsCache::hasFlags(diff->mods, SongDetailsCache::MapMods::NoodleExtensions)) {
-                return false;
-            }
+        switch (currentFilter.modRequirement)
+        {
+            case FilterOptions::RequirementType::Chroma:
+                if (!hasFlags(diff->mods, MapMods::Chroma)) return false;
+                break;
+            case FilterOptions::RequirementType::Cinema:
+                if (!hasFlags(diff->mods, MapMods::Cinema)) return false;
+                break;
+            case FilterOptions::RequirementType::MappingExtensions:
+                if (!hasFlags(diff->mods, MapMods::MappingExtensions)) return false;
+                break;
+            case FilterOptions::RequirementType::NoodleExtensions:
+                if (!hasFlags(diff->mods, MapMods::NoodleExtensions)) return false;
+                break;
+            case FilterOptions::RequirementType::None:
+                if (!((diff->mods & (MapMods::NE | MapMods::ME)) == MapMods::None)) return false;
+                break;
+        default:
+            break;
         }
     }
 
-    if(song->songDurationSeconds > 0) {
+    if(song->songDurationSeconds > 0 ) {
         float nps = (float)diff->notes / (float)song->songDurationSeconds;
 
         if(nps < currentFilter.minNPS || nps > currentFilter.maxNPS)
@@ -396,7 +367,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
         long long before = 0;
-        long long after = 0;
         before = CurrentTimeMs();
 
         // Prolly need 4 but gotta go fast
@@ -407,33 +377,43 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         // Filter songs if needed
         if (currentFilterChanged) {
             DEBUG("Filtering");
-            DataHolder::filteredSongList.clear();
-            // Set up variables for threads
             int totalSongs = DataHolder::songDetails->songs.size();
+            DataHolder::filteredSongList.clear();
+            if (DataHolder::filterOptionsCache.skipFilter) {
+                DEBUG("Filtering skipped");
+                DataHolder::filteredSongList.reserve(totalSongs);
+                for (auto & song: DataHolder::songDetails->songs) {
+                    DataHolder::filteredSongList.push_back(&song);
+                }
+            } else {
+                // Set up variables for threads
+                std::mutex valuesMutex;
+                std::atomic_int index = 0;
 
-            std::mutex valuesMutex;
-            std::atomic_int index = 0;
-
-            //Launch a group of threads
-            for (int i = 0; i < num_threads; ++i) {
-                t[i] = std::thread([&index, &valuesMutex, totalSongs](){
-                    int i = index++;
-                    while(i < totalSongs) {
-                        const SongDetailsCache::Song & item = DataHolder::songDetails->songs.at(i);
-                        bool meetsFilter = MeetsFilter(&item);
-                        if (meetsFilter) {
-                            std::lock_guard<std::mutex> lock(valuesMutex);
-                            DataHolder::filteredSongList.push_back(&item);
+                //Launch a group of threads
+                for (int i = 0; i < num_threads; ++i) {
+                    t[i] = std::thread([&index, &valuesMutex, totalSongs](){
+                        int i = index++;
+                        while(i < totalSongs) {
+                            const SongDetailsCache::Song & item = DataHolder::songDetails->songs.at(i);
+                            bool meetsFilter = MeetsFilter(&item);
+                            if (meetsFilter) {
+                                std::lock_guard<std::mutex> lock(valuesMutex);
+                                DataHolder::filteredSongList.push_back(&item);
+                            }
+                            i = index++;
                         }
-                        i = index++;
-                    }
-                });
+                    });
+                }
+
+
+                //Join the threads with the main thread
+                for (int i = 0; i < num_threads; ++i) { t[i].join(); }
             }
-
-
-            //Join the threads with the main thread
-            for (int i = 0; i < num_threads; ++i) { t[i].join(); }
+            
         }
+
+        INFO("Filtered in {} ms",  CurrentTimeMs()-before);
 
         
         if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
@@ -457,6 +437,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 float maxSortWeight = 0.0f;
                 
                 DEBUG("Searching");
+                long long before = CurrentTimeMs();
                 DataHolder::searchedSongList.clear();
                 // Set up variables for threads
                 int totalSongs = DataHolder::filteredSongList.size();
@@ -539,7 +520,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
                                 int matchpos = songName.find(words[i]);
                                 if(matchpos != std::string::npos) {
-                                    DEBUG("Matched word {} in {} at {}", words[i], songName, matchpos);
                                     // Check if we matched the beginning of a word
                                     bool wordStart = matchpos == 0 || songName[matchpos - 1] == ' ';
 
@@ -624,9 +604,11 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 //Join the threads with the main thread
                 for (int i = 0; i < num_threads; ++i) { t[i].join(); }
 
+                INFO("Calculated search indexes in {} ms",  CurrentTimeMs()-before);
                 if (prefiltered.size() == 0) {
                     DataHolder::searchedSongList.clear();
                 } else {
+                    long long before = CurrentTimeMs();
                     float maxSearchWeightInverse = 1.0f / maxSearchWeight;
                     float maxSortWeightInverse = 1.0f / maxSortWeight;
 
@@ -649,22 +631,25 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     for (auto x: prefiltered) {
                         DataHolder::searchedSongList.push_back(x.song);
                     }
+                    INFO("sorted search results in {} ms",  CurrentTimeMs()-before);
                 }
             } else {
+                long long before = CurrentTimeMs();
+                
                 DataHolder::searchedSongList = DataHolder::filteredSongList;
                 std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
                     [currentSort](const SongDetailsCache::Song * s1, const SongDetailsCache::Song * s2){
                         return sortFunctionMap.at(currentSort)(s1) > sortFunctionMap.at(currentSort)(s2);
                     }
                 );
+                INFO("Sort without search in {} ms",  CurrentTimeMs()-before);
             }
         }
 
-        after = CurrentTimeMs();
-        DEBUG("Search time: {}ms", after-before);
+        
+        DEBUG("Search time: {}ms", CurrentTimeMs()-before);
         QuestUI::MainThreadScheduler::Schedule([this]{
             long long before = 0;
-            long long after = 0;
             before = CurrentTimeMs();
             
             // Copy the list to the displayed one
@@ -672,8 +657,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             DataHolder::sortedSongList = DataHolder::searchedSongList;
             this->ResetTable();
 
-            after = CurrentTimeMs();
-            INFO("table reset in {} ms",  after-before);
+            INFO("table reset in {} ms",  CurrentTimeMs()-before);
 
             if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr.m_value) {
                 if(DataHolder::filteredSongList.size() == DataHolder::songDetails->songs.size()) {
@@ -741,6 +725,9 @@ void ViewControllers::SongListController::PostParse() {
 
     // Get the default cover image
     defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
+
+    // Set default cover image
+    coverImage->set_sprite(defaultImage);
 
     // Get song preview player 
     songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
@@ -1178,9 +1165,7 @@ void ViewControllers::SongListController::UpdateDetails () {
                     oldSprite != defaultImage && 
                     this->coverImage->get_sprite() != oldSprite)
                 {
-                    
                     if (oldSprite != nullptr && oldSprite->m_CachedPtr.m_value != nullptr) {
-                        DEBUG("REMOVING OLD SPRITE");
                         auto texture = oldSprite->get_texture();
                         if (texture != nullptr && texture->m_CachedPtr.m_value != nullptr) {
                             UnityEngine::Object::DestroyImmediate(texture);

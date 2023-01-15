@@ -52,6 +52,9 @@ using namespace std;
         case 4:
             return "Cinema";
             break;
+        case 5:
+            return "None";
+            break;
         default:
             return "Unknown";
             break;
