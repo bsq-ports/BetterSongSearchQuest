@@ -69,8 +69,12 @@ namespace BetterSongSearch::UI {
         inline static std::vector<const SongDetailsCache::Song*> searchedSongList;
         // Sorted songs (actually displayed)
         inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
-        
-        inline static std::vector<std::string> songsWithScores;
+
+        // State variables to be globally accessible
+        inline static SortMode currentSort = SortMode::Newest;
+        inline static std::string currentSearch = "";
+
+        inline static std::unordered_set<std::string> songsWithScores;
 
         inline static FilterOptions filterOptions;
         inline static FilterOptionsCache filterOptionsCache;
@@ -124,6 +128,9 @@ namespace BetterSongSearch::UI {
 #undef PROP_GET
 
 }
+
+using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
+extern std::unordered_map<SortMode, SortFunction> sortFunctionMap;
 
 #ifdef HotReload
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
