@@ -1,6 +1,8 @@
 #include "Util/Debug.hpp"
 #include <string>
 #include "main.hpp"
+#include "UI/ViewControllers/SongList.hpp"
+
 using namespace std;
 
 
@@ -190,6 +192,7 @@ using namespace std;
             );
 
         }
+        DEBUG("Sort score: {}", sortFunctionMap.at(UI::DataHolder::currentSort)(song));
     }
 
     // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
