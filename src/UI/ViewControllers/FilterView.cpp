@@ -88,6 +88,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan).count();
 
         DataHolder::filterOptions.minUploadDate = timestamp;
+        DataHolder::filterOptions.minUploadDateInMonths = this->hideOlderThan;
         DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan));
 
         getPluginConfig().MinUploadDate.SetValue(timestamp);
@@ -358,7 +359,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     
     // I hate BSML some times
     auto m = modsRequirementDropdown->dropdown->modalView;
+    modsRequirementDropdown->dropdown->numberOfVisibleCells = get_modOptions()->get_Count();
     reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
+
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";

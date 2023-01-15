@@ -238,6 +238,7 @@ public:
     SortMode prevSort = (SortMode) 0;
     
     bool filterChanged = true;
+
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 
