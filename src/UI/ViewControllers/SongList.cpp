@@ -366,8 +366,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
 
     std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged]{
-        long long before = 0;
-        before = CurrentTimeMs();
+        long long before = CurrentTimeMs();
 
         // Prolly need 4 but gotta go fast
         const int num_threads = 8;
@@ -1342,6 +1341,36 @@ void ViewControllers::SongListController::SongDataDone() {
     DataHolder::needsRefresh = false;
 
     QuestUI::MainThreadScheduler::Schedule([this]{
+        long long before = CurrentTimeMs();
+        // Err, I kinda forgot about it xD
+        INFO("Checking for local scores...");
+        auto playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
+        if(playerDataModel) {
+            for(int i = 0; i < playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
+                auto x = playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
+                if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40 || !x->levelID->StartsWith("custom_level_"))
+                    continue;
+                auto sh = std::regex_replace((std::string)x->levelID, std::basic_regex("custom_level_"), "");
+                auto& song = DataHolder::songDetails->songs.FindByHash(sh);
+                if(song == SongDetailsCache::Song::none)
+                    continue;
+
+                bool foundDiff = false;
+
+                for (auto& diff:song) {
+                    if (diff.difficulty == SongDetailsCache::MapDifficulty((int)x->difficulty)) {
+                        foundDiff = true;
+                        break;
+                    }
+                }
+                if(!foundDiff) continue;
+
+                DataHolder::songsWithScores.push_back(sh);
+            }
+            INFO("local scores checked. found {}", DataHolder::songsWithScores.size());
+        }
+        INFO("Checked local scores in {} ms",  CurrentTimeMs()-before);
+
         if (this->get_isActiveAndEnabled()) {
             // Initial search
             this->filterChanged = true;
