@@ -127,20 +127,7 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
 
-    // Skip if not needed
-    if (filterOptions.downloadType != FilterOptions::DownloadFilterType::All) {
-        bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
-        if(downloaded)
-        {
-            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
-                return false;
-        }
-        else
-        {
-            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
-                return false;
-        }
-    }
+    
 
     // Skip if not needed
     if (filterOptions.localScoreType != FilterOptions::LocalScoreFilterType::All ) {
@@ -176,6 +163,21 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     if(song->songDurationSeconds < filterOptions.minLength) return false;
     if(song->songDurationSeconds > filterOptions.maxLength) return false;
 
+
+    // This is the most heavy filter, check it last
+    if (filterOptions.downloadType != FilterOptions::DownloadFilterType::All) {
+        bool downloaded = RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+        if(downloaded)
+        {
+            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+                return false;
+        }
+        else
+        {
+            if(filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+                return false;
+        }
+    }
 
     return true;
 }
