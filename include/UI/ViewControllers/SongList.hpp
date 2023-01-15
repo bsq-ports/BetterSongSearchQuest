@@ -74,6 +74,8 @@ namespace BetterSongSearch::UI {
 
         inline static FilterOptions filterOptions;
         inline static FilterOptionsCache filterOptionsCache;
+        /// @brief Player data model to get the scores
+        inline static GlobalNamespace::PlayerDataModel* playerDataModel = nullptr;
 
 
         /// @brief Song data is loaded
