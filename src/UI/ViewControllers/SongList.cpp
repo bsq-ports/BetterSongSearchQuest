@@ -612,19 +612,16 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     float maxSearchWeightInverse = 1.0f / maxSearchWeight;
                     float maxSortWeightInverse = 1.0f / maxSortWeight;
 
-
-                    // 
+                    // Calculate total search weight
+                    for (auto& item :prefiltered) {
+                        float searchWeight = item.searchWeight * maxSearchWeightInverse;
+                        item.searchWeight = searchWeight + min(searchWeight / 2, item.sortWeight * maxSortWeightInverse * (searchWeight / 2));
+                    }
+                    
+                    
                     std::stable_sort(prefiltered.begin(), prefiltered.end(),
-                        [maxSearchWeightInverse, maxSortWeightInverse](xd s1, xd s2){
-                            // First elem weight
-                            float searchWeight = s1.searchWeight * maxSearchWeightInverse;
-                            float s1weight = searchWeight + min(searchWeight / 2, s1.sortWeight * maxSortWeightInverse * (searchWeight / 2));
-
-                            // Second elem weight
-                            searchWeight = s2.searchWeight * maxSearchWeightInverse;
-                            float s2weight = searchWeight + min(searchWeight / 2, s2.sortWeight * maxSortWeightInverse * (searchWeight / 2));
-
-                            return s1weight > s2weight;
+                        [](xd s1, xd s2){
+                            return s1.searchWeight > s2.searchWeight;
                         }
                     );
 
@@ -637,11 +634,30 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 long long before = CurrentTimeMs();
                 
                 DataHolder::searchedSongList = DataHolder::filteredSongList;
-                std::stable_sort(DataHolder::searchedSongList.begin(), DataHolder::searchedSongList.end(),
-                    [currentSort](const SongDetailsCache::Song * s1, const SongDetailsCache::Song * s2){
-                        return sortFunctionMap.at(currentSort)(s1) > sortFunctionMap.at(currentSort)(s2);
+                
+                std::vector<xd> prefiltered; 
+                prefiltered.reserve(DataHolder::searchedSongList.size());
+
+                auto sortFunction = sortFunctionMap.at(currentSort);
+                for (auto item :DataHolder::searchedSongList) {
+                    auto score =sortFunction(item); 
+                    // Set sort weight
+                    prefiltered.push_back({
+                        item, 0 , score 
+                    });
+                }
+
+                std::stable_sort(prefiltered.begin(), prefiltered.end(),
+                    [](xd s1, xd s2){
+                        return s1.sortWeight > s2.sortWeight;
                     }
                 );
+
+                // Push to searched
+                for (auto x: prefiltered) {
+                    DataHolder::searchedSongList.push_back(x.song);
+                }
+              
                 INFO("Sort without search in {} ms",  CurrentTimeMs()-before);
             }
         }
