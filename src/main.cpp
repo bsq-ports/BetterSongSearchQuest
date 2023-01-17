@@ -141,11 +141,14 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 {
     GameplaySetupViewController_RefreshContent(self);
 
-    // FIXME: This button does not get recreated in the multiplayer menu for some reason, find a way to detect button dying
+    bool multiplayer = self->showMultiplayer;
+
+    // Don't do anything if not in multiplayer to avoid messing with unity objects
+    if (!multiplayer) {
+        return;
+    }
     // Button instance
     static SafePtrUnity<UnityEngine::GameObject> button;
-
-    bool multiplayer = self->showMultiplayer;
 
     if(!button) {
         DEBUG("Button not found, creating");
