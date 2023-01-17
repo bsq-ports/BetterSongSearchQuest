@@ -52,7 +52,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     // Stop song preview on exit
     auto songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
     if (songPreviewPlayer != nullptr && songPreviewPlayer->m_CachedPtr.m_value != nullptr) {
-        songPreviewPlayer->FadeOut(0.1f);
+        songPreviewPlayer->CrossfadeToDefault();
     }
 
     // Trigger refresh of songs only if needed
