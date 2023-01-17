@@ -304,8 +304,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         return;
     }
     
-    // Skip if song details is null
-    if (DataHolder::songDetails == nullptr) {
+    // Skip if song details is null or if data is not loaded yet
+    if (DataHolder::songDetails == nullptr || !DataHolder::songDetails->songs.get_isDataAvailable()) {
         return;
     }
 
