@@ -143,12 +143,17 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
     bool multiplayer = self->showMultiplayer;
 
-    // Don't do anything if not in multiplayer to avoid messing with unity objects
-    if (!multiplayer) {
-        return;
-    }
     // Button instance
     static SafePtrUnity<UnityEngine::GameObject> button;
+
+    // Don't do anything if not in multiplayer to avoid messing with unity objects
+    if (!multiplayer) {
+        if (button) {
+            button->set_active(multiplayer);
+        }
+        return;
+    }
+    
 
     if(!button) {
         DEBUG("Button not found, creating");
