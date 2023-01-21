@@ -129,6 +129,10 @@ bool ViewControllers::DownloadHistoryViewController::TryAddDownload(const SongDe
 
     if (existingDLHistoryEntry)
         existingDLHistoryEntry->ResetIfFailed();
+
+    if(!CheckIsDownloadable(song->hash()))
+        return false;
+
     if (existingDLHistoryEntry == nullptr)
     {
         // var newPos = downloadList.FindLastIndex(x => x.status > DownloadHistoryEntry.DownloadStatus.Queued);
@@ -142,9 +146,6 @@ bool ViewControllers::DownloadHistoryViewController::TryAddDownload(const SongDe
     }
 
     ProcessDownloads(!isBatch);
-    // TODO: Add downloadable check
-    // if(!song.CheckIsDownloadable())
-    // return false;
 
     return true;
 }
@@ -333,7 +334,8 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(Downloa
         !dlElem->IsInAnyOfStates(
             (DownloadHistoryEntry::DownloadStatus) (
                 DownloadHistoryEntry::DownloadStatus::Preparing |
-                DownloadHistoryEntry::DownloadStatus::Downloading
+                DownloadHistoryEntry::DownloadStatus::Downloading |
+                DownloadHistoryEntry::DownloadStatus::Queued
             )
         ) && !CheckIsDownloaded(dlElem->hash)){
         return true;
