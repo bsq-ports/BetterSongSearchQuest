@@ -41,8 +41,9 @@ void Modals::MultiDL::StartMultiDownload()
         // Skip if can't dl or already downloading
         if (dlController->CheckIsDownloaded(std::string(song->hash())) || !dlController->CheckIsDownloadable(std::string(song->hash()))) 
             continue;
-            
-        dlController->TryAddDownload(song, true);
+
+        if (!dlController->TryAddDownload(song, true))
+            continue;
 
         if (++downloaded >= this->songsToDownload)
             break;
