@@ -2,6 +2,9 @@
 
 Searching, downloading and playing songs, now with 100% less annoying!
 
+
+*This mod is a port of PC version of [BetterSongSearch](https://github.com/kinsi55/BeatSaber_BetterSongSearch) for Quest.*
+
 ## Features
 
 - Wide variety of filtering / searching and sorting options
