@@ -409,8 +409,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             INFO("Checked local scores in {} ms",  CurrentTimeMs()-before);
         }
 
-        // Prolly need 4 but gotta go fast
-        const int num_threads = 8;
+        // 4 threads are fine
+        const int num_threads = 4;
         std::thread t[num_threads];
         
         // Filter songs if needed
