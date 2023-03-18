@@ -176,6 +176,7 @@ public:
             downloadType == FilterOptions::DownloadFilterType::All &&
             localScoreType ==  FilterOptions::LocalScoreFilterType::All &&
             (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) && 
+            (s.minLength == 0) &&
             minNJS == 0 && 
             s.maxNJS >= NJS_FILTER_MAX &&
             s.minNPS == 0 &&
