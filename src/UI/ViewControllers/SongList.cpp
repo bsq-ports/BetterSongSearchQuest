@@ -110,7 +110,7 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     std::string songHash = song->hash();
 
     if(filterOptions.uploaders.size() != 0) {
-		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->levelAuthorName()))) != filterOptions.uploaders.end()) {
+		if(std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->uploaderName()))) != filterOptions.uploaders.end()) {
             if(filterOptions.uploadersBlackList)
                 return false;
 		} else if (!filterOptions.uploadersBlackList) {
@@ -1299,8 +1299,8 @@ void ViewControllers::SongListController::FilterByUploader () {
         return;
     }
     
-    fcInstance->FilterViewController->uploadersString = this->currentSong->levelAuthorName();
-    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->levelAuthorName());
+    fcInstance->FilterViewController->uploadersString = this->currentSong->uploaderName();
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->uploaderName());
     fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }
