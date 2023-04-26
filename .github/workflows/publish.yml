@@ -10,6 +10,9 @@ on:
     tags:
       - "v*.*.*-bs-*.*.*"
 
+permissions:
+  contents: write
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -18,10 +21,12 @@ jobs:
     - name: Get Mod and game version from tag name
       id: modversion
       run: |
+        echo "VERSION_TAG=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
         TEMP=$(echo "$GITHUB_REF_NAME" | grep -Po "(?<=v)\d+.\d+.\d+")
         echo "VERSION=$TEMP" >> $GITHUB_ENV
         TEMP=$(echo "$GITHUB_REF_NAME" | grep -Po "(?<=bs-)[.\d_]*")
         echo "BS_VERSION=$TEMP" >> $GITHUB_ENV
+        
 
     - uses: actions/checkout@v3
       name: Checkout
@@ -59,22 +64,40 @@ jobs:
       run: |
         pwsh -Command ./createqmod.ps1 ${{env.qmodName}}
 
-    - name: Get Library Name
+    - name: Get Library Name and Build ID
       id: libname
       run: |
         cd ./build/
         pattern="lib${module_id}*.so"
         files=( $pattern )
         echo "LIBNAME=${files[0]}" >> $GITHUB_ENV
+        echo "BUILD_ID=$(readelf -n ${files[0]} | grep -Po "(?<=Build ID: )[0-9a-f]+")" >> $GITHUB_ENV
 
     - name: Rename debug file
       run: mv "./build/debug/${{ env.LIBNAME }}" "./build/debug/debug_${{ env.LIBNAME }}"
+        
+    - name: Calculate SHA-256 of the qmod file
+      id: qmodsha
+      run: |
+        echo "QMOD_SHA=$(sha256sum ./${{ env.qmodName }}.qmod | grep -Po "^[0-9a-f]+")" >> $GITHUB_ENV
 
     - name: Release
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
+        tag_name: ${{ env.VERSION_TAG }}
+        name: BetterSongSearch ${{ env.VERSION }} for ${{ env.BS_VERSION }}
+        generate_release_notes: true
+        body: |
+          ---
+
+          ### Build info
+          
+          SHA-256: ${{ env.QMOD_SHA }}
+          Build ID: ${{ env.BUILD_ID }}
         files: |
           ./${{ env.qmodName }}.qmod
           ./build/${{ env.LIBNAME }}
           ./build/debug/debug_${{ env.LIBNAME }}
+        draft: true
+        prerelease: false
