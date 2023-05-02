@@ -81,6 +81,8 @@ namespace BetterSongSearch::UI {
         /// @brief Player data model to get the scores
         inline static GlobalNamespace::PlayerDataModel* playerDataModel = nullptr;
 
+        // Preferred Leaderboard
+        inline static PreferredLeaderBoard preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
 
         /// @brief Song data is loaded
         inline static bool loaded = false;
