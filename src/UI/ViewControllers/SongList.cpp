@@ -127,8 +127,6 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
     
     if(((int)song->upvotes + (int)song->downvotes) < filterOptions.minVotes) return false;
 
-    
-
     // Skip if not needed
     if (filterOptions.localScoreType != FilterOptions::LocalScoreFilterType::All ) {
         bool hasLocalScore = false;
@@ -143,7 +141,13 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song* song)
                 return false;
         }
     }
-   
+    
+    if(filterOptions.rankedType != FilterOptions::RankedFilterType::ShowAll) {
+        // if not the ranked that we want, skip
+        if (!hasFlags(song->rankedStates, rankMap.at(filterOptions.rankedType))) {
+            return false;
+        }
+    }
 
     bool passesDiffFilter = true;
 
@@ -189,13 +193,12 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     }
 
 
-    if(currentFilter.rankedType == FilterOptions::RankedFilterType::OnlyRanked)
-        if(!diff->ranked())
+    if(currentFilter.rankedType != FilterOptions::RankedFilterType::ShowAll) {
+        // if not the ranked that we want, skip
+        if (!hasFlags(song->rankedStates, rankMap.at(currentFilter.rankedType))) {
             return false;
-
-    if(currentFilter.rankedType != FilterOptions::RankedFilterType::HideRanked)
-        if(diff->stars < currentFilter.minStars || diff->stars > currentFilter.maxStars)
-            return false;
+        }
+    }
 
     if (currentFilter.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
         if (diff->difficulty != currentFilter.difficultyFilterPreprocessed) {
@@ -263,8 +266,8 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            {
                                 return x->max([x](const auto& diff){
                                     bool passesFilter = DifficultyCheck(&diff, x);
-                                    if (passesFilter && diff.ranked()) {
-                                        return diff.stars;
+                                    if (passesFilter && (getStars(&diff) > 0)) {
+                                        return getStars(&diff);
                                     } else {
                                         return 0.0f;
                                     }
@@ -274,8 +277,8 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            {
                                return 420.0f - x->min([x](const auto& diff){
                                     bool passesFilter = DifficultyCheck(&diff, x);
-                                    if (passesFilter && diff.ranked()) {
-                                        return diff.stars;
+                                    if (passesFilter && (getStars(&diff) > 0)) {
+                                        return getStars(&diff);
                                     } else {
                                         return 420.0f;
                                     }

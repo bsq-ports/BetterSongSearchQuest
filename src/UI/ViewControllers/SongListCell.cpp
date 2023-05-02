@@ -7,17 +7,20 @@
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/RankedStatus.hpp"
 #include "PluginConfig.hpp"
-
+#include "Util/SongUtil.hpp"
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
+
+using namespace BetterSongSearch::Util;
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
 struct DiffIndex {
     const SongDetailsCache::SongDifficulty* diff;
     bool passesFilter;
+    float stars;
 };
 
 namespace BetterSongSearch::UI::ViewControllers
@@ -72,7 +75,8 @@ namespace BetterSongSearch::UI::ViewControllers
         for (const SongDetailsCache::SongDifficulty &diff: *entry) {
             sortedDiffs.push_back({
                 &diff,
-                DifficultyCheck(&diff, entry)
+                DifficultyCheck(&diff, entry),
+                getStars(&diff)
             });
         };
 
@@ -91,8 +95,8 @@ namespace BetterSongSearch::UI::ViewControllers
         if (DataHolder::currentSort == SortMode::Most_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
            
-                auto diff1 = - a.diff->stars;
-                auto diff2 = - b.diff->stars;
+                auto diff1 = - a.stars;
+                auto diff2 = - b.stars;
 
                 // Ascending
                 return diff1 < diff2;
@@ -101,8 +105,8 @@ namespace BetterSongSearch::UI::ViewControllers
         // If least stars
         if (DataHolder::currentSort == SortMode::Least_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
-                auto diff1 = a.diff->ranked()? a.diff->stars: -420.0f;
-                auto diff2 = b.diff->ranked()? b.diff->stars: -420.0f;
+                auto diff1 = a.stars > 0 ? a.stars: -420.0f;
+                auto diff2 = b.stars > 0 ? b.stars: -420.0f;
                 // Ascending
                 return diff1 < diff2;
             });
@@ -110,8 +114,8 @@ namespace BetterSongSearch::UI::ViewControllers
 
         // By ranked
         std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
-            auto diff1 = a.diff->ranked()? 1: 0;
-            auto diff2 = b.diff->ranked()? 1: 0;
+            auto diff1 = a.stars > 0 ? 1: 0;
+            auto diff2 = b.stars > 0 ? 1: 0;
             // Descending
             return diff1 < diff2;
         });
@@ -136,8 +140,8 @@ namespace BetterSongSearch::UI::ViewControllers
                 bool passesFilter = sortedDiffs[i].passesFilter;
                 auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i].diff);
                 std::string stars = ""; 
-                if (sortedDiffs[i].diff->stars > 0 && sortedDiffs[i].diff->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
-                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].diff->stars, 1));
+                if (sortedDiffs[i].stars > 0 && sortedDiffs[i].diff->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
+                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
                 };
                 
                 diffs[i]->SetText(

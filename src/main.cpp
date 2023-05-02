@@ -90,6 +90,17 @@ extern "C" void setup(ModInfo& info) {
         filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
         filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
         filterOptions.minUploadDateInMonths = getPluginConfig().MinUploadDateInMonths.GetValue();
+        
+        // Preferred Leaderboard
+        std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
+        if (leaderBoardMap.contains(preferredLeaderboard)) {
+            DataHolder::preferredLeaderboard = leaderBoardMap.at(preferredLeaderboard);
+        } else {
+            DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
+            getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
+            getPluginConfig().config->Write();
+        }
+        
         // Custom string loader
         auto uploadersString = getPluginConfig().Uploaders.GetValue();
         if (uploadersString.size() > 0) {
