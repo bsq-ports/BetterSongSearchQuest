@@ -130,13 +130,19 @@ using namespace std;
         switch (rankedFilterType)
         {
         case 0:
-            return "All";
+            return "ShowAll";
             break;
         case 1:
-            return "OnlyRanked";
+            return "ScoreSaberRanked";
             break;
         case 2:
-            return "HideRanked";
+            return "BeatLeaderRanked";
+            break;
+        case 3:
+            return "ScoreSaberQualified";
+            break;
+        case 4:
+            return "BeatLeaderQualified";
             break;
         default:
             return "Unknown";

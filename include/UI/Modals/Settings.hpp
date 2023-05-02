@@ -26,6 +26,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoB
     DECLARE_BSML_PROPERTY(bool, loadSongPreviews);
     DECLARE_BSML_PROPERTY(bool, smallerFontSize);
 
+    DECLARE_BSML_PROPERTY(StringW, preferredLeaderboard);
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, settingsModal);
     // DECLARE_INSTANCE_FIELD(BSML::ModalView*, chinaModal);
+    BSML_OPTIONS_LIST_OBJECT(preferredLeaderboardOptions, "Scoresaber", "Beatleader");
 )
