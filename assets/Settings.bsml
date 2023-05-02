@@ -7,6 +7,7 @@
 			<toggle-setting text='Return to BSS from Solo' value="returnToBssFromSolo" bind-value="true" apply-on-change="true" hover-hint="When Playing a song from Better Song Search, return once leaving the Solo menu"/>
 			<toggle-setting text='Download Song previews' value="loadSongPreviews" bind-value="true" apply-on-change="true" hover-hint="Load and play a short preview of songs not downloaded yet"/>
 			<toggle-setting text='Smaller Font size' value="smallerFontSize" bind-value="true" apply-on-change="true" hover-hint="Makes the Font size of the Song List smaller"/>
+			<list-setting text='Preferred leaderboard' value="preferredLeaderboard" choices='preferredLeaderboardOptions' bind-value="true" apply-on-change="true" hover-hint="Sets your preferred leaderboard when you don't filer by any leaderboard" />
 			<!-- <toggle-setting id="chinaToggle" text='Use Chinese BeatSaver Mirror' on-change="ChinaToggled"/> -->
 			<horizontal pad-top="2">
 				<button text='Close' on-click='CloseModal'/>

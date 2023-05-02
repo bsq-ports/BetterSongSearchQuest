@@ -5,6 +5,7 @@
 #include "main.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/MapDifficulty.hpp"
+#include "song-details/shared/Data/RankedStates.hpp"
 #include "song-details/shared/Data/MapMods.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 
@@ -30,9 +31,11 @@ public:
     };
     enum class RankedFilterType
     {
-        All,
-        OnlyRanked,
-        HideRanked
+        ShowAll,
+        ScoreSaberRanked,
+        BeatLeaderRanked,
+        ScoreSaberQualified,
+        BeatLeaderQualified
     };
     enum class DifficultyFilterType
     {
@@ -66,7 +69,7 @@ public:
     };
 
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
-    const float STAR_FILTER_MAX = 14.0f;
+    const float STAR_FILTER_MAX = 15.0f;
     const float NJS_FILTER_MAX = 25.0f;
     const float NPS_FILTER_MAX = 12.0f;
     static const int64_t BEATSAVER_EPOCH = 1525136400;
@@ -80,9 +83,9 @@ public:
     float minNJS = 0, maxNJS = 25;
     float minNPS = 0, maxNPS = 12;
 
-    //ScoreSaber
-    RankedFilterType rankedType = RankedFilterType::All;
-    float minStars = 0, maxStars = 14;
+    // Ranked
+    RankedFilterType rankedType = RankedFilterType::ShowAll;
+    float minStars = 0, maxStars = 15;
 
     //BeatSaver
     int minUploadDate = BEATSAVER_EPOCH;
@@ -110,6 +113,11 @@ enum class SortMode {
     Worst_rated
 };
 
+enum class PreferredLeaderBoard {
+    ScoreSaber = 0,
+    BeatLeader = 1
+};
+
 
 
 // Map for characteristics
@@ -131,6 +139,21 @@ static const std::unordered_map<FilterOptions::DifficultyFilterType, SongDetails
     {FilterOptions::DifficultyFilterType::Hard, SongDetailsCache::MapDifficulty::Hard},
     {FilterOptions::DifficultyFilterType::Expert, SongDetailsCache::MapDifficulty::Expert},
     {FilterOptions::DifficultyFilterType::ExpertPlus, SongDetailsCache::MapDifficulty::ExpertPlus}
+};
+
+
+// Map for ranked states
+static const std::unordered_map<FilterOptions::RankedFilterType, SongDetailsCache::RankedStates> rankMap = {
+    {FilterOptions::RankedFilterType::ScoreSaberRanked, SongDetailsCache::RankedStates::ScoresaberRanked},
+    {FilterOptions::RankedFilterType::BeatLeaderRanked, SongDetailsCache::RankedStates::BeatleaderRanked},
+    {FilterOptions::RankedFilterType::ScoreSaberQualified, SongDetailsCache::RankedStates::ScoresaberQualified},
+    {FilterOptions::RankedFilterType::BeatLeaderQualified, SongDetailsCache::RankedStates::BeatleaderQualified}
+};
+
+// Map for preferred leaderboard
+static const std::unordered_map<std::string, PreferredLeaderBoard> leaderBoardMap = {
+    {"Scoresaber", PreferredLeaderBoard::ScoreSaber},
+    {"Beatleader", PreferredLeaderBoard::BeatLeader}
 };
 
 class FilterOptionsCache
@@ -181,7 +204,7 @@ public:
             s.maxNJS >= NJS_FILTER_MAX &&
             s.minNPS == 0 &&
             s.maxNPS >= NPS_FILTER_MAX && 
-            rankedType == FilterOptions::RankedFilterType::All &&
+            rankedType == FilterOptions::RankedFilterType::ShowAll &&
             minStars == 0 &&
             s.maxStars >= STAR_FILTER_MAX &&
             s.minUploadDateInMonths == 0 &&
@@ -198,7 +221,7 @@ public:
     
     // Prolly need to deduplicate these..
     const float SONG_LENGTH_FILTER_MAX = 15.0f;
-    const float STAR_FILTER_MAX = 14.0f;
+    const float STAR_FILTER_MAX = 15.0f;
     const float NJS_FILTER_MAX = 25.0f;
     const float NPS_FILTER_MAX = 12.0f;
 
@@ -212,8 +235,8 @@ public:
     float minNPS = 0, maxNPS = 12;
 
     //ScoreSaber
-    FilterOptions::RankedFilterType rankedType = FilterOptions::RankedFilterType::All;
-    float minStars = 0, maxStars = 14;
+    FilterOptions::RankedFilterType rankedType = FilterOptions::RankedFilterType::ShowAll;
+    float minStars = 0, maxStars = 15;
 
     //BeatSaver
     int minUploadDate = FilterOptions::BEATSAVER_EPOCH;
