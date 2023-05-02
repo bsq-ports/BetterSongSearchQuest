@@ -7,29 +7,21 @@
 #include "UnityEngine/Sprite.hpp"
 #include "songloader/shared/API.hpp"
 #include "GlobalNamespace/IBeatmapLevel.hpp"
+#include "song-details/shared/Data/RankedStates.hpp"
+#include "song-details/shared/Data/SongDifficulty.hpp"
+#include "FilterOptions.hpp"
+#include "UI/ViewControllers/SongList.hpp"
+
 
 namespace BetterSongSearch::Util {
-    UnityEngine::Sprite* getLocalCoverSync(GlobalNamespace::CustomPreviewBeatmapLevel* level) {
-        StringW path = System::IO::Path::Combine(level->customLevelPath, level->standardLevelInfoSaveData->coverImageFilename);
-
-        if(!System::IO::File::Exists(path)) {
-            DEBUG("File does not exist");
-            return nullptr;
-        }
-
-        auto sprite = QuestUI::BeatSaberUI::FileToSprite((std::string) path);
-        return sprite;
-    }
+    UnityEngine::Sprite* getLocalCoverSync(GlobalNamespace::CustomPreviewBeatmapLevel* level);
 
 
-    UnityEngine::Sprite* getLocalCoverSync(StringW songHash) {
-        auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(songHash));
+    UnityEngine::Sprite* getLocalCoverSync(StringW songHash);
 
-        if (beatmap.has_value()) {
-            return getLocalCoverSync(beatmap.value());
-        } else {
-            return nullptr;
-        }
-    }
-    
+    SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff);
+
+    float getStars(const SongDetailsCache::SongDifficulty* diff, SongDetailsCache::RankedStates state);
+
+    float getStars(const SongDetailsCache::SongDifficulty* diff);
 }

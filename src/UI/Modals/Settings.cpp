@@ -69,3 +69,29 @@ void Modals::Settings::set_smallerFontSize(bool value) {
     getPluginConfig().SmallerFontSize.SetValue(value);
     fcInstance->SongListController->songListTable()->ReloadData();
 }
+
+StringW Modals::Settings::get_preferredLeaderboard() {
+    // Preferred Leaderboard
+    std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
+    if (leaderBoardMap.contains(preferredLeaderboard)) {
+        return preferredLeaderboard;
+    } else {
+        DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
+        getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
+        getPluginConfig().config->Write();
+        return "Scoresaber";
+    }
+}
+
+void Modals::Settings::set_preferredLeaderboard(StringW value) {
+    std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
+    if (leaderBoardMap.contains(preferredLeaderboard)) {
+        DataHolder::preferredLeaderboard = leaderBoardMap.at(preferredLeaderboard);
+        getPluginConfig().PreferredLeaderboard.SetValue(value);
+        getPluginConfig().config->Write();
+
+        auto controller = fcInstance->SongListController;
+        controller->filterChanged = true;
+        controller->SortAndFilterSongs(controller->sort, controller->search, true);
+    }
+}

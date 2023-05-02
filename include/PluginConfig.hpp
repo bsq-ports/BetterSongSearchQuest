@@ -33,6 +33,7 @@ CONFIG_VALUE(DifficultyType, int, "Difficulty Type", 0);
 CONFIG_VALUE(CharacteristicType, int, "Characteristic Type", 0);
 CONFIG_VALUE(Uploaders, std::string, "Uploaders filter", "");
 CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
+CONFIG_VALUE(PreferredLeaderboard, std::string, "Preferred Leaderboard", "Scoresaber");
     CONFIG_INIT_FUNCTION(
         CONFIG_INIT_VALUE(ReturnToBSS);
         CONFIG_INIT_VALUE(LoadSongPreviews);
@@ -57,5 +58,6 @@ CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
         CONFIG_INIT_VALUE(CharacteristicType);
         CONFIG_INIT_VALUE(Uploaders);
         CONFIG_INIT_VALUE(RequirementType);
+        CONFIG_INIT_VALUE(PreferredLeaderboard);
     )
 )
