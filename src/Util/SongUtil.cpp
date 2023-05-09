@@ -31,10 +31,20 @@ namespace BetterSongSearch::Util {
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff) {
         auto rStates = diff->song().rankedStates;
 
-        if (hasFlags(rStates, SongDetailsCache::RankedStates::ScoresaberRanked) &&
-            // Filtering by BeatLeader ranked
-            UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::BeatLeaderRanked &&
-            BetterSongSearch::UI::DataHolder::preferredLeaderboard != PreferredLeaderBoard::BeatLeader
+        if (hasFlags(rStates, SongDetailsCache::RankedStates::ScoresaberRanked) && 
+            // Not Filtering by BeatLeader ranked
+            UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::BeatLeaderRanked && 
+            
+            (
+                // Not filtering by BeatLeader
+                BetterSongSearch::UI::DataHolder::preferredLeaderboard != PreferredLeaderBoard::BeatLeader ||
+                // Song has no beatleader rank
+                !hasFlags(rStates, SongDetailsCache::RankedStates::BeatleaderRanked) ||
+                // Filtering by SS ranked
+                UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::ScoreSaberRanked 
+            )
+            
+
         ) {
             return SongDetailsCache::RankedStates::ScoresaberRanked;
         }
