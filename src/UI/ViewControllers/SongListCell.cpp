@@ -14,7 +14,7 @@
 
 
 using namespace BetterSongSearch::Util;
-
+using namespace SongDetailsCache;
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell);
 
 struct DiffIndex {
@@ -139,10 +139,15 @@ namespace BetterSongSearch::UI::ViewControllers
             {
                 bool passesFilter = sortedDiffs[i].passesFilter;
                 auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i].diff);
-                std::string stars = ""; 
-                if (sortedDiffs[i].stars > 0 && sortedDiffs[i].diff->characteristic == SongDetailsCache::MapCharacteristic::Standard) {
-                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
-                };
+                std::string stars = "";
+
+                auto lbsvc = GetTargetedRankLeaderboardService(sortedDiffs[i].diff);
+
+				if(lbsvc == RankedStates::ScoresaberRanked && sortedDiffs[i].diff->starsSS > 0) {
+					stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
+				} else if(lbsvc == RankedStates::BeatleaderRanked && sortedDiffs[i].diff->starsBL > 0) {
+					stars = fmt::format(" <color=#{}>{}", (passesFilter ? "B1D" : "606"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
+				}
                 
                 diffs[i]->SetText(
                     fmt::format("<color=#{}>{}</color>{}",
