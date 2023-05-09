@@ -179,6 +179,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
     DECLARE_INSTANCE_METHOD(void, UpdateSearchedSongsList);
+    DECLARE_INSTANCE_METHOD(void, GetBeatmapLevelsLoaderIfNull);
     DECLARE_INSTANCE_METHOD(void, _UpdateSearchedSongsList);
 
     DECLARE_INSTANCE_FIELD(bool, IsSearching);
