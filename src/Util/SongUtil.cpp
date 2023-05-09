@@ -47,8 +47,8 @@ namespace BetterSongSearch::Util {
     }
 
     float getStars(const SongDetailsCache::SongDifficulty* diff, SongDetailsCache::RankedStates state) {
-        if (state == SongDetailsCache::RankedStates::ScoresaberRanked && diff->stars > 0) {
-            return diff->stars;
+        if (state == SongDetailsCache::RankedStates::ScoresaberRanked && diff->starsSS > 0) {
+            return diff->starsSS;
         }
         if (state == SongDetailsCache::RankedStates::BeatleaderRanked && diff->starsBL > 0) {
             return diff->starsBL;
