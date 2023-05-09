@@ -189,12 +189,12 @@ using namespace std;
     void BetterSongSearch::Util::LogSongInfo(const SongDetailsCache::Song* song) {
         // DEBUG info
         auto struct1DiffVec = song->rankedChangeUnix;
-        DEBUG("Name: {}, bpm {}, upvotes: {}, downvotes: {}, diffCount: {}, rankedStatus: {} ", (std::string)song->songName(), song->bpm, song->upvotes, song->downvotes, song->diffCount, song->rankedStatus  );
+        DEBUG("Name: {}, bpm {}, upvotes: {}, downvotes: {}, diffCount: {}, rankedStatus: {}, rankedStates: {} ", (std::string)song->songName(), song->bpm, song->upvotes, song->downvotes, song->diffCount, song->rankedStatus, song->rankedStates  );
         DEBUG("Ranked time: {}", struct1DiffVec);
         for (const SongDetailsCache::SongDifficulty &diff: *song) {
             DEBUG(
-                "Diff: {}, Ranked: {}, stars: {}, notes: {}, characteristic: {}, njs: {}, mods: {} ",
-                diff.difficulty, diff.ranked(), diff.stars, diff.notes, diff.characteristic, diff.njs, diff.mods
+                "Diff: {}, Ranked: {}, starsSS: {}, starsBL: {}, notes: {}, characteristic: {}, njs: {}, mods: {} ",
+                diff.difficulty, diff.ranked(), diff.starsSS, diff.starsBL, diff.notes, diff.characteristic, diff.njs, diff.mods
             );
 
         }
