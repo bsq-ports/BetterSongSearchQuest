@@ -826,6 +826,18 @@ void ViewControllers::SongListController::PostParse() {
     reinterpret_cast<RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
 }
 
+// @brief: Function to refresh beatmapLevelsModel if it is null (happens when songloader haven't finished loading all songs)
+void ViewControllers::SongListController::GetBeatmapLevelsLoaderIfNull() {
+    // Get customLebelPackCollection if empty
+    if (beatmapLevelsModel == nullptr || beatmapLevelsModel->customLevelPackCollection == nullptr) {
+        beatmapLevelsModel = QuestUI::ArrayUtil::First(
+        UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>(),
+        [](BeatmapLevelsModel *x) {
+            return x->customLevelPackCollection != nullptr;
+        });
+    }
+}
+
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
     fromBSS = false;
@@ -1188,9 +1200,29 @@ void ViewControllers::SongListController::UpdateDetails () {
     auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap.has_value();
     bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->hash()));
+    
+    float minNPS = 500000, maxNPS = 0;
+    float minNJS = 500000, maxNJS = 0;
+    for (const auto &diff: *song) {
+        float nps = (float) diff.notes / (float) song->songDurationSeconds;
+        float njs = diff.njs;
+        minNPS = std::min(nps, minNPS);
+        maxNPS = std::max(nps, maxNPS);
+
+        minNJS = std::min(njs, minNJS);
+        maxNJS = std::max(njs, maxNJS);
+    }
+
+    // downloadButton.set.text = "Download";
+    SetIsDownloaded(downloaded);
+    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongName->set_text(song->songName());
+    selectedSongAuthor->set_text(song->songAuthorName());
+
+    // This part below is here to not break anything on return
     #ifdef SONGDOWNLOADER
     
-    // if beatmap is loaded
+    // if beatmap is loaded 
     if (loaded) {
         auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap.value());
         if (cover != nullptr) {
@@ -1253,9 +1285,15 @@ void ViewControllers::SongListController::UpdateDetails () {
 
     // If the song is loaded then get it from local sources
     if(loaded) {
+        // Get beatmapLevelsModel if it is null
+        GetBeatmapLevelsLoaderIfNull();
+
         //Get preview from beatmap
-        if(!beatmapLevelsModel)
+        if(!beatmapLevelsModel) {
+            WARNING("beatmapLevelsModel is null, songloader is not loaded yet");
             return;
+        }
+
         if(!levelCollectionViewController)
             return;
 
@@ -1286,23 +1324,6 @@ void ViewControllers::SongListController::UpdateDetails () {
     }
 
     #endif
-    float minNPS = 500000, maxNPS = 0;
-    float minNJS = 500000, maxNJS = 0;
-    for (const auto &diff: *song) {
-        float nps = (float) diff.notes / (float) song->songDurationSeconds;
-        float njs = diff.njs;
-        minNPS = std::min(nps, minNPS);
-        maxNPS = std::max(nps, maxNPS);
-
-        minNJS = std::min(njs, minNJS);
-        maxNJS = std::max(njs, maxNJS);
-    }
-
-    // downloadButton.set.text = "Download";
-    SetIsDownloaded(downloaded);
-    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
-    selectedSongName->set_text(song->songName());
-    selectedSongAuthor->set_text(song->songAuthorName());
 }
 
 void ViewControllers::SongListController::FilterByUploader () {
