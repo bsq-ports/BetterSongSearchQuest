@@ -63,6 +63,7 @@
 #include <cmath>
 #include "song-details/shared/SongDetails.hpp"
 #include <limits>
+#include "song-details/shared/Data/RankedStates.hpp"
 
 #define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -260,7 +261,7 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                            }},
         {SortMode::Latest_Ranked, [] (const SongDetailsCache::Song* x) // Latest Ranked
                             {
-                                return (x->rankedStatus != SongDetailsCache::RankedStatus::Unranked)? x->rankedChangeUnix: 0.0f;
+                                return (hasFlags(x->rankedStates, (SongDetailsCache::RankedStates::BeatleaderRanked | SongDetailsCache::RankedStates::ScoresaberRanked) ))? x->rankedChangeUnix: 0.0f;
                             }},
         {SortMode::Most_Stars, [] (const SongDetailsCache::Song* x) // Most Stars
                            {
