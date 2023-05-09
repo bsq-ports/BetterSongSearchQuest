@@ -84,12 +84,10 @@ StringW Modals::Settings::get_preferredLeaderboard() {
 }
 
 void Modals::Settings::set_preferredLeaderboard(StringW value) {
-    std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
-    if (leaderBoardMap.contains(preferredLeaderboard)) {
-        DataHolder::preferredLeaderboard = leaderBoardMap.at(preferredLeaderboard);
+    if (leaderBoardMap.contains(value)) {
+        DataHolder::preferredLeaderboard = leaderBoardMap.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
         getPluginConfig().config->Write();
-
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;
         controller->SortAndFilterSongs(controller->sort, controller->search, true);

@@ -28,27 +28,27 @@ namespace BetterSongSearch::Util {
         }
     }
 
+    // Gets preferred leaderboard for a song difficulty
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff) {
         auto& rStates = diff->song().rankedStates;
 
+        // If song is scoresaber ranked
         if (hasFlags(rStates, SongDetailsCache::RankedStates::ScoresaberRanked) && 
-            // Not Filtering by BeatLeader ranked
+            // And Not Filtering by BeatLeader ranked
             UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::BeatLeaderRanked && 
-            
             (
-                // Not filtering by BeatLeader
+                // Beatleader is not preferred leaderboard
                 BetterSongSearch::UI::DataHolder::preferredLeaderboard != PreferredLeaderBoard::BeatLeader ||
-                // Song has no beatleader rank
+                // Song has no BeatLeader rank
                 !hasFlags(rStates, SongDetailsCache::RankedStates::BeatleaderRanked) ||
                 // Filtering by SS ranked
-                UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::ScoreSaberRanked 
+                UI::DataHolder::filterOptionsCache.rankedType == FilterOptions::RankedFilterType::ScoreSaberRanked 
             )
-            
-
         ) {
             return SongDetailsCache::RankedStates::ScoresaberRanked;
         }
 
+        // If song has beatleader rank then return beatleader 
         if (hasFlags(rStates, SongDetailsCache::RankedStates::BeatleaderRanked)) {
             return SongDetailsCache::RankedStates::BeatleaderRanked;
         }
