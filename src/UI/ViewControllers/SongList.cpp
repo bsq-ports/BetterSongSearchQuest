@@ -853,6 +853,15 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
     }
 
+    // Restore search songs count
+    if (DataHolder::loaded  && !DataHolder::failed && songSearchPlaceholder != nullptr && songSearchPlaceholder->m_CachedPtr.m_value != nullptr) {
+        if (DataHolder::filteredSongList.size() < DataHolder::songDetails->songs.size()) {
+            songSearchPlaceholder->set_text(fmt::format("Search {} songs", DataHolder::filteredSongList.size()));
+        } else {
+            songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+        }
+    }
+
     if (!firstActivation)
         return;
 
@@ -1426,8 +1435,16 @@ void ViewControllers::SongListController::SongDataDone() {
             // Initial search
             this->filterChanged = true;
             fcInstance->SongListController->SortAndFilterSongs(this->sort, this->search, true);
+
+            std::chrono::sys_seconds timeScraped = DataHolder::songDetails->get_scrapeEndedTimeUnix();
+
+            std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
+            std::tm local_tm = *std::localtime(&tt);
+
+            std::string timeScrapedString = fmt::format("{:%d %b %y - %H:%M}", local_tm);
+
             // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", DataHolder::songDetails->songs.size()));
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset.  Last update: {}", DataHolder::songDetails->songs.size(),timeScrapedString ));
         } else {
             DataHolder::needsRefresh = true;
         }
