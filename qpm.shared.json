@@ -28,12 +28,12 @@
       },
       {
         "id": "codegen",
-        "versionRange": "^0.33.0",
+        "versionRange": "^0.31.0",
         "additionalData": {}
       },
       {
         "id": "questui",
-        "versionRange": "^0.17.11",
+        "versionRange": "^0.17.9",
         "additionalData": {}
       },
       {
@@ -58,7 +58,7 @@
       },
       {
         "id": "songloader",
-        "versionRange": "^0.10.14",
+        "versionRange": "^0.10.12",
         "additionalData": {}
       },
       {
@@ -68,7 +68,7 @@
       },
       {
         "id": "songdownloader",
-        "versionRange": "^0.5.6",
+        "versionRange": "^0.5.4",
         "additionalData": {}
       },
       {
@@ -78,7 +78,7 @@
       },
       {
         "id": "bsml",
-        "versionRange": "^0.3.1",
+        "versionRange": "^0.2.8",
         "additionalData": {}
       },
       {
@@ -93,16 +93,16 @@
     {
       "dependency": {
         "id": "bsml",
-        "versionRange": "=0.3.2",
+        "versionRange": "=0.2.8",
         "additionalData": {
-          "soLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.3.2/libbsml.so",
-          "debugSoLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.3.2/debug_libbsml.so",
+          "soLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.2.8/libbsml.so",
+          "debugSoLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.2.8/debug_libbsml.so",
           "overrideSoName": "libbsml.so",
-          "modLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.3.2/BSML.qmod",
-          "branchName": "version-v0.3.2"
+          "modLink": "https://github.com/RedBrumbler/Quest-BSML/releases/download/v0.2.8/BSML.qmod",
+          "branchName": "version-v0.2.8"
         }
       },
-      "version": "0.3.2"
+      "version": "0.2.8"
     },
     {
       "dependency": {
@@ -207,13 +207,13 @@
     {
       "dependency": {
         "id": "questui",
-        "versionRange": "=0.17.12",
+        "versionRange": "=0.17.9",
         "additionalData": {
-          "soLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.12/libquestui.so",
-          "debugSoLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.12/debug_libquestui.so",
+          "soLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.9/libquestui.so",
+          "debugSoLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.9/debug_libquestui.so",
           "overrideSoName": "libquestui.so",
-          "modLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.12/QuestUI.qmod",
-          "branchName": "version-v0.17.12",
+          "modLink": "https://github.com/darknight1050/QuestUI/releases/download/v0.17.9/QuestUI.qmod",
+          "branchName": "version-v0.17.9",
           "compileOptions": {
             "systemIncludes": [
               "shared/cppcodec"
@@ -221,7 +221,7 @@
           }
         }
       },
-      "version": "0.17.12"
+      "version": "0.17.9"
     },
     {
       "dependency": {
@@ -240,16 +240,16 @@
     {
       "dependency": {
         "id": "songloader",
-        "versionRange": "=0.10.15",
+        "versionRange": "=0.10.12",
         "additionalData": {
-          "soLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.15/libsongloader.so",
-          "debugSoLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.15/debug_libsongloader.so",
+          "soLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.12/libsongloader.so",
+          "debugSoLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.12/debug_libsongloader.so",
           "overrideSoName": "libsongloader.so",
-          "modLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.15/SongLoader.qmod",
-          "branchName": "version-v0.10.15"
+          "modLink": "https://github.com/darknight1050/SongLoader/releases/download/v0.10.12/SongLoader.qmod",
+          "branchName": "version-v0.10.12"
         }
       },
-      "version": "0.10.15"
+      "version": "0.10.12"
     },
     {
       "dependency": {
@@ -294,15 +294,15 @@
     {
       "dependency": {
         "id": "codegen",
-        "versionRange": "=0.33.0",
+        "versionRange": "=0.31.0",
         "additionalData": {
-          "soLink": "https://github.com/sc2ad/BeatSaber-Quest-Codegen/releases/download/v0.33.0/libcodegen.so",
+          "soLink": "https://github.com/sc2ad/BeatSaber-Quest-Codegen/releases/download/v0.31.0/libcodegen.so",
           "overrideSoName": "libcodegen.so",
-          "modLink": "https://github.com/sc2ad/BeatSaber-Quest-Codegen/releases/download/v0.33.0/Codegen.qmod",
-          "branchName": "version-v0.33.0"
+          "modLink": "https://github.com/sc2ad/BeatSaber-Quest-Codegen/releases/download/v0.31.0/Codegen.qmod",
+          "branchName": "version-v0.31.0"
         }
       },
-      "version": "0.33.0"
+      "version": "0.31.0"
     },
     {
       "dependency": {
@@ -326,16 +326,16 @@
     {
       "dependency": {
         "id": "songdownloader",
-        "versionRange": "=0.5.6",
+        "versionRange": "=0.5.4",
         "additionalData": {
-          "soLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.6/libsongdownloader.so",
-          "debugSoLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.6/debug_libsongdownloader.so",
+          "soLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.4/libsongdownloader.so",
+          "debugSoLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.4/debug_libsongdownloader.so",
           "overrideSoName": "libsongdownloader.so",
-          "modLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.6/SongDownloader.qmod",
-          "branchName": "version-v0.5.6"
+          "modLink": "https://github.com/darknight1050/SongDownloader/releases/download/v0.5.4/SongDownloader.qmod",
+          "branchName": "version-v0.5.4"
         }
       },
-      "version": "0.5.6"
+      "version": "0.5.4"
     }
   ]
 }
