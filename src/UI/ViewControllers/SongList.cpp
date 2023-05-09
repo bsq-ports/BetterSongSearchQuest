@@ -200,6 +200,18 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
             return false;
         }
     }
+    
+    // Min and max stars
+    if (currentFilter.maxStars != currentFilter.STAR_FILTER_MAX) {
+        if (getStars(diff) > currentFilter.maxStars) {
+            return false;
+        }
+    }
+    if (currentFilter.minStars > 0) {
+        if (getStars(diff) < currentFilter.minStars) {
+            return false;
+        }
+    }
 
     if (currentFilter.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
         if (diff->difficulty != currentFilter.difficultyFilterPreprocessed) {
