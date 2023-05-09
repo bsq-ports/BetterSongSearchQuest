@@ -29,7 +29,7 @@ namespace BetterSongSearch::Util {
     }
 
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff) {
-        auto rStates = diff->song().rankedStates;
+        auto& rStates = diff->song().rankedStates;
 
         if (hasFlags(rStates, SongDetailsCache::RankedStates::ScoresaberRanked) && 
             // Not Filtering by BeatLeader ranked
