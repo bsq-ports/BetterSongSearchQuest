@@ -47,12 +47,10 @@ ndkpath.txt
 *.txt
 extern/
 Android.mk.backup
-qpm.shared.json
 *.log
 tombstone_00
 *.qmod
 mod.json
 extern.cmake
 qpm_defines.cmake
-qpm.shared.json
 node_modules
