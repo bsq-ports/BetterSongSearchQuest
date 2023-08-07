@@ -98,7 +98,7 @@ extern "C" void setup(ModInfo& info) {
         } else {
             DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
             getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-            getPluginConfig().config->Write();
+            getPluginConfig().Save();
         }
         
         // Custom string loader
@@ -238,6 +238,8 @@ extern "C" void load() {
     il2cpp_functions::Init();
 
     QuestUI::Init();
+    
+    BSML::Init();
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
