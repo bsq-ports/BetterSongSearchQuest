@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <limits>
-#include "main.hpp"
+
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/MapDifficulty.hpp"
 #include "song-details/shared/Data/RankedStates.hpp"
@@ -72,7 +72,7 @@ public:
     const float STAR_FILTER_MAX = 15.0f;
     const float NJS_FILTER_MAX = 25.0f;
     const float NPS_FILTER_MAX = 12.0f;
-    static const int64_t BEATSAVER_EPOCH = 1525136400;
+    static inline const int64_t BEATSAVER_EPOCH = 1525136400;
 
     //General
     DownloadFilterType downloadType = DownloadFilterType::All;

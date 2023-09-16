@@ -78,7 +78,7 @@ StringW Modals::Settings::get_preferredLeaderboard() {
     } else {
         DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
         getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-        getPluginConfig().config->Write();
+        getPluginConfig().Save();
         return "Scoresaber";
     }
 }
@@ -87,7 +87,7 @@ void Modals::Settings::set_preferredLeaderboard(StringW value) {
     if (leaderBoardMap.contains(value)) {
         DataHolder::preferredLeaderboard = leaderBoardMap.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
-        getPluginConfig().config->Write();
+        getPluginConfig().Save();
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;
         controller->SortAndFilterSongs(controller->sort, controller->search, true);

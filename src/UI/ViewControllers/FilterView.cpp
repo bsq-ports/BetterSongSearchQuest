@@ -226,7 +226,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
         auto val = GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
-        return fmt::format("{:%b:%Y}", fmt::localtime(val));
+
+        return fmt::format("{:%b:%Y}", fmt::localtime(system_clock::to_time_t(val)));
     };
 
     // Update the value and set the formatter
