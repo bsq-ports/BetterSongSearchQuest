@@ -52,7 +52,7 @@
     },
     {
       "id": "config-utils",
-      "versionRange": "^0.8.0",
+      "versionRange": "^1.1.0",
       "additionalData": {}
     },
     {
@@ -67,7 +67,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.5.6",
+      "versionRange": "^0.6.0",
       "additionalData": {}
     },
     {
