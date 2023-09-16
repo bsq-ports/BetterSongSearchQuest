@@ -215,6 +215,12 @@ public:
             charFilter == FilterOptions::CharFilterType::All &&
             modRequirement == FilterOptions::RequirementType::Any
         );
+
+        // Do infinity checks for songs that are out of bounds
+        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); }
+        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); }
+        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); }
+        if (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); }
     }
 
     bool skipFilter = false;
