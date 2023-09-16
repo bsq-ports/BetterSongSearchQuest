@@ -98,7 +98,6 @@ extern "C" void setup(ModInfo& info) {
         } else {
             DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
             getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-            getPluginConfig().Save();
         }
         
         // Custom string loader
