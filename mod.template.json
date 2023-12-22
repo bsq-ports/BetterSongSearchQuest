@@ -2,12 +2,15 @@
   "_QPVersion": "0.1.0",
   "name": "${mod_name}",
   "id": "${mod_id}",
+  "modloader": "QuestLoader",
   "author": "FrozenAlex, FernTheDev, FutureMapper, and Christoffyw",
   "version": "${version}",
   "description": "Search and download songs with a lot of filtering and sorting options and without frustration!",
   "packageVersion": "1.26.2",
   "dependencies": [],
-  "modFiles": [],
+  "modFiles": [
+    "${binary}"
+  ],
   "libraryFiles": [],
   "fileCopies": [],
   "copyExtensions": [],
