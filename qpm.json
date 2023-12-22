@@ -63,7 +63,7 @@
     },
     {
       "id": "fmt",
-      "versionRange": "^9.0.0",
+      "versionRange": "^10.0.0",
       "additionalData": {}
     },
     {
@@ -83,7 +83,7 @@
     },
     {
       "id": "paper",
-      "versionRange": "^1.2.9",
+      "versionRange": "^1.2.20",
       "additionalData": {}
     }
   ],
