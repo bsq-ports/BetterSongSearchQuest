@@ -1,5 +1,6 @@
 {
   "config": {
+    "version": "0.1.0",
     "sharedDir": "shared",
     "dependenciesDir": "extern",
     "info": {
@@ -8,8 +9,12 @@
       "version": "0.1.0",
       "url": "https://github.com/bsq-ports/BetterSongSearchQuest",
       "additionalData": {
-        "overrideSoName": "libBetterSongSearch.so"
+        "overrideSoName": "libBetterSongSearch.so",
+        "cmake": true
       }
+    },
+    "workspace": {
+      "scripts": {}
     },
     "dependencies": [
       {
@@ -86,8 +91,7 @@
         "versionRange": "^1.2.9",
         "additionalData": {}
       }
-    ],
-    "workspace": null
+    ]
   },
   "restoredDependencies": [
     {
@@ -107,12 +111,12 @@
     {
       "dependency": {
         "id": "libil2cpp",
-        "versionRange": "=0.2.3",
+        "versionRange": "=0.2.5",
         "additionalData": {
           "headersOnly": true
         }
       },
-      "version": "0.2.3"
+      "version": "0.2.5"
     },
     {
       "dependency": {
@@ -153,16 +157,17 @@
     {
       "dependency": {
         "id": "tinyxml2",
-        "versionRange": "=9.0.5",
+        "versionRange": "=9.0.6",
         "additionalData": {
-          "soLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.5/libtinyxml2.so",
-          "debugSoLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.5/debug_libtinyxml2.so",
+          "soLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.6/libtinyxml2.so",
+          "debugSoLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.6/debug_libtinyxml2.so",
           "overrideSoName": "libtinyxml2.so",
-          "modLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.5/tinyxml2.qmod",
-          "branchName": "version-v9.0.5"
+          "modLink": "https://github.com/MillzyDev/NDK-tinyxml2/releases/download/v9.0.6/.qmod",
+          "branchName": "version/v9_0_6",
+          "cmake": true
         }
       },
-      "version": "9.0.5"
+      "version": "9.0.6"
     },
     {
       "dependency": {
@@ -271,7 +276,6 @@
         "versionRange": "=7.78.0",
         "additionalData": {
           "staticLinking": true,
-          "useRelease": true,
           "soLink": "https://github.com/darknight1050/openssl-curl-android/releases/download/v7.78.0/libcurl.a",
           "overrideSoName": "libcurl.a",
           "branchName": "version-v7.78.0"
