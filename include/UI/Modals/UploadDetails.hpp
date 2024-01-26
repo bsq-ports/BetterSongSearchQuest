@@ -17,8 +17,6 @@
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
-
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::MonoBehaviour,
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);

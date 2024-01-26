@@ -26,6 +26,7 @@
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "System/StringComparison.hpp"
 #include "System/Nullable_1.hpp"
+#include "System/Nullable.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -407,7 +408,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     bool foundDiff = false;
 
                     for (auto& diff:song) {
-                        if (diff.difficulty == SongDetailsCache::MapDifficulty((int)x->difficulty)) {
+                        if (diff.difficulty == SongDetailsCache::MapDifficulty((int)x->difficulty.value__)) {
                             foundDiff = true;
                             break;
                         }
@@ -765,7 +766,7 @@ void ViewControllers::SongListController::PostParse() {
     // Steal search box from the base game
     static SafePtrUnity<HMUI::InputFieldView> gameSearchBox;
     if (!gameSearchBox) {
-        gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>().First(
+        gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>()->First(
         [](HMUI::InputFieldView *x) {
             return x->get_name() == "SearchInputField";
         });
@@ -780,7 +781,7 @@ void ViewControllers::SongListController::PostParse() {
         auto songSearchInput = searchBox->GetComponent<HMUI::InputFieldView *>();
         songSearchPlaceholder = searchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
         songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
-        songSearchInput->keyboardPositionOffset = Vector3(-15, -36, 0);
+        songSearchInput->_keyboardPositionOffset = Vector3(-15, -36, 0);
 
         std::function<void(HMUI::InputFieldView * view)> onValueChanged = [this](HMUI::InputFieldView * view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
@@ -997,7 +998,7 @@ void ViewControllers::SongListController::SelectRandom() {
     }
     auto id = BetterSongSearch::Util::random(0, cellsNumber - 1);
     songListTable()->SelectCellWithIdx(id, true);
-    songListTable()->ScrollToCellWithIdx(id, TableView::ScrollPositionType::Beginning, false);
+    songListTable()->ScrollToCellWithIdx(id, HMUI::TableView::ScrollPositionType::Beginning, false);
 };
 
 void ViewControllers::SongListController::ShowMoreModal() {
@@ -1032,7 +1033,7 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateData
 
     SortMode sort = prevSort;
     if (selectedSortMode != nullptr) {
-        int index = get_sortModeSelections()->IndexOf(selectedSortMode);
+        int index = get_sortModeSelections()->IndexOf(reinterpret_cast<System::String*> (selectedSortMode.convert()));
         if (index < 0 ) {} else {
             if (index != getPluginConfig().SortMode.GetValue()) {
                 filtersChanged = true;

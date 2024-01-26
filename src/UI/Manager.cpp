@@ -154,7 +154,7 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
 }
 
 void BetterSongSearch::UI::Manager::GoToSongSelect() {
-    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton")).unsafePtr();
     if (!songSelectButton) {
         songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
     }

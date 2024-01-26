@@ -9,14 +9,10 @@
 #include "HMUI/TableCell.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
-// #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-// #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "song-details/shared/Data/Song.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
-
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell, HMUI::TableCell,

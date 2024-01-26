@@ -2,7 +2,6 @@
 #include "main.hpp"
 
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "songloader/shared/API.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
@@ -12,7 +11,6 @@
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 #define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))

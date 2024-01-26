@@ -11,7 +11,7 @@
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "custom-types/shared/coroutine.hpp"
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 namespace BetterSongSearch::UI::Util::BSMLStuff
 {
