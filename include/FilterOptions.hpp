@@ -104,6 +104,7 @@ public:
 };
 
 enum class SortMode {
+    Relevance,
     Newest,
     Oldest,
     Latest_Ranked,

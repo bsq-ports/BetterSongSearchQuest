@@ -71,7 +71,7 @@ namespace BetterSongSearch::UI {
         inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
 
         // State variables to be globally accessible
-        inline static SortMode currentSort = SortMode::Newest;
+        inline static SortMode currentSort = SortMode::Relevance;
         inline static std::string currentSearch = "";
 
         inline static std::unordered_set<std::string> songsWithScores;
@@ -214,7 +214,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, playButton);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, infoButton);
-    BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
+    BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Relevance", "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
 
     DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
     DECLARE_INSTANCE_FIELD(StringW, selectedSortMode);
