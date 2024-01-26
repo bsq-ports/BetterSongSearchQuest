@@ -783,7 +783,7 @@ void ViewControllers::SongListController::PostParse() {
         songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         songSearchInput->_keyboardPositionOffset = Vector3(-15, -36, 0);
 
-        std::function<void(HMUI::InputFieldView * view)> onValueChanged = [this](HMUI::InputFieldView * view) {
+        std::function<void(UnityW<HMUI::InputFieldView> view)> onValueChanged = [this](UnityW<HMUI::InputFieldView> view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
             this->SortAndFilterSongs(this->sort, (std::string) view->get_text(), true);
         };
@@ -1242,7 +1242,7 @@ void ViewControllers::SongListController::UpdateDetails () {
             if (
                 // Don't delete defaultImage
                 oldSprite != defaultImage && 
-                this->coverImage->get_sprite() != oldSprite)
+                this->coverImage->get_sprite().unsafePtr() != oldSprite)
             {
                     if (oldSprite != nullptr && oldSprite->m_CachedPtr) {
                         DEBUG("REMOVING OLD SPRITE");
@@ -1277,7 +1277,7 @@ void ViewControllers::SongListController::UpdateDetails () {
                 if (
                     // Don't delete old image if it's a default image
                     oldSprite != defaultImage && 
-                    this->coverImage->get_sprite() != oldSprite)
+                    this->coverImage->get_sprite().unsafePtr() != oldSprite)
                 {
                     if (oldSprite != nullptr && oldSprite->m_CachedPtr) {
                         auto texture = oldSprite->get_texture();

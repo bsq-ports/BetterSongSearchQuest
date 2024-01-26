@@ -185,7 +185,7 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
         reinterpret_cast<HMUI::SelectableCell*>(t)->_wasPressedSignal=nullptr;
 
         
-        std::function<void(HMUI::SelectableCell*, HMUI::SelectableCell::TransitionType, ::Il2CppObject*)> fun = [t](HMUI::SelectableCell* cell, HMUI::SelectableCell::TransitionType transition, Il2CppObject* obj) { 
+        std::function<void(UnityW<::HMUI::SelectableCell>, HMUI::SelectableCell::TransitionType, ::System::Object*)> fun = [t](UnityW<::HMUI::SelectableCell> cell, HMUI::SelectableCell::TransitionType transition, ::System::Object* obj) {
             if(!t->get_selected())
                 return;
 
