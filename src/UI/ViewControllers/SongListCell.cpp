@@ -148,13 +148,13 @@ namespace BetterSongSearch::UI::ViewControllers
 				} else if(lbsvc == RankedStates::BeatleaderRanked && sortedDiffs[i].diff->starsBL > 0) {
 					stars = fmt::format(" <color=#{}>{}", (passesFilter ? "B1D" : "606"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
 				}
-                
-                diffs[i]->SetText(
-                    fmt::format("<color=#{}>{}</color>{}",
+                auto text = fmt::format("<color=#{}>{}</color>{}",
                         (passesFilter ? "EEE" : "888"),
                         diffname,
                         stars
-                    )
+                    );
+                diffs[i]->SetText(
+                    text, false
                 );
                 diffsLeft--;
             }

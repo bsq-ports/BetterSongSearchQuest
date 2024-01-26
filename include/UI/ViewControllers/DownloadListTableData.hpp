@@ -20,16 +20,16 @@ namespace BetterSongSearch::UI::ViewControllers
             auto tableCell = tableView->DequeueReusableCellForIdentifier(ReuseIdentifier);
             if (!tableCell)
             {
-                tableCell = UnityEngine::GameObject::New_ctor("CustomDownloadListTableCell", csTypeOf(HMUI::Touchable *))->AddComponent<CustomDownloadListTableCell *>();
+                tableCell = UnityEngine::GameObject::New_ctor("CustomDownloadListTableCell")->AddComponent<CustomDownloadListTableCell *>();
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(ReuseIdentifier);
-                BSML::parse_and_construct(IncludedAssets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);
+                BSML::parse_and_construct(Assets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);
                 
                 // Weird hack cause HMUI touchable is not there for some reason
                 tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
             }
 
-            return reinterpret_cast<CustomDownloadListTableCell *>(tableCell);
+            return tableCell.cast<CustomDownloadListTableCell>();
         }
     };
 }

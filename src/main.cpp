@@ -1,15 +1,12 @@
 #include "main.hpp"
 
-#include "questui/shared/QuestUI.hpp"
+#include "bsml/shared/BSML-Lite.hpp"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
-#include "HMUI/FlowCoordinator.hpp"
-#include "HMUI/ViewController_AnimationType.hpp"
-#include "HMUI/SelectableCell.hpp"
-#include "HMUI/ViewController_AnimationDirection.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/Resources.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/IDifficultyBeatmap.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
@@ -27,16 +24,20 @@
 #include "HMUI/TextSegmentedControlCell.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "Util/TextUtil.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 
+#include "GlobalNamespace/CoroutineStarter.hpp"
+#include "GlobalNamespace/MainFlowCoordinator.hpp"
 #include <regex>
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
-using namespace QuestUI;
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
+
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
 using namespace BetterSongSearch::Util;
 
-static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
+inline modloader::ModInfo modInfo = {MOD_ID, VERSION, GIT_COMMIT}; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
 // Loads the config from disk using our modInfo, then returns it for use
 Configuration& getConfig() {
@@ -58,13 +59,13 @@ Paper::ConstLoggerContext<17UL> getLogger() {
 
 
 // Called at the early stages of game loading
-extern "C" void setup(ModInfo& info) {
+extern "C" void setup(CModInfo& info) {
     info.id = MOD_ID;
     info.version = VERSION;
-    modInfo = info;
+    modInfo.assign(info);
 
     getConfig().Load(); // Load the config file
-    getPluginConfig().Init(info);
+    getPluginConfig().Init(modInfo);
     getConfig().Reload();
     getConfig().Write();
     getLoggerOld().info("Completed setup!");
@@ -116,12 +117,12 @@ extern "C" void setup(ModInfo& info) {
     }).detach();   
 }
 
-MAKE_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoordinator::DidActivate, void, GlobalNamespace::MainFlowCoordinator* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
+MAKE_AUTO_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoordinator::DidActivate, void, GlobalNamespace::MainFlowCoordinator* self, bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling) {
     MainFlowCoordinator_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
     static bool debugstarted = false; 
     if (!debugstarted) {
         debugstarted = true;
-        QuestUI::MainThreadScheduler::Schedule([]{
+        BSML::MainThreadScheduler::Schedule([]{
             coro(manager.Debug());
         });
     }
@@ -139,19 +140,19 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
 
     ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
     if (fromBSS) {
-        auto currentFlowCoordinator = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+        auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
         auto betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>().FirstOrDefault();
         if(betterSongSearchFlowCoordinator)
             currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::Out, false);
     }
     
-}
+};
 
 MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::GameplaySetupViewController::RefreshContent, void, GlobalNamespace::GameplaySetupViewController* self)
 {
     GameplaySetupViewController_RefreshContent(self);
 
-    bool multiplayer = self->showMultiplayer;
+    bool multiplayer = self->_showMultiplayer;
 
     // Button instance
     static SafePtrUnity<UnityEngine::GameObject> button;
@@ -181,7 +182,7 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
         t->set_text("Better Song Search");
 
-        reinterpret_cast<HMUI::SelectableCell*>(t)->wasPressedSignal=nullptr;
+        reinterpret_cast<HMUI::SelectableCell*>(t)->_wasPressedSignal=nullptr;
 
         
         std::function<void(HMUI::SelectableCell*, HMUI::SelectableCell::TransitionType, ::Il2CppObject*)> fun = [t](HMUI::SelectableCell* cell, HMUI::SelectableCell::TransitionType transition, Il2CppObject* obj) { 
@@ -206,7 +207,7 @@ MAKE_HOOK_MATCH(LevelFilteringNavigationController_Setup, &GlobalNamespace::Leve
 
     // To have interoperability with pinkcore I trigger it only if pressing play in the bss
 	if (openToCustom ) {
-		self->selectLevelCategoryViewController->Setup(startLevelCategory.CustomSongs, self->enabledLevelCategories);
+		self->_selectLevelCategoryViewController->Setup(startLevelCategory.CustomSongs, self->_enabledLevelCategories);
         openToCustom = false;
 	}
 }
@@ -235,9 +236,6 @@ MAKE_HOOK_MATCH(
 // Called later on in the game loading - a good time to install function hooks
 extern "C" void load() {
     il2cpp_functions::Init();
-
-    QuestUI::Init();
-    
     BSML::Init();
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);

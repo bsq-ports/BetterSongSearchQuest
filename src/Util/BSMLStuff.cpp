@@ -7,7 +7,7 @@
 #include "UnityEngine/UI/LayoutElement.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/GameObject.hpp"
-#include "UnityEngine/UI/Button_ButtonClickedEvent.hpp"
+#include "UnityEngine/UI/Button.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "custom-types/shared/coroutine.hpp"
 
@@ -25,7 +25,7 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
 
         for (auto item : items)
         {
-            if (item != nullptr && item->m_CachedPtr.m_value != nullptr && item->get_text() == "MERGE_TO_PREV")
+            if (item != nullptr && item->m_CachedPtr != nullptr && item->get_text() == "MERGE_TO_PREV")
             {
                 filteredItems.push_back(item);
             }
@@ -36,8 +36,8 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
             auto ourContainer = x->get_transform()->get_parent();
             auto prevContainer = ourContainer->get_parent()->GetChild(ourContainer->GetSiblingIndex() - 1);
 
-            reinterpret_cast<UnityEngine::RectTransform*> (prevContainer->Find("BSMLSlider"))->set_offsetMax(Vector2(-20, 0));
-            reinterpret_cast<UnityEngine::RectTransform*> (ourContainer->Find("BSMLSlider"))->set_offsetMin(Vector2(-20, 0));
+            prevContainer->Find("BSMLSlider").cast<UnityEngine::RectTransform>()->set_offsetMax(Vector2(-20, 0));
+            ourContainer->Find("BSMLSlider").cast<UnityEngine::RectTransform>()->set_offsetMin(Vector2(-20, 0));
             ourContainer->set_position(prevContainer->get_position());
 
             auto minTimeSlider = prevContainer->GetComponentInChildren<HMUI::CustomFormatRangeValuesSlider*>();

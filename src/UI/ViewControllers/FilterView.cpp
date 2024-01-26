@@ -2,7 +2,6 @@
 
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Backgroundable.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "HMUI/ImageView.hpp"
 
 #include "main.hpp"
@@ -10,6 +9,7 @@
 #include "assets.hpp"
 
 #include <fmt/chrono.h>
+#include <UnityEngine/Resources.hpp>
 
 #include "FilterOptions.hpp"
 #include "DateUtils.hpp"
@@ -17,6 +17,7 @@
 #include "Util/BSMLStuff.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 
 
 using namespace BetterSongSearch::Util;
@@ -26,7 +27,8 @@ using namespace BetterSongSearch::UI::Util::BSMLStuff;
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
 #define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
     if (value != nullptr) { \
         int index = get_##options()->IndexOf(value); \
@@ -165,10 +167,10 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
 UnityEngine::Sprite* GetBGSprite(std::string str)
 {
-    return QuestUI::ArrayUtil::First(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>(),
-                                     [str](UnityEngine::Sprite* x) {
-                                         return to_utf8(csstrtostr(x->get_name())) == str;
-                                     });
+    return UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>()->First([str](UnityEngine::Sprite* x) {
+        return to_utf8(csstrtostr(x->get_name())) == str;
+    });
+
 }
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
@@ -212,12 +214,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
 
     // Create bsml view
-    BSML::parse_and_construct(IncludedAssets::FilterView_bsml, this->get_transform(), this);
+    BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
 
     auto x = reinterpret_cast<UnityEngine::RectTransform*>(this->get_gameObject()->get_transform());
     x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
 
-    auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
+    auto maxUploadDate = BetterSongSearch::GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
     coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
 
@@ -225,7 +227,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
     std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
-        auto val = GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
+        auto val = BetterSongSearch::GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
         return fmt::format("{:%b:%Y}", fmt::localtime(system_clock::to_time_t(val)));
     };
 
@@ -358,9 +360,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     FormatStringSettingValue(this->uploadersStringControl);
     
     // I hate BSML some times
-    auto m = modsRequirementDropdown->dropdown->modalView;
-    reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
-
+    auto m = modsRequirementDropdown->dropdown->_modalView;
+    m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
@@ -508,8 +509,8 @@ void ViewControllers::FilterViewController::ShowPresets()
 // }
 void ViewControllers::FilterViewController::TryToDownloadDataset()
 {
-    if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
-        if (fcInstance->SongListController !=nullptr && fcInstance->SongListController->m_CachedPtr.m_value != nullptr) {
+    if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr) {
+        if (fcInstance->SongListController != nullptr && fcInstance->SongListController->m_CachedPtr) {
             fcInstance->SongListController->RetryDownloadSongList();
         }
     }

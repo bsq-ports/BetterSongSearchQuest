@@ -1,8 +1,6 @@
 #include "UI/Modals/MultiDL.hpp"
 #include "main.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableView_ScrollPositionType.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -67,7 +65,7 @@ void Modals::MultiDL::ctor()
 void Modals::MultiDL::OpenModal()
 {
     if (!initialized) {
-        BSML::parse_and_construct(IncludedAssets::MultiDl_bsml, this->get_transform(), this);
+        BSML::parse_and_construct(Assets::MultiDl_bsml, this->get_transform(), this);
         initialized = true;
     }
     this->modal->Show();

@@ -1,7 +1,7 @@
 #pragma once
 #include "UI/ViewControllers/SongListCellTableData.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
-#include "HMUI/TableView_IDataSource.hpp"
+
 #include "HMUI/TableView.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableCell.hpp"
@@ -10,13 +10,12 @@
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "TMPro/TextAlignmentOptions.hpp"
-#include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-#include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
-#include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
+// #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
+// #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+// #include "questui/shared/CustomTypes/Components/SegmentedControl/CustomTextSegmentedControlData.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/MultiplayerLevelSelectionFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
-#include "GlobalNamespace/LevelSelectionFlowCoordinator_State.hpp"
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
@@ -140,11 +139,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
 
-    
-
     DECLARE_CTOR(ctor);
     DECLARE_DTOR(dtor);
-    DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
 
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);

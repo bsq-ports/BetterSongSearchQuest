@@ -23,19 +23,21 @@ namespace BetterSongSearch::UI::ViewControllers
             auto tableCell = tableView->DequeueReusableCellForIdentifier(CustomSongListTableCellReuseIdentifier);
             if (!tableCell)
             {
-                tableCell = UnityEngine::GameObject::New_ctor("CustomSongListTableCell", csTypeOf(HMUI::Touchable *))->AddComponent<CustomSongListTableCell *>();
+                //  old tableCell = UnityEngine::GameObject::New_ctor("CustomSongListTableCell", csTypeOf(HMUI::Touchable *))->AddComponent<CustomSongListTableCell *>();
+
+                tableCell = UnityEngine::GameObject::New_ctor("CustomSongListTableCell")->AddComponent<CustomSongListTableCell *>();
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(CustomSongListTableCellReuseIdentifier);
-                BSML::parse_and_construct(IncludedAssets::SongListCell_bsml, tableCell->get_transform(), tableCell);
+                BSML::parse_and_construct(Assets::SongListCell_bsml, tableCell->get_transform(), tableCell);
 
                 // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
                 tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
 
-                auto cell = reinterpret_cast<CustomSongListTableCell *>(tableCell);
+                auto cell = tableCell.cast<CustomSongListTableCell>();
                 cell->diffs = cell->diffsContainer->GetComponentsInChildren<TMPro::TextMeshProUGUI*>();
             }
 
-            return reinterpret_cast<CustomSongListTableCell *>(tableCell);
+            return tableCell.cast<CustomSongListTableCell>();
         }
     };
 }

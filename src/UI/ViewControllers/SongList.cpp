@@ -10,12 +10,9 @@
 #include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/InputFieldView.hpp"
 #include "HMUI/InputFieldViewChangeBinder.hpp"
-#include "HMUI/InputFieldView_InputFieldChanged.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
 #include "songloader/shared/API.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
@@ -32,8 +29,6 @@
 #include "bsml/shared/Helpers/getters.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "fmt/fmt/include/fmt/core.h"
 #include "Util/SongUtil.hpp"
 #include <iterator>
@@ -63,12 +58,13 @@
 #include <cmath>
 #include "song-details/shared/SongDetails.hpp"
 #include <limits>
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "song-details/shared/Data/RankedStates.hpp"
 
-#define coro(coroutine) SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI::Util::BSMLStuff;
@@ -392,10 +388,10 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         // TODO: Actually update the scores
         // Get scores if we don't have them
         if (DataHolder::songsWithScores.size() == 0 ) {
-            if(DataHolder::playerDataModel != nullptr && DataHolder::playerDataModel->m_CachedPtr.m_value != nullptr) {
+            if(DataHolder::playerDataModel != nullptr && DataHolder::playerDataModel->m_CachedPtr) {
                 for(int i = 0; i < DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
                     GlobalNamespace::PlayerLevelStatsData* x = DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
-                    if(!x->validScore || x->highScore == 0 || x->levelID->get_Length() < 13 + 40)
+                    if(!x->validScore || x->____highScore == 0 || x->levelID->get_Length() < 13 + 40)
                         continue;
                     std::u16string_view levelid = x->levelID;
                     if (!levelid.starts_with(u"custom_level_")) {
@@ -719,7 +715,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
         
         DEBUG("Search time: {}ms", CurrentTimeMs()-before);
-        QuestUI::MainThreadScheduler::Schedule([this]{
+        BSML::MainThreadScheduler::Schedule([this]{
             long long before = 0;
             before = CurrentTimeMs();
             
@@ -730,7 +726,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
             INFO("table reset in {} ms",  CurrentTimeMs()-before);
 
-            if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr.m_value) {
+            if(songSearchPlaceholder && songSearchPlaceholder->m_CachedPtr) {
                 if(DataHolder::filteredSongList.size() == DataHolder::songDetails->songs.size()) {
                     songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
                 } else {
@@ -777,8 +773,8 @@ void ViewControllers::SongListController::PostParse() {
 
     if (gameSearchBox) {
         // Cleanup the old search
-        if (searchBox && searchBox->m_CachedPtr.m_value) {
-            DestroyImmediate(searchBox);
+        if (searchBox && searchBox->m_CachedPtr) {
+            UnityEngine::Object::DestroyImmediate(searchBox);
         }
         searchBox = Instantiate(gameSearchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
         auto songSearchInput = searchBox->GetComponent<HMUI::InputFieldView *>();
@@ -795,46 +791,48 @@ void ViewControllers::SongListController::PostParse() {
     }
 
     // Get the default cover image
-    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
+    defaultImage = UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>()->First([](UnityEngine::Sprite* x) {return x->get_name() == "CustomLevelsPack"; });
 
     // Set default cover image
     coverImage->set_sprite(defaultImage);
 
     // Get song preview player 
-    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
-    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>().FirstOrDefault();
-    beatmapLevelsModel = QuestUI::ArrayUtil::First(
-        UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>(),
-        [](BeatmapLevelsModel *x) {
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>()->FirstOrDefault();
+    beatmapLevelsModel = UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>()->First(
+    [](BeatmapLevelsModel *x) {
             return x->customLevelPackCollection != nullptr;
-        });
+        }
+    );
+
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->_platformHelper;
     if (platformHelper == nullptr) {
     } else {
         for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
-            x->platformHelper=platformHelper;
+            x->_platformHelper=platformHelper;
         }
     }
 
     // Make the sort dropdown bigger
-    auto c = std::min(9, this->get_sortModeSelections()->size);
-    sortDropdown->dropdown->numberOfVisibleCells = c;
+    auto c = std::min(9, this->get_sortModeSelections()->_size);
+    sortDropdown->dropdown->____numberOfVisibleCells = c;
     sortDropdown->dropdown->ReloadData();
-    auto m = sortDropdown->dropdown->modalView;
-    reinterpret_cast<RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
+    auto m = sortDropdown->dropdown->_modalView;
+    m->get_transform().cast<RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
 }
 
 // @brief: Function to refresh beatmapLevelsModel if it is null (happens when songloader haven't finished loading all songs)
 void ViewControllers::SongListController::GetBeatmapLevelsLoaderIfNull() {
     // Get customLebelPackCollection if empty
     if (beatmapLevelsModel == nullptr || beatmapLevelsModel->customLevelPackCollection == nullptr) {
-        beatmapLevelsModel = QuestUI::ArrayUtil::First(
-        UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>(),
-        [](BeatmapLevelsModel *x) {
-            return x->customLevelPackCollection != nullptr;
-        });
+        beatmapLevelsModel = Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>()->First(
+            [](BeatmapLevelsModel *x) {
+                return x->customLevelPackCollection != nullptr;
+            }
+        );
+
     }
 }
 
@@ -854,7 +852,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     }
 
     // Restore search songs count
-    if (DataHolder::loaded  && !DataHolder::failed && songSearchPlaceholder != nullptr && songSearchPlaceholder->m_CachedPtr.m_value != nullptr) {
+    if (DataHolder::loaded  && !DataHolder::failed && songSearchPlaceholder != nullptr && songSearchPlaceholder->m_CachedPtr) {
         if (DataHolder::filteredSongList.size() < DataHolder::songDetails->songs.size()) {
             songSearchPlaceholder->set_text(fmt::format("Search {} songs", DataHolder::filteredSongList.size()));
         } else {
@@ -865,7 +863,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (!firstActivation)
         return;
 
-    if (DataHolder::playerDataModel == nullptr || DataHolder::playerDataModel->m_CachedPtr.m_value == nullptr) {
+    if (DataHolder::playerDataModel == nullptr || !DataHolder::playerDataModel->m_CachedPtr) {
         DataHolder::playerDataModel =  UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
     };
     // Get coordinators
@@ -885,14 +883,14 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
     // Get sort setting from config
     auto sortMode = getPluginConfig().SortMode.GetValue();
-    if (sortMode < get_sortModeSelections()->size ) {
+    if (sortMode < get_sortModeSelections()->get_Count()) {
         selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
         sort = (SortMode) sortMode;
     }
 
-    BSML::parse_and_construct(IncludedAssets::SongList_bsml, this->get_transform(), this);
+    BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
 
-    if (this->songList != nullptr && this->songList->m_CachedPtr.m_value != nullptr)
+    if (this->songList != nullptr && this->songList->m_CachedPtr)
     {
         getLoggerOld().info("Table exists");
         songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
@@ -965,7 +963,7 @@ void ViewControllers::SongListController::ResetTable()
         DEBUG("Songs size: {}", DataHolder::sortedSongList.size());
         DEBUG("TABLE RESET");
         songListTable()->ReloadData();
-        songListTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, false);
+        songListTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
     }
 }
 
@@ -1103,7 +1101,7 @@ void GetByURLAsync(std::string url, std::function<void(bool success, std::vector
 custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip*)> finished) {
     auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
-    if(webRequest->get_isNetworkError()) {
+    if(webRequest->GetError() != UnityEngine::Networking::UnityWebRequest::UnityWebRequestError::OK) {
         INFO("Network error");
         finished(nullptr);   
         co_return;
@@ -1135,7 +1133,7 @@ void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level)
     manager.GoToSongSelect();
 
     // For some reason setup does not work for multiplayer so I have to use this method to workaround
-    multiplayerLevelSelectionFlowCoordinator->levelSelectionNavigationController->levelCollectionNavigationController->SelectLevel(level);
+    multiplayerLevelSelectionFlowCoordinator->levelSelectionNavigationController->_levelCollectionNavigationController->SelectLevel(level);
 }
 
 
@@ -1156,7 +1154,7 @@ void ViewControllers::SongListController::PlaySong (const SongDetailsCache::Song
 
     // Hopefully not leaking any memory
     auto fun = [this, songToPlay](){
-        QuestUI::MainThreadScheduler::Schedule(
+        BSML::MainThreadScheduler::Schedule(
         [this, songToPlay]
         {
             auto level = RuntimeSongLoader::API::GetLevelByHash(std::string(songToPlay->hash()));
@@ -1245,10 +1243,10 @@ void ViewControllers::SongListController::UpdateDetails () {
                 oldSprite != defaultImage && 
                 this->coverImage->get_sprite() != oldSprite)
             {
-                    if (oldSprite != nullptr && oldSprite->m_CachedPtr.m_value != nullptr) {
+                    if (oldSprite != nullptr && oldSprite->m_CachedPtr) {
                         DEBUG("REMOVING OLD SPRITE");
                         auto texture = oldSprite->get_texture();
-                        if (texture != nullptr && texture->m_CachedPtr.m_value != nullptr) {
+                        if (texture != nullptr && texture->m_CachedPtr) {
                             UnityEngine::Object::DestroyImmediate(texture);
                         }
                         UnityEngine::Object::DestroyImmediate(oldSprite);
@@ -1262,13 +1260,13 @@ void ViewControllers::SongListController::UpdateDetails () {
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
         GetByURLAsync(newUrl, [this, song, oldSprite](bool success, std::vector<uint8_t> bytes) {
-            QuestUI::MainThreadScheduler::Schedule([this, bytes, song, success, oldSprite] {
+            BSML::MainThreadScheduler::Schedule([this, bytes, song, success, oldSprite] {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
                     if (song->hash() != this->currentSong->hash()) return;
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
-                    this->coverImage->set_sprite(QuestUI::BeatSaberUI::ArrayToSprite(spriteArray));
+                    this->coverImage->set_sprite(BSML::Lite::ArrayToSprite(spriteArray));
                 } else {
                     this->coverImage->set_sprite(defaultImage);
                 }
@@ -1280,9 +1278,9 @@ void ViewControllers::SongListController::UpdateDetails () {
                     oldSprite != defaultImage && 
                     this->coverImage->get_sprite() != oldSprite)
                 {
-                    if (oldSprite != nullptr && oldSprite->m_CachedPtr.m_value != nullptr) {
+                    if (oldSprite != nullptr && oldSprite->m_CachedPtr) {
                         auto texture = oldSprite->get_texture();
-                        if (texture != nullptr && texture->m_CachedPtr.m_value != nullptr) {
+                        if (texture != nullptr && texture->m_CachedPtr) {
                             UnityEngine::Object::DestroyImmediate(texture);
                         }
                         UnityEngine::Object::DestroyImmediate(oldSprite);
@@ -1429,7 +1427,7 @@ void ViewControllers::SongListController::SongDataDone() {
     DataHolder::invalid = false;
     DataHolder::needsRefresh = false;
 
-    QuestUI::MainThreadScheduler::Schedule([this]{
+    BSML::MainThreadScheduler::Schedule([this]{
 
         if (this->get_isActiveAndEnabled()) {
             // Initial search
@@ -1461,8 +1459,8 @@ void ViewControllers::SongListController::SongDataError() {
     DataHolder::invalid = true;
     DataHolder::needsRefresh = false;
     
-    QuestUI::MainThreadScheduler::Schedule([this]{
-        if (this->m_CachedPtr.m_value != nullptr ) {  
+    BSML::MainThreadScheduler::Schedule([this]{
+        if (this->m_CachedPtr ) {
             fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
         }
     });

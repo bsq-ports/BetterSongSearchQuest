@@ -1,11 +1,8 @@
 #pragma once
 
-#include "System/Action.hpp"
-#include "System/Collections/IEnumerator.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
-#include "UnityEngine/Coroutine.hpp"
 #include "main.hpp"
 
 namespace BetterSongSearch::Util {

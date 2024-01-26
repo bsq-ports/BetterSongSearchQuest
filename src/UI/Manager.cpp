@@ -1,19 +1,17 @@
 #include "UI/Manager.hpp"
 
+#include <bsml/shared/Helpers/getters.hpp>
+
 #include "Util/Debug.hpp"
 #include "sys/types.h"
 #include "sys/sysinfo.h"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "System/GC.hpp"
 #include "UnityEngine/Profiling/Profiler.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace GlobalNamespace;
@@ -51,7 +49,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         
        
         // Tests for the fcinstance
-        if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
+        if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr) {
         //     // Select random song go into the play menu and go back
         //     {
         //         auto* songlist = fcInstance->SongListController;
@@ -151,7 +149,7 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
     if (!flow) {
         flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
     }
-    parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+    parentFlow = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
     parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }
 

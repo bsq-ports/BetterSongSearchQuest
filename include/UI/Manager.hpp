@@ -4,12 +4,11 @@
 #include "bsml/shared/BSML.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
-#include "HMUI/ViewController_AnimationDirection.hpp"
-#include "HMUI/ViewController_AnimationType.hpp"
-#include "UnityEngine/UI/Button_ButtonClickedEvent.hpp"
+#include "HMUI/ViewController.hpp"
+#include "HMUI/ViewController.hpp"
+#include "UnityEngine/UI/Button.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace GlobalNamespace;

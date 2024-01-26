@@ -1,7 +1,7 @@
-#pragma once
 #include "Util/SongUtil.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
+#include "bsml/shared/BSML-Lite/Creation/Image.hpp"
+
 #include "UI/ViewControllers/SongList.hpp"
 
 namespace BetterSongSearch::Util {
@@ -13,7 +13,7 @@ namespace BetterSongSearch::Util {
             return nullptr;
         }
 
-        auto sprite = QuestUI::BeatSaberUI::FileToSprite((std::string) path);
+        auto sprite = BSML::Lite::FileToSprite((std::string) path);
         return sprite;
     }
 

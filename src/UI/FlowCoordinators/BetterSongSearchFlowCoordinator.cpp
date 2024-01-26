@@ -1,13 +1,14 @@
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
+#include <bsml/shared/Helpers/creation.hpp>
+#include <bsml/shared/Helpers/getters.hpp>
+#include <UnityEngine/Resources.hpp>
+
 #include "System/Action.hpp"
-#include "HMUI/ViewController_AnimationDirection.hpp"
-#include "HMUI/ViewController_AnimationType.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/QuestUI.hpp"
+#include "HMUI/ViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
 
-using namespace QuestUI;
+
 using namespace GlobalNamespace;
 
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);
@@ -16,14 +17,14 @@ DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordina
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
-    if (!SongListController || !SongListController->m_CachedPtr.m_value) {
-        SongListController = BeatSaberUI::CreateViewController<ViewControllers::SongListController*>();
+    if (!SongListController || !SongListController->m_CachedPtr) {
+        SongListController = BSML::Helpers::CreateViewController<ViewControllers::SongListController*>();
     }
-    if (!FilterViewController ||  !FilterViewController->m_CachedPtr.m_value) {
-        FilterViewController = BeatSaberUI::CreateViewController<ViewControllers::FilterViewController*>();
+    if (!FilterViewController ||  !FilterViewController->m_CachedPtr) {
+        FilterViewController = BSML::Helpers::CreateViewController<ViewControllers::FilterViewController*>();
     }
-    if (!DownloadHistoryViewController ||  !DownloadHistoryViewController->m_CachedPtr.m_value) {
-        DownloadHistoryViewController = BeatSaberUI::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
+    if (!DownloadHistoryViewController ||  !DownloadHistoryViewController->m_CachedPtr) {
+        DownloadHistoryViewController = BSML::Helpers::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
     }
 }
 
@@ -50,8 +51,8 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     cancelConfirmCallback = nullptr;
 
     // Stop song preview on exit
-    auto songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>().FirstOrDefault();
-    if (songPreviewPlayer != nullptr && songPreviewPlayer->m_CachedPtr.m_value != nullptr) {
+    auto songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
+    if (songPreviewPlayer != nullptr && songPreviewPlayer->m_CachedPtr != nullptr) {
         songPreviewPlayer->CrossfadeToDefault();
     }
 
@@ -67,8 +68,8 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
         modal->Hide(false, nullptr);
     }
 
-    if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr && fcInstance->get_isActiveAndEnabled() && fcInstance->get_isActivated()) {
-        this->parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
+    if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr && fcInstance->get_isActiveAndEnabled() && fcInstance->get_isActivated()) {
+        this->_parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
     }
 };
 bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){

@@ -2,14 +2,14 @@
 
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
-#include "HMUI/TableView_IDataSource.hpp"
+#include "HMUI/TableView.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
 #include "HMUI/TableCell.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
-#include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-#include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
+// #include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
+// #include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "song-details/shared/Data/Song.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
@@ -32,8 +32,6 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 inline static const int RETRY_COUNT = 3;
-
-
 
 
 class DownloadHistoryEntry {
@@ -119,7 +117,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
 #endif
     DECLARE_CTOR(ctor);
     DECLARE_SIMPLE_DTOR();
-    DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);

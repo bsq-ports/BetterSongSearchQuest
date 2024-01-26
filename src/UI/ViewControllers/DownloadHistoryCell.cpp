@@ -27,7 +27,7 @@ namespace BetterSongSearch::UI::ViewControllers {
         clr.a = 0.5f + (entry->downloadProgress * 0.4f);
         bgProgress->set_color(clr);
 
-        auto x = reinterpret_cast<UnityEngine::RectTransform*>(bgProgress->get_gameObject()->get_transform());
+        auto x = bgProgress->get_gameObject()->get_transform().cast<UnityEngine::RectTransform>();
         if(!x)
             return;
         x->set_anchorMax(UnityEngine::Vector2(entry->downloadProgress, 1));

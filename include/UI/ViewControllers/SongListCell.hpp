@@ -5,14 +5,11 @@
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "HMUI/ViewController.hpp"
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_IDataSource.hpp"
 #include "HMUI/TableCell.hpp"
 #include "HMUI/ImageView.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "System/Object.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
-#include "questui/shared/CustomTypes/Components/List/QuestUITableView.hpp"
-#include "questui/shared/CustomTypes/Components/Backgroundable.hpp"
 #include "song-details/shared/Data/Song.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
@@ -23,9 +20,9 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell, HMUI::TableCell,
-    DECLARE_OVERRIDE_METHOD(void, SelectionDidChange, GET_FIND_METHOD(&HMUI::SelectableCell::SelectionDidChange), HMUI::SelectableCell::TransitionType transitionType);
-    DECLARE_OVERRIDE_METHOD(void, HighlightDidChange, GET_FIND_METHOD(&HMUI::SelectableCell::HighlightDidChange), HMUI::SelectableCell::TransitionType transitionType);
-    DECLARE_OVERRIDE_METHOD(void, WasPreparedForReuse, GET_FIND_METHOD(&HMUI::TableCell::WasPreparedForReuse));
+    DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, fullFormattedSongName);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, uploadDateFormatted);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, levelAuthorName);
