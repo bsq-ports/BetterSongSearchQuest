@@ -390,8 +390,13 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         // Get scores if we don't have them
         if (DataHolder::songsWithScores.size() == 0 ) {
             if(DataHolder::playerDataModel != nullptr && DataHolder::playerDataModel->m_CachedPtr) {
-                for(int i = 0; i < DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Count(); i++) {
-                    GlobalNamespace::PlayerLevelStatsData* x = DataHolder::playerDataModel->get_playerData()->get_levelsStatsData()->get_Item(i);
+                auto statsData = DataHolder::playerDataModel->get_playerData()->get_levelsStatsData();
+                auto statsDataEnumerator = statsData->GetEnumerator();
+
+                while (statsDataEnumerator.MoveNext()) {
+                    auto statsDataKeys = statsDataEnumerator.Current;
+                    auto x = statsDataKeys.get_Value();
+
                     if(!x->validScore || x->____highScore == 0 || x->levelID->get_Length() < 13 + 40)
                         continue;
                     std::u16string_view levelid = x->levelID;
@@ -802,7 +807,7 @@ void ViewControllers::SongListController::PostParse() {
     levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>()->FirstOrDefault();
     beatmapLevelsModel = UnityEngine::Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>()->First(
     [](BeatmapLevelsModel *x) {
-            return x->customLevelPackCollection != nullptr;
+            return x->____customLevelPackCollection != nullptr;
         }
     );
 
@@ -827,10 +832,10 @@ void ViewControllers::SongListController::PostParse() {
 // @brief: Function to refresh beatmapLevelsModel if it is null (happens when songloader haven't finished loading all songs)
 void ViewControllers::SongListController::GetBeatmapLevelsLoaderIfNull() {
     // Get customLebelPackCollection if empty
-    if (beatmapLevelsModel == nullptr || beatmapLevelsModel->customLevelPackCollection == nullptr) {
+    if (beatmapLevelsModel == nullptr || beatmapLevelsModel->____customLevelPackCollection == nullptr) {
         beatmapLevelsModel = Resources::FindObjectsOfTypeAll<BeatmapLevelsModel *>()->First(
             [](BeatmapLevelsModel *x) {
-                return x->customLevelPackCollection != nullptr;
+                return x->____customLevelPackCollection != nullptr;
             }
         );
 
@@ -1120,14 +1125,17 @@ void ViewControllers::SongListController::EnterSolo(IPreviewBeatmapLevel* level)
     fcInstance->Close(true, false);
     
     auto customLevelsPack = RuntimeSongLoader::API::GetCustomLevelsPack();
-    auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
-    
-    auto state = LevelSelectionFlowCoordinator::State::New_ctor(
-        System::Nullable_1(category, true),
-        (IBeatmapLevelPack*) customLevelsPack->CustomLevelsPack ,
-        level,
-        nullptr
-    );
+auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
+
+::System::Nullable_1<::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory> levelCategory = System::Nullable_1<::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory>();
+levelCategory.value = (::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory) category;
+
+auto state = LevelSelectionFlowCoordinator::State::New_ctor(
+        levelCategory,
+    (IBeatmapLevelPack*) customLevelsPack->CustomLevelsPack ,
+    level,
+    nullptr
+);
     multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
     soloFreePlayFlowCoordinator->Setup(state);
 
