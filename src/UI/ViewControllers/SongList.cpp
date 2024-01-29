@@ -263,6 +263,10 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
 
 
 std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
+        {SortMode::Relevance, [] (const SongDetailsCache::Song* x) // Relevance
+                           {
+                               return 0.0f;
+                           }},
         {SortMode::Newest, [] (const SongDetailsCache::Song* x) // Newest
                            {
                                return (x->uploadTimeUnix);
@@ -309,9 +313,29 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
 
 struct xd {
     const SongDetailsCache::Song * song;
-	float searchWeight;
-	float sortWeight;
+	float weight;
 };
+
+bool isPrefix(const std::string& query, const std::string& word) {
+    if (word.size() < query.size()) {
+        return false;
+    }
+
+    return equal(query.begin(), query.end(), word.begin());
+}
+
+int countPrefixes(const std::string &str, const std::string& query) {
+    std::istringstream ss(str);
+    std::string word;
+    int count = 0;
+    while (ss >> word) {
+        if (isPrefix(query, word)) {
+            count++;
+        }
+    }
+
+    return count;
+}
 
 void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     DEBUG("_UpdateSearchedSongsList");
@@ -473,7 +497,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         
         if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
             if (currentSearch.length() > 0) {
-                auto words = split(currentSearch, " ");
+                auto words = split(toLower(currentSearch), " ");
                 DEBUG("Words length {}", words.size());
                 for (int i = 0; i < words.size(); i++) {
                     DEBUG("Search term: '{}'", words[i]);
@@ -489,7 +513,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 }
 
                 float maxSearchWeight = 0.0f;
-                float maxSortWeight = 0.0f;
                 
                 DEBUG("Searching");
                 long long before = CurrentTimeMs();
@@ -505,151 +528,54 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
                 //Launch a group of threads
                 for (int i = 0; i < num_threads; ++i) {
-                    t[i] = std::thread([&index, &valuesMutex, totalSongs, currentSearch, words, &prefiltered, &maxSearchWeight, &maxSortWeight, currentSort, possibleSongKey](std::vector<std::string> searchQuery){
+                    t[i] = std::thread([&index, &valuesMutex, totalSongs, currentSearch, words, &prefiltered, &maxSearchWeight, currentSort, possibleSongKey](std::vector<std::string> searchQuery){
                         
                         int j = index++;
                         while(j < totalSongs) {
                             auto songe = DataHolder::filteredSongList[j];
                             
-
                             float resultWeight = 0;
                             bool matchedAuthor = false;
                             int prevMatchIndex = -1;
-
 
                             std::string songName = removeSpecialCharacter(toLower(songe->songName()));
                             std::string songAuthorName = removeSpecialCharacter(toLower(songe->songAuthorName()));
                             std::string levelAuthorName = removeSpecialCharacter(toLower(songe->levelAuthorName()));
                             uint32_t songKey = songe->mapId();
 
-                            // If song key is present and mapid == songkey, pull it to the top
-                            if(possibleSongKey != 0 && songKey == possibleSongKey)
-                                resultWeight = 30;
+                            auto isMatch = true;
+                            for (const auto &word : words) {
+                                auto term = toLower(word);
+                                int songNameMatches = countPrefixes(songName, term);
+                                int songAuthorMatches = countPrefixes(songAuthorName, term);
+                                int levelAuthorMatches = countPrefixes(levelAuthorName, term);
 
-                            // Find full match author name
-                            int authorFullMatch = currentSearch.find(songAuthorName);
-
-                            // set up i for the loop
-                            int i = 0;
-                            
-                            if(songAuthorName.length() > 4 && authorFullMatch != std::string::npos && 
-                                // Checks if there is a space after the supposedly matched author name
-                                (currentSearch.length() == songAuthorName.length() || IsSpace(currentSearch[songAuthorName.length()]))
-                            ) {
-                                matchedAuthor = true;
-                                resultWeight += songAuthorName.length() > 5 ? 25 : 20;
-
-                                // If the author is matched and is the first, then skip first word (i + 1)
-                                // This is super cheapskate - I'd have to replace the author from the filter and recreate the words array otherwise
-                                if(authorFullMatch == 0)
-                                    i = 1;
-                            }
-
-                            // Go over a list of words
-                            for (; i < words.size(); i++) {
-                                // If the word matches the author 1:1 thats cool innit
-                                // If author name is not empty
-                                if (songAuthorName.length() != 0) {
-                                    // If not matched author and author name == word then add weight, skip if author is already matched
-                                    if(!matchedAuthor && songAuthorName == words[i]) {
-                                        matchedAuthor = true;
-                                        // 3*length of the word divided by 2? wtf
-                                        resultWeight += 3 * (words[i].length() / 2);
-
-                                        // Go to next word
-                                        continue;
-                                        // Otherwise we'll have to check if its contained within this word
-                                    } else if(!matchedAuthor && words[i].length() >= 3) {
-                                        int index = songAuthorName.find(words[i]);
-
-                                        // If found in the beginning or is space at the end of author name which means we matched the beginning of a word
-                                        if(index == 0 || (index > 0 && IsSpace(songAuthorName[index - 1]))) {
-                                            
-                                            matchedAuthor = true;
-                                            // Add weight
-                                            resultWeight += (int)round((index == 0 ? 4.0f : 3.0f) * ((float)words[i].length() / songAuthorName.length()));
-                                            continue;
-                                        }
-                                    }
-                                }
-
-                                int matchpos = songName.find(words[i]);
-                                if(matchpos != std::string::npos) {
-                                    // Check if we matched the beginning of a word
-                                    bool wordStart = matchpos == 0 || songName[matchpos - 1] == ' ';
-
-                                    // If it was the beginning add 5 weighting, else 3
-                                    resultWeight += wordStart ? 5 : 3;
-                                    
-
-                                    ///////////////// New algo  /////////////////////////
-                                    // Find the position in the name
-                                    int posInName = matchpos + words[i].length();
-
-                                    /*
-                                    * Check if we are at the end of the song name, but only if it has at least 8 characters
-                                    * We do this because otherwise, when searching for "lowermost revolt", songs where the
-                                    * songName is exactly "lowermost revolt" would have a lower result weight than 
-                                    * "lowermost revolt (JoeBama cover)"
-                                    * 
-                                    * The 8 character limitation for this is so that super short words like "those" dont end
-                                    * up triggering this
-                                    */
-                                    if(songName.length() > 7 && songName.length() == posInName) {
-                                        resultWeight += 3;
-                                    } else {
-                                        // If we did match the beginning, check if we matched an entire word. Get the end index as indicated by our needle
-                                        bool maybeWordEnd = wordStart && posInName < songName.length();
-
-                                        // Check if we actually end up at a non word char, if so add 2 weighting
-                                        if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
-                                            resultWeight += 2;
-                                    }
-                                    /////////////////////////////////////////////////////
-
-                                    //// Old algo for testing pc compatibility (comment out new algo and uncomment this for comparison with PC) //////////
-                                    // bool maybeWordEnd = wordStart && matchpos + words[i].length() < songName.length();
-
-                                    // // Check if we actually end up at a non word char, if so add 2 weighting
-                                    // if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
-                                    //     resultWeight += 2;
-                                    ////////////////////////////////////////////////////
-
-
-                                    // If the word we just checked is behind the previous matched, add another 1 weight
-                                    if(prevMatchIndex != -1 && matchpos > prevMatchIndex)
-                                        resultWeight += 1;
-
-                                    prevMatchIndex = matchpos;
-                                }
-                            }
-
-                            for(i = 0; i < words.size(); i++) {
-                                if(words[i].length() > 3 && levelAuthorName.find(words[i]) != std::string::npos) {
-                                    resultWeight += 1;
-
+                                int totalMatches = songNameMatches + songAuthorMatches + levelAuthorMatches;
+                                if (totalMatches > 0) {
+                                    auto localWeight = songNameMatches + songAuthorMatches * 1.2f + levelAuthorMatches * 0.5f;
+                                    auto totalLength = songName.size() + songAuthorName.size() + levelAuthorName.size();
+                                    resultWeight += localWeight * term.size() / static_cast<float>(totalLength);
+                                } else {
+                                    isMatch = false;
                                     break;
                                 }
                             }
 
-                            if(resultWeight > 0) {
-                                float sortWeight = sortFunctionMap.at(currentSort)(songe);
+                            // If song key is present and mapid == songkey, pull it to the top
+                            if (possibleSongKey != 0 && songKey == possibleSongKey) {
+                                resultWeight += 30;
+                                isMatch = true;
+                            }
 
+                            if (isMatch) {
                                 std::lock_guard<std::mutex> lock(valuesMutex);
-
-                                prefiltered.push_back({
-                                    songe, resultWeight, sortWeight
-                                });
+                                prefiltered.push_back({ songe, resultWeight });
 
                                 // #if DEBUG
-                                //                         x.sortWeight = sortWeight;
                                 //                         x.resultWeight = resultWeight;
                                 // #endif
-                                if(maxSearchWeight < resultWeight)
+                                if (maxSearchWeight < resultWeight)
                                     maxSearchWeight = resultWeight;
-
-                                if(maxSortWeight < sortWeight)
-                                    maxSortWeight = sortWeight;
                             }
                             j = index++;
                         }
@@ -664,18 +590,19 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     DataHolder::searchedSongList.clear();
                 } else {
                     long long before = CurrentTimeMs();
-                    float maxSearchWeightInverse = 1.0f / maxSearchWeight;
-                    float maxSortWeightInverse = 1.0f / maxSortWeight;
 
                     // Calculate total search weight
-                    for (auto& item :prefiltered) {
-                        float searchWeight = item.searchWeight * maxSearchWeightInverse;
-                        item.searchWeight = searchWeight + min(searchWeight / 2, item.sortWeight * maxSortWeightInverse * (searchWeight / 2));
+                    for (auto& item : prefiltered) {
+                        if (currentSort == SortMode::Relevance) {
+                            item.weight /= maxSearchWeight;
+                        } else {
+                            item.weight = sortFunctionMap.at(currentSort)(item.song);
+                        }
                     }
                     
                     std::stable_sort(prefiltered.begin(), prefiltered.end(),
                         [](const xd& s1, const xd& s2){
-                            return s1.searchWeight > s2.searchWeight;
+                            return s1.weight > s2.weight;
                         }
                     );
 
@@ -683,25 +610,26 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     for (auto& x: prefiltered) {
                         DataHolder::searchedSongList.push_back(x.song);
                     }
+
                     INFO("sorted search results in {} ms",  CurrentTimeMs()-before);
                 }
             } else {
                 long long before = CurrentTimeMs();
 
                 std::vector<xd> prefiltered; 
-                auto sortFunction = sortFunctionMap.at(currentSort);
+                auto sortFunction = currentSort == SortMode::Relevance
+                    ? sortFunctionMap.at(SortMode::Newest)
+                    : sortFunctionMap.at(currentSort);
                 for (auto item : DataHolder::filteredSongList) {
                     auto score = sortFunction(item);
-                    prefiltered.push_back({
-                        item, 0 , score 
-                    });
+                    prefiltered.push_back({ item, score });
                 }
 
                 std::stable_sort(
                     prefiltered.begin(),
                     prefiltered.end(),
                     [](const xd& s1, const xd& s2){
-                        return s1.sortWeight > s2.sortWeight;
+                        return s1.weight > s2.weight;
                     }
                 );
 
