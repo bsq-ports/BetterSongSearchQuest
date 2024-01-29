@@ -63,6 +63,9 @@
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "song-details/shared/Data/RankedStates.hpp"
 
+#include "System/Collections/Generic/Dictionary_2.hpp"
+#include "System/Collections/Generic/EnumerableHelpers.hpp"
+#include "GlobalNamespace/BeatmapLevelsModel.hpp"
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 
@@ -394,8 +397,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                 auto statsDataEnumerator = statsData->GetEnumerator();
 
                 while (statsDataEnumerator.MoveNext()) {
-                    auto statsDataKeys = statsDataEnumerator.Current;
-                    auto x = statsDataKeys.get_Value();
+                    auto statsDataKeys = statsDataEnumerator._current;
+                    auto x = statsDataKeys.value;
 
                     if(!x->validScore || x->____highScore == 0 || x->levelID->get_Length() < 13 + 40)
                         continue;
@@ -764,7 +767,9 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     }).detach();
 }
 void ViewControllers::SongListController::UpdateSearchedSongsList() {
-    coro(limitedUpdateSearchedSongsList->CallNextFrame());
+    // TODO: rate limit this (it's only temporary)
+    this->_UpdateSearchedSongsList();
+    // coro(limitedUpdateSearchedSongsList->CallNextFrame());
 }
 
 void ViewControllers::SongListController::PostParse() {
@@ -813,13 +818,13 @@ void ViewControllers::SongListController::PostParse() {
 
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->_platformHelper;
-    if (platformHelper == nullptr) {
-    } else {
-        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
-            x->_platformHelper=platformHelper;
-        }
-    }
+   auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->_platformHelper;
+   if (platformHelper == nullptr) {
+   } else {
+       for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
+           x->_platformHelper=platformHelper;
+       }
+   }
 
     // Make the sort dropdown bigger
     auto c = std::min(9, this->get_sortModeSelections()->_size);
@@ -881,6 +886,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     
     limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]()
         { 
+            DEBUG("UpdateSearchedSongsList limited called");
             this->_UpdateSearchedSongsList();
         }, 0.1f);
 

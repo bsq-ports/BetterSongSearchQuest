@@ -234,19 +234,18 @@ MAKE_HOOK_MATCH(
 }
 	
 // Called later on in the game loading - a good time to install function hooks
-extern "C" void load() {
+extern "C" void late_load() {
     il2cpp_functions::Init();
     BSML::Init();
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
     INSTALL_HOOK(getLoggerOld(), LevelFilteringNavigationController_Setup);
+    // Auto open to BSS
     // INSTALL_HOOK(getLoggerOld(), MainFlowCoordinator_DidActivate);
     INSTALL_HOOK(getLoggerOld(), MultiplayerLevelScenesTransitionSetupDataSO_Init);
 
     custom_types::Register::AutoRegister();
 
-    modInfo.id = MOD_ID;
-    
     manager.Init();
 }

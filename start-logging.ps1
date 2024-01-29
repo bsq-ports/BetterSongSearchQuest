@@ -47,7 +47,7 @@ if ($all -eq $false) {
 }
 
 if ($self -eq $true) {
-    $command += " | Select-String -pattern `"(BetterSongSearch|AndroidRuntime|CRASH)`""
+    $command += " | Select-String -pattern `"(BetterSongSearch|AndroidRuntime|SongDetails|CRASH)`""
 } elseif ($custom -ne "") {
     $pattern = "(" + $custom + "|AndriodRuntime|CRASH)"
     $command += " | Select-String -pattern `"$pattern`""

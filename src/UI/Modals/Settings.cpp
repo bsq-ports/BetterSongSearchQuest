@@ -13,7 +13,7 @@
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, Settings);
 

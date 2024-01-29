@@ -16,14 +16,14 @@ using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace GlobalNamespace;
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
   
 void BetterSongSearch::UI::Manager::Init(){
+    // Register the menu button
     BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this](){
         DEBUG("MenuButtonClick");
         ShowFlow(false);
-    } );
+    });
 }
 
 custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
@@ -32,7 +32,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     int64_t lastused = 0;
     int64_t initialmemusage = UnityEngine::Profiling::Profiler::GetMonoUsedSizeLong();
     // wait for the game to start
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(10.0f));
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(3.0f));
 
     // Open the BSS
     ShowFlow(true);
