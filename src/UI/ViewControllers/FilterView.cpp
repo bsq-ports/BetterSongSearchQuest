@@ -255,17 +255,17 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     auto getBgSprite = GetBGSprite("RoundRect10BorderFade");
 
-//    for(auto x : QuestUI::ArrayUtil::Select<HMUI::ImageView*>(GetComponentsInChildren<BSML::Backgroundable*>(), [](BSML::Backgroundable* x) {return x->GetComponent<HMUI::ImageView*>();})) {
-//        if(!x || x->get_color0() != Color::get_white() || x->get_sprite()->get_name() != "RoundRect10")
-//            continue;
-//        x->skew = 0.0f;
-//        x->set_overrideSprite(nullptr);
-//        x->set_sprite(getBgSprite);
-//        x->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
-//    }
-//
-//    for(auto x : QuestUI::ArrayUtil::Where(filterbarContainer->GetComponentsInChildren<HMUI::ImageView*>(), [](HMUI::ImageView* x) {return x->get_gameObject()->get_name() == "Underline";}))
-//        x->set_sprite(getBgSprite);
+    auto backgroundables = GetComponentsInChildren<BSML::Backgroundable*>();
+    for (auto & backgroundable : backgroundables) {
+        auto imageView = backgroundable->GetComponent<HMUI::ImageView*>();
+        if (!imageView || !imageView->get_color0().Equals(Color::get_white()) || imageView->get_sprite()->get_name() != "RoundRect10") {
+            continue;
+        }
+        imageView->_skew = 0.0f;
+        imageView->set_overrideSprite(nullptr);
+        imageView->set_sprite(getBgSprite);
+        imageView->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
+    }
 
     // Format other values
     std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {

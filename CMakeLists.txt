@@ -27,10 +27,12 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # compile options used
-add_compile_options(-frtti -fexceptions)
-# add_compile_options(-O3)
-# Uncomment for faster builds
-add_compile_options(-O0)
+add_link_options(-Wl,--exclude-libs,ALL)
+add_compile_options(-frtti -fPIE -fPIC -fexceptions -fvisibility=hidden)
+
+add_compile_options(-O3)
+# Uncomment for faster builds (DO NOT USE IN PRODUCTION, it slows down the search 6 times)
+# add_compile_options(-O0)
 
 # get git info
 execute_process(COMMAND git config user.name OUTPUT_VARIABLE GIT_USER)

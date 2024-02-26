@@ -767,9 +767,9 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     }).detach();
 }
 void ViewControllers::SongListController::UpdateSearchedSongsList() {
-    // TODO: rate limit this (it's only temporary)
-    this->_UpdateSearchedSongsList();
-    // coro(limitedUpdateSearchedSongsList->CallNextFrame());
+    this->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(
+            limitedUpdateSearchedSongsList->CallNextFrame()
+    ));
 }
 
 void ViewControllers::SongListController::PostParse() {

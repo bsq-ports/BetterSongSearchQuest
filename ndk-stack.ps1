@@ -5,4 +5,4 @@ if (-not ($PSVersionTable.PSEdition -eq "Core")) {
     $stackScript += ".cmd"
 }
 
-Get-Content ./log.log | & $stackScript -sym ./build/debug/ > log_unstripped.log
+Get-Content ./crash.log | & $stackScript -sym ./build/debug/ > log_unstripped.log

@@ -1,5 +1,5 @@
 #include "main.hpp"
-
+#include "_config.h"
 #include "bsml/shared/BSML-Lite.hpp"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
@@ -59,7 +59,7 @@ Paper::ConstLoggerContext<17UL> getLogger() {
 
 
 // Called at the early stages of game loading
-extern "C" void setup(CModInfo& info) {
+BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.id = MOD_ID;
     info.version = VERSION;
     modInfo.assign(info);
@@ -122,9 +122,9 @@ MAKE_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoord
     static bool debugstarted = false; 
     if (!debugstarted) {
         debugstarted = true;
-        BSML::MainThreadScheduler::Schedule([]{
-            coro(manager.Debug());
-        });
+        self->StartCoroutine(custom_types::Helpers::new_coro(
+            manager.Debug()
+        ));
     }
 }
 
@@ -234,9 +234,10 @@ MAKE_HOOK_MATCH(
 }
 	
 // Called later on in the game loading - a good time to install function hooks
-extern "C" void late_load() {
+BSS_EXPORT_FUNC void late_load() {
     il2cpp_functions::Init();
     BSML::Init();
+    custom_types::Register::AutoRegister();
 
     INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
     INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
@@ -244,8 +245,6 @@ extern "C" void late_load() {
     // Auto open to BSS
     // INSTALL_HOOK(getLoggerOld(), MainFlowCoordinator_DidActivate);
     INSTALL_HOOK(getLoggerOld(), MultiplayerLevelScenesTransitionSetupDataSO_Init);
-
-    custom_types::Register::AutoRegister();
 
     manager.Init();
 }

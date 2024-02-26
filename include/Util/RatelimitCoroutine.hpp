@@ -42,7 +42,7 @@ namespace BetterSongSearch::Util {
 
 			if(queuedFallingEdge) {
 				queuedFallingEdge = false;
-				co_yield  custom_types::Helpers::new_coro(CallNow());
+				co_yield custom_types::Helpers::new_coro(CallNow());
 			} else {
 				wasRecentlyExecuted = false;
 			}
