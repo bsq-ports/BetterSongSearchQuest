@@ -13,9 +13,9 @@ using namespace BetterSongSearch::UI;
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator, HMUI::FlowCoordinator,
-    DECLARE_INSTANCE_FIELD(ViewControllers::SongListController*, SongListController);
-    DECLARE_INSTANCE_FIELD(ViewControllers::FilterViewController*, FilterViewController);
-    DECLARE_INSTANCE_FIELD(ViewControllers::DownloadHistoryViewController*, DownloadHistoryViewController);
+    DECLARE_INSTANCE_FIELD(UnityW<ViewControllers::SongListController>, SongListController);
+    DECLARE_INSTANCE_FIELD(UnityW<ViewControllers::FilterViewController>, FilterViewController);
+    DECLARE_INSTANCE_FIELD(UnityW<ViewControllers::DownloadHistoryViewController>, DownloadHistoryViewController);
 
     DECLARE_INSTANCE_METHOD(void, Awake);
 
@@ -30,4 +30,4 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFl
     void ConfirmCancelCallback(bool doCancel = true);
 )
 
-inline BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator* fcInstance;
+inline UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> fcInstance;

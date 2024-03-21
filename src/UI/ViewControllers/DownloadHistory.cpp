@@ -3,12 +3,12 @@
 #include <bsml/shared/BSML/MainThreadScheduler.hpp>
 
 #include "main.hpp"
-
+#include "logging.hpp"
 
 #include "HMUI/TableView.hpp"
 
 #include "bsml/shared/BSML.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
@@ -40,28 +40,28 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         return;
 
     limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
+        DEBUG("Reloading table coroutine started");
+        if (this->downloadHistoryTable() != nullptr)
         this->downloadHistoryTable()->ReloadData();
-    }, 0.1f);
+        DEBUG("Reloading table coroutine ended");
+    }, 0.2f);
 
 
-    getLoggerOld().info("Download contoller activated");
+    INFO("Download contoller activated");
     BSML::parse_and_construct(Assets::DownloadHistory_bsml, this->get_transform(), this);
 
-    if (this->downloadList != nullptr && this->downloadList->m_CachedPtr)
+    if (this->downloadList != nullptr)
     {
-        getLoggerOld().info("Table exists");
-
+        INFO("Table exists");
         downloadList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
-
-
     }
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->_platformHelper;
+    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->____platformHelper;
     if (platformHelper == nullptr) {
     } else {
         for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
-            x->_platformHelper=platformHelper;
+            x->____platformHelper=platformHelper;
         }
     }
 
@@ -228,7 +228,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                 firstEntry->UpdateProgressHandler();
             });
         }
-        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);     
+        INFO("DownloadProgress: {}", downloadPercentage);     
     };
     DEBUG("Hash {}", firstEntry->hash);
 
@@ -273,7 +273,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 if (!this->HasPendingDownloads()) {
                                     // Do not refresh songs if not active anymore
                                     if (this->get_isActiveAndEnabled()) {
-                                        RuntimeSongLoader::API::RefreshSongs(false);
+                                        SongCore::API::Loading::RefreshSongs(false);
                                         hasUnloadedDownloads = false;
                                     }
                                 }
@@ -307,6 +307,7 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
     BSML::MainThreadScheduler::Schedule(
     [this]
     {
+        DEBUG("Refreshing table");
         // Sort entry list
         std::stable_sort(downloadEntryList.begin(), downloadEntryList.end(),
             [] (DownloadHistoryEntry* entry1, DownloadHistoryEntry* entry2)
@@ -314,12 +315,14 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
                 return (entry1->orderValue() < entry2->orderValue());
             }
         );
-        coro(this->limitedFullTableReload->Call());
+        DEBUG("Starting coroutine to refresh table");
+        this->StartCoroutine(custom_types::Helpers::new_coro(this->limitedFullTableReload->Call()));
     });
 }
 
 bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(std::string songHash){
-    return RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+    auto level = SongCore::API::Loading::GetLevelByHash(songHash);
+    return level != nullptr;
 };
 
 DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string hash){

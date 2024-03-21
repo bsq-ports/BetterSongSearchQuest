@@ -1,7 +1,7 @@
 #include "UI/Manager.hpp"
 
 #include <bsml/shared/Helpers/getters.hpp>
-
+#include "logging.hpp"
 #include "Util/Debug.hpp"
 #include "sys/types.h"
 #include "sys/sysinfo.h"
@@ -49,7 +49,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         
        
         // Tests for the fcinstance
-        if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr) {
+        if (fcInstance) {
         //     // Select random song go into the play menu and go back
         //     {
         //         auto* songlist = fcInstance->SongListController;
@@ -75,7 +75,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
 
             // Pick random song, show details, close details
             {
-                auto* songlist = fcInstance->SongListController;
+                auto songlist = fcInstance->SongListController;
                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
                 songlist->SelectRandom();
                 if (songlist->currentSong) {

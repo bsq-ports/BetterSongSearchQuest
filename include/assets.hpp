@@ -1,6 +1,7 @@
 #pragma once
 #include "kaleb/shared/kaleb.hpp"
 
+DECLARE_FILE(_binary_CustomLevelsCover_png, Assets, CustomLevelsCover_png);
 DECLARE_FILE(_binary_DownloadHistory_bsml, Assets, DownloadHistory_bsml);
 DECLARE_FILE(_binary_DownloadHistoryCell_bsml, Assets, DownloadHistoryCell_bsml);
 DECLARE_FILE(_binary_DownloadListCell_bsml, Assets, DownloadListCell_bsml);

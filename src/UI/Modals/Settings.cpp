@@ -3,7 +3,7 @@
 #include "PluginConfig.hpp"
 #include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 
 #include "assets.hpp"

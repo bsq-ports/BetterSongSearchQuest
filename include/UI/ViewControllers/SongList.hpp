@@ -19,7 +19,7 @@
 #include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
 #include "bsml/shared/BSML/Components/ModalView.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "song-details/shared/Data/Song.hpp"
@@ -49,7 +49,7 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 namespace BetterSongSearch::UI {
-    inline GlobalNamespace::IPreviewBeatmapLevel* currentLevel;
+    inline UnityW<SongCore::SongLoader::CustomBeatmapLevel> currentLevel;
     inline bool fromBSS = false;
     inline bool openToCustom = false;
     bool MeetsFilter(const SongDetailsCache::Song* song);
@@ -75,7 +75,7 @@ namespace BetterSongSearch::UI {
         inline static FilterOptions filterOptions;
         inline static FilterOptionsCache filterOptionsCache;
         /// @brief Player data model to get the scores
-        inline static GlobalNamespace::PlayerDataModel* playerDataModel = nullptr;
+        inline static UnityW<GlobalNamespace::PlayerDataModel> playerDataModel = nullptr;
 
         // Preferred Leaderboard
         inline static PreferredLeaderBoard preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
@@ -139,9 +139,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_CTOR(ctor);
     DECLARE_DTOR(dtor);
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
-    DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, songList);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::CustomListTableData>, songList);
 
-    DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
+    DECLARE_INSTANCE_METHOD(void, SelectSong, UnityW<HMUI::TableView> table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     DECLARE_INSTANCE_FIELD(float, cellSize);
 
@@ -173,30 +173,29 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
     DECLARE_INSTANCE_METHOD(void, UpdateSearchedSongsList);
-    DECLARE_INSTANCE_METHOD(void, GetBeatmapLevelsLoaderIfNull);
     DECLARE_INSTANCE_METHOD(void, _UpdateSearchedSongsList);
 
     DECLARE_INSTANCE_FIELD(bool, IsSearching);
     
-    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, searchBoxContainer);
-    DECLARE_INSTANCE_FIELD(HMUI::CurvedTextMeshPro*, songSearchPlaceholder);
-    DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, detailActions);
-    DECLARE_INSTANCE_FIELD(HMUI::ModalView*, rootModal);
-    DECLARE_INSTANCE_FIELD(HMUI::ModalView*, moreModal);
-    DECLARE_INSTANCE_FIELD(BSML::ModalView*, downloadCancelConfirmModal);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedRating);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedCharacteristics);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, songDetailsLoading);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, searchInProgress);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::HorizontalOrVerticalLayoutGroup>, searchBoxContainer);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::CurvedTextMeshPro>, songSearchPlaceholder);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::HorizontalOrVerticalLayoutGroup>, detailActions);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ModalView>, rootModal);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ModalView>, moreModal);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, downloadCancelConfirmModal);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongKey);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedRating);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedCharacteristics);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, songDetailsLoading);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, searchInProgress);
 
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongAuthor);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongName);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongAuthor);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongName);
 
-    DECLARE_INSTANCE_FIELD(UnityEngine::GameObject *, searchBox);
-    DECLARE_INSTANCE_FIELD(UnityEngine::Sprite*, defaultImage);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverImage);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, coverLoading);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::GameObject >, searchBox);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::Sprite>, defaultImage);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, coverImage);
+    DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, coverLoading);
 
     // Modals
     DECLARE_INSTANCE_FIELD(Modals::MultiDL*, multiDlModal);
@@ -253,7 +252,7 @@ public:
     void DownloadSongList();
     void RetryDownloadSongList();
 
-    void EnterSolo(GlobalNamespace::IPreviewBeatmapLevel* level);
+    void EnterSolo(GlobalNamespace::BeatmapLevel* level);
 
     // Event receivers
     void SongDataDone();

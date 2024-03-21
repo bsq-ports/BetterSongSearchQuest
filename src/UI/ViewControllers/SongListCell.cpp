@@ -3,7 +3,7 @@
 
 #include "UnityEngine/Color.hpp"
 #include "sombrero/shared/FastColor.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/RankedStatus.hpp"
 #include "PluginConfig.hpp"

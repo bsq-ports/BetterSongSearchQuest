@@ -118,7 +118,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
     DECLARE_CTOR(ctor);
     DECLARE_SIMPLE_DTOR();
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
-    DECLARE_INSTANCE_FIELD(BSML::CustomListTableData*, downloadList);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::CustomListTableData>, downloadList);
     DECLARE_INSTANCE_METHOD(void, SelectSong, HMUI::TableView* table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     DECLARE_INSTANCE_FIELD(float, cellSize);
@@ -129,7 +129,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
 
     
 public:
-    HMUI::TableView* downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
+    UnityW<HMUI::TableView> downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
     std::vector<DownloadHistoryEntry*> downloadEntryList;
     void ProcessDownloads(bool forceTableReload = false);
     void RefreshTable(bool fullReload = true);

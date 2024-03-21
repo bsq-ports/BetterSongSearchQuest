@@ -5,6 +5,7 @@
 #include "HMUI/ImageView.hpp"
 
 #include "main.hpp"
+#include "logging.hpp"
 #include "PluginConfig.hpp"
 #include "assets.hpp"
 
@@ -181,7 +182,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 UnityEngine::Sprite* GetBGSprite(std::string str)
 {
     return UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>()->First([str](UnityEngine::Sprite* x) {
-        return to_utf8(csstrtostr(x->get_name())) == str;
+        return x->get_name() == str;
     });
 
 }
@@ -261,7 +262,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         if (!imageView || !imageView->get_color0().Equals(Color::get_white()) || imageView->get_sprite()->get_name() != "RoundRect10") {
             continue;
         }
-        imageView->_skew = 0.0f;
+        imageView->____skew = 0.0f;
         imageView->set_overrideSprite(nullptr);
         imageView->set_sprite(getBgSprite);
         imageView->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
@@ -373,7 +374,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     FormatStringSettingValue(this->uploadersStringControl);
     
     // I hate BSML some times
-    auto m = modsRequirementDropdown->dropdown->_modalView;
+    auto m = modsRequirementDropdown->dropdown->____modalView;
     m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     #ifdef HotReload
@@ -522,8 +523,8 @@ void ViewControllers::FilterViewController::ShowPresets()
 // }
 void ViewControllers::FilterViewController::TryToDownloadDataset()
 {
-    if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr) {
-        if (fcInstance->SongListController != nullptr && fcInstance->SongListController->m_CachedPtr) {
+    if (fcInstance) {
+        if (fcInstance->SongListController) {
             fcInstance->SongListController->RetryDownloadSongList();
         }
     }

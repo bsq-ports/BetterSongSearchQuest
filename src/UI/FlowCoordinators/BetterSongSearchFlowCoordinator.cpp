@@ -17,13 +17,13 @@ DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordina
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
-    if (!SongListController || !SongListController->m_CachedPtr) {
+    if (!SongListController) {
         SongListController = BSML::Helpers::CreateViewController<ViewControllers::SongListController*>();
     }
-    if (!FilterViewController ||  !FilterViewController->m_CachedPtr) {
+    if (!FilterViewController) {
         FilterViewController = BSML::Helpers::CreateViewController<ViewControllers::FilterViewController*>();
     }
-    if (!DownloadHistoryViewController ||  !DownloadHistoryViewController->m_CachedPtr) {
+    if (!DownloadHistoryViewController) {
         DownloadHistoryViewController = BSML::Helpers::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
     }
 }
@@ -51,14 +51,14 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     cancelConfirmCallback = nullptr;
 
     // Stop song preview on exit
-    auto songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
-    if (songPreviewPlayer != nullptr && songPreviewPlayer->m_CachedPtr != nullptr) {
+    UnityW<SongPreviewPlayer> songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
+    if (songPreviewPlayer) {
         songPreviewPlayer->CrossfadeToDefault();
     }
 
     // Trigger refresh of songs only if needed
     if (DownloadHistoryViewController->hasUnloadedDownloads) {
-        RuntimeSongLoader::API::RefreshSongs(false);
+        SongCore::API::Loading::RefreshSongs(false);
         DownloadHistoryViewController->hasUnloadedDownloads = false;
     }
 
@@ -68,8 +68,8 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
         modal->Hide(false, nullptr);
     }
 
-    if (fcInstance != nullptr && fcInstance->m_CachedPtr != nullptr && fcInstance->get_isActiveAndEnabled() && fcInstance->get_isActivated()) {
-        this->_parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
+    if (fcInstance && fcInstance->get_isActiveAndEnabled() && fcInstance->get_isActivated()) {
+        this->____parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
     }
 };
 bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){
