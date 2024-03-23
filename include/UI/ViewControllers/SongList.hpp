@@ -198,22 +198,22 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, coverLoading);
 
     // Modals
-    DECLARE_INSTANCE_FIELD(Modals::MultiDL*, multiDlModal);
-    DECLARE_INSTANCE_FIELD(Modals::Settings*, settingsModal);
-    DECLARE_INSTANCE_FIELD(Modals::UploadDetails*, uploadDetailsModal);
+    DECLARE_INSTANCE_FIELD(UnityW<Modals::MultiDL>, multiDlModal);
+    DECLARE_INSTANCE_FIELD(UnityW<Modals::Settings>, settingsModal);
+    DECLARE_INSTANCE_FIELD(UnityW<Modals::UploadDetails>, uploadDetailsModal);
     
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongDiffInfo);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongDiffInfo);
 
-    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, downloadButton);
-    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, playButton);
-    DECLARE_INSTANCE_FIELD(UnityEngine::UI::Button*, infoButton);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, downloadButton);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, playButton);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, infoButton);
     BSML_OPTIONS_LIST_OBJECT(sortModeSelections, "Newest", "Oldest", "Latest Ranked", "Most Stars", "Least Stars", "Best rated", "Worst rated");
 
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, sortDropdown);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, sortDropdown);
     DECLARE_INSTANCE_FIELD(StringW, selectedSortMode);
 
-    DECLARE_INSTANCE_FIELD(GlobalNamespace::SoloFreePlayFlowCoordinator*, soloFreePlayFlowCoordinator);
-    DECLARE_INSTANCE_FIELD(GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator*, multiplayerLevelSelectionFlowCoordinator);
+    DECLARE_INSTANCE_FIELD(UnityW<GlobalNamespace::SoloFreePlayFlowCoordinator>, soloFreePlayFlowCoordinator);
+    DECLARE_INSTANCE_FIELD(UnityW<GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator>, multiplayerLevelSelectionFlowCoordinator);
 
 
     DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);

@@ -40,10 +40,10 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         return;
 
     limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
-        DEBUG("Reloading table coroutine started");
-        if (this->downloadHistoryTable() != nullptr)
-        this->downloadHistoryTable()->ReloadData();
-        DEBUG("Reloading table coroutine ended");
+        BSML::MainThreadScheduler::Schedule([this]{
+            auto table = this->downloadHistoryTable();
+            if (table) table->ReloadData();
+        });
     }, 0.2f);
 
 
@@ -294,9 +294,11 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                     },
                     progressUpdate);
             } else {
-                errored("Error" ,firstEntry);
-                RefreshTable(true);
-                this->ProcessDownloads(forceTableReload);
+                BSML::MainThreadScheduler::Schedule([this, firstEntry, forceTableReload]{
+                    errored("Error" ,firstEntry);
+                    RefreshTable(true);
+                    this->ProcessDownloads(forceTableReload);
+                });
             }
         });
     this->ProcessDownloads(forceTableReload);

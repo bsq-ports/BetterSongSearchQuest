@@ -392,7 +392,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
         // TODO: Actually update the scores
         // Get scores if we don't have them
         if (DataHolder::songsWithScores.size() == 0 ) {
-            if(DataHolder::playerDataModel != nullptr) {
+            if(DataHolder::playerDataModel) {
                 auto statsData = DataHolder::playerDataModel->get_playerData()->get_levelsStatsData();
                 auto statsDataEnumerator = statsData->GetEnumerator();
 
@@ -515,7 +515,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                         int j = index++;
                         while(j < totalSongs) {
                             auto songe = DataHolder::filteredSongList[j];
-                            
 
                             float resultWeight = 0;
                             bool matchedAuthor = false;
