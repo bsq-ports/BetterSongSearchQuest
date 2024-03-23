@@ -1107,7 +1107,7 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     co_return;
 }
 
-void ViewControllers::SongListController::EnterSolo(BeatmapLevel* level) {
+void ViewControllers::SongListController::EnterSolo(SongCore::SongLoader::CustomBeatmapLevel* level) {
     fcInstance->Close(true, false);
     
     auto customLevelsPack = SongCore::API::Loading::GetCustomLevelPack();
@@ -1117,10 +1117,8 @@ void ViewControllers::SongListController::EnterSolo(BeatmapLevel* level) {
     levelCategory.value = (::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory) category;
 
     auto state = LevelSelectionFlowCoordinator::State::New_ctor(
-            levelCategory,
-        (BeatmapLevelPack*) customLevelsPack,
-        level,
-        nullptr
+        customLevelsPack,
+        level
     );
     multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
     soloFreePlayFlowCoordinator->Setup(state);
