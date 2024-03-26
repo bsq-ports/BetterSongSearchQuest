@@ -14,7 +14,7 @@
   "dependencies": [
     {
       "id": "scotland2",
-      "versionRange": "^0.1.3",
+      "versionRange": "^0.1.4",
       "additionalData": {
         "includeQmod": false,
         "private": true
@@ -37,7 +37,7 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.17.2",
+      "versionRange": "^0.17.6",
       "additionalData": {}
     },
     {
@@ -52,7 +52,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^0.2.0",
+      "versionRange": "^1.0.1",
       "additionalData": {}
     },
     {
@@ -62,7 +62,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.7.0",
+      "versionRange": "^0.7.2",
       "additionalData": {}
     },
     {

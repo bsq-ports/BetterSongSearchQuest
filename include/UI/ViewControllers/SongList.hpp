@@ -49,7 +49,6 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 namespace BetterSongSearch::UI {
-    inline SongCore::SongLoader::CustomBeatmapLevel* currentLevel;
     inline bool fromBSS = false;
     inline bool openToCustom = false;
     bool MeetsFilter(const SongDetailsCache::Song* song);
@@ -252,7 +251,7 @@ public:
     void DownloadSongList();
     void RetryDownloadSongList();
 
-    void EnterSolo(SongCore::SongLoader::CustomBeatmapLevel* level);
+    void EnterSolo(GlobalNamespace::BeatmapLevel* level);
 
     // Event receivers
     void SongDataDone();

@@ -811,7 +811,7 @@ void ViewControllers::SongListController::PostParse() {
     levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>()->FirstOrDefault();
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-   auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->_platformHelper;
+   auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->____platformHelper;
    if (platformHelper == nullptr) {
    } else {
        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
@@ -1107,26 +1107,54 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     co_return;
 }
 
-void ViewControllers::SongListController::EnterSolo(SongCore::SongLoader::CustomBeatmapLevel* level) {
+void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLevel* level) {
+    if (level == nullptr) {
+        ERROR("Level is null, refusing to continue");
+        return;
+    }
     fcInstance->Close(true, false);
     
     auto customLevelsPack = SongCore::API::Loading::GetCustomLevelPack();
+    if (customLevelsPack == nullptr) {
+        ERROR("CustomLevelsPack is null, refusing to continue");
+        return;
+    }
+    if (customLevelsPack->___beatmapLevels->get_Length() == 0) {
+        ERROR("CustomLevelsPack has no levels, refusing to continue");
+        return;
+    }
+
     auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
 
-    ::System::Nullable_1<::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory> levelCategory = System::Nullable_1<::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory>();
-    levelCategory.value = (::GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory) category;
+    // static_assert(sizeof (System::Nullable_1<SelectLevelCategoryViewController::LevelCategory>) == 0x8)
+    auto levelCategory = System::Nullable_1<SelectLevelCategoryViewController::LevelCategory>();
+    levelCategory.value = category;
+    levelCategory.hasValue = true;
 
     auto state = LevelSelectionFlowCoordinator::State::New_ctor(
         customLevelsPack,
-        level
+        static_cast<GlobalNamespace::BeatmapLevel*>(level)
     );
+
+    state->___levelCategory = levelCategory;
+
     multiplayerLevelSelectionFlowCoordinator->LevelSelectionFlowCoordinator::Setup(state);
     soloFreePlayFlowCoordinator->Setup(state);
 
     manager.GoToSongSelect();
 
     // For some reason setup does not work for multiplayer so I have to use this method to workaround
-    multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController->SelectLevel(level);
+    if (
+        multiplayerLevelSelectionFlowCoordinator &&
+        multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController &&
+        multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController
+    )  {
+        DEBUG("Selecting level in multiplayer");
+        
+        multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController->SelectLevel(
+            static_cast<GlobalNamespace::BeatmapLevel*>(level)
+        );
+    };
 }
 
 
@@ -1138,6 +1166,7 @@ void ViewControllers::SongListController::PlaySong (const SongDetailsCache::Song
     if (songToPlay == nullptr) {
         songToPlay = currentSong;
         if (currentSong == nullptr) {
+            ERROR("Current song is null and songToPlay is null");
             return;
         }
     }
@@ -1147,21 +1176,37 @@ void ViewControllers::SongListController::PlaySong (const SongDetailsCache::Song
 
     // Hopefully not leaking any memory
     auto fun = [this, songToPlay](){
+        auto level = SongCore::API::Loading::GetLevelByHash(songToPlay->hash());
+
+        // Fallback for rare cases when the hash is different from the hash in our database (e.g. song got updated)
+        if (level == nullptr) {
+            // Get song beatsaver id
+            std::string songKey = fmt::format("{:X}", songToPlay->mapId());
+            songKey = toLower(songKey);
+            DEBUG("Looking for level by beatsaver id in path: {}", songKey);
+            level = SongCore::API::Loading::GetLevelByFunction(
+                [mapId = songKey](auto level){
+                    auto levelPath = level->get_customLevelPath();
+                    return levelPath.find(mapId) != std::string::npos;
+                }
+            );
+        }
+
+        // If all else fails, cancel
+        if(level == nullptr) {
+            DEBUG("Hash: {}", songToPlay->hash());
+            ERROR("Song somehow is not downloaded and could not find it in our database, pls fix");
+            return;
+        }
+
+        // If we successfully found the level, we can continue
         BSML::MainThreadScheduler::Schedule(
-        [this, songToPlay]
+        [this, level]
         {
-            auto level = SongCore::API::Loading::GetLevelByHash(std::string(songToPlay->hash()));
-            if(level)
-            {
-                currentLevel = level;
-            } else {
-                ERROR("Song somehow is not downloaded, pls fix");
-                return;
-            }
 
             fromBSS = true;
             openToCustom = true;
-            EnterSolo(currentLevel);
+            EnterSolo(level);
         });
     };
 

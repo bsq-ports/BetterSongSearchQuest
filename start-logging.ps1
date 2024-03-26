@@ -52,9 +52,10 @@ if ($self -eq $true) {
     $pattern = "(" + $custom + "|AndriodRuntime|CRASH)"
     $command += " | Select-String -pattern `"$pattern`""
 }
-elseif ($all -eq $false) {
-    $command += " | Select-String -pattern `"(BetterSongSearch|QuestHook|modloader|AndroidRuntime|CRASH)`""
-}
+# Prollly not needed
+# elseif ($all -eq $false) {
+#     $command += " | Select-String -pattern `"(BetterSongSearch|QuestHook|modloader|AndroidRuntime|CRASH)`""
+# }
 
 if ($file -eq $true) {
     $command += " | Out-File -FilePath $PSScriptRoot\logcat.log"
