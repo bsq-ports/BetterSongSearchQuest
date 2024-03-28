@@ -18,13 +18,13 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 #ifdef HotReload
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController,
+DECLARE_CLASS_CUSTOM(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController,
 #else
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController,
 #endif
 
     DECLARE_SIMPLE_DTOR();
-    DECLARE_OVERRIDE_METHOD(void, DidActivate, GET_FIND_METHOD(&HMUI::ViewController::DidActivate), bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
 
     // Modal related things
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);

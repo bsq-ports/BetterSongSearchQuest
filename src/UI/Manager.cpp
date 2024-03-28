@@ -1,31 +1,29 @@
 #include "UI/Manager.hpp"
 
+#include <bsml/shared/Helpers/getters.hpp>
+#include "logging.hpp"
 #include "Util/Debug.hpp"
 #include "sys/types.h"
 #include "sys/sysinfo.h"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "System/GC.hpp"
 #include "UnityEngine/Profiling/Profiler.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace GlobalNamespace;
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
   
 void BetterSongSearch::UI::Manager::Init(){
+    // Register the menu button
     BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this](){
         DEBUG("MenuButtonClick");
         ShowFlow(false);
-    } );
+    });
 }
 
 custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
@@ -34,7 +32,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     int64_t lastused = 0;
     int64_t initialmemusage = UnityEngine::Profiling::Profiler::GetMonoUsedSizeLong();
     // wait for the game to start
-    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(10.0f));
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(3.0f));
 
     // Open the BSS
     ShowFlow(true);
@@ -51,7 +49,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         
        
         // Tests for the fcinstance
-        if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
+        if (fcInstance) {
         //     // Select random song go into the play menu and go back
         //     {
         //         auto* songlist = fcInstance->SongListController;
@@ -77,7 +75,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
 
             // Pick random song, show details, close details
             {
-                auto* songlist = fcInstance->SongListController;
+                auto songlist = fcInstance->SongListController;
                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
                 songlist->SelectRandom();
                 if (songlist->currentSong) {
@@ -151,12 +149,12 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
     if (!flow) {
         flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
     }
-    parentFlow = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+    parentFlow = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
     parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }
 
 void BetterSongSearch::UI::Manager::GoToSongSelect() {
-    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton"));
+    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton")).unsafePtr();
     if (!songSelectButton) {
         songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
     }

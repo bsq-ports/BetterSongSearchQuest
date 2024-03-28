@@ -3,6 +3,7 @@ include(qpm_defines.cmake)
 
 cmake_minimum_required(VERSION 3.21)
 project(${COMPILE_ID})
+include(${EXTERN_DIR}/includes/kaleb/shared/cmake/assets.cmake)
 
 # Enable link time optimization
 # In my experience, this can be highly unstable but it nets a huge size optimization and likely performance
@@ -26,10 +27,35 @@ set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # compile options used
-add_compile_options(-frtti -fexceptions)
-# add_compile_options(-O3)
-# Uncomment for faster builds
-add_compile_options(-O0)
+add_link_options(-Wl,--exclude-libs,ALL)
+add_compile_options(-frtti -fPIE -fPIC -fexceptions -fvisibility=hidden)
+
+add_compile_options(-O3)
+# Uncomment for faster builds (DO NOT USE IN PRODUCTION, it slows down the search 6 times)
+# add_compile_options(-O0)
+
+# get git info
+execute_process(COMMAND git config user.name OUTPUT_VARIABLE GIT_USER)
+execute_process(COMMAND git branch --show-current OUTPUT_VARIABLE GIT_BRANCH)
+execute_process(COMMAND git rev-parse --short HEAD OUTPUT_VARIABLE GIT_COMMIT)
+execute_process(COMMAND git diff-index --quiet HEAD RESULT_VARIABLE GIT_MODIFIED)
+
+string(STRIP "${GIT_USER}" GIT_USER)
+string(STRIP "${GIT_BRANCH}" GIT_BRANCH)
+string(STRIP "${GIT_COMMIT}" GIT_COMMIT)
+string(STRIP "${GIT_MODIFIED}" GIT_MODIFIED)
+
+message(STATUS "GIT_USER: ${GIT_USER}")
+message(STATUS "GIT_BRANCH: ${GIT_BRANCH}")
+message(STATUS "GIT_COMMIT: 0x${GIT_COMMIT}")
+message(STATUS "GIT_MODIFIED: ${GIT_MODIFIED}")
+
+# set git defines
+add_compile_definitions(GIT_USER=\"${GIT_USER}\")
+add_compile_definitions(GIT_BRANCH=\"${GIT_BRANCH}\")
+add_compile_definitions(GIT_COMMIT=0x${GIT_COMMIT})
+add_compile_definitions(GIT_MODIFIED=${GIT_MODIFIED})
+
 # compile definitions used
 add_compile_definitions(VERSION=\"${MOD_VERSION}\")
 add_compile_definitions(MOD_ID=\"${MOD_ID}\")
@@ -66,7 +92,10 @@ target_include_directories(${COMPILE_ID} PUBLIC ${SHARED_DIR})
 # codegen includes
 target_include_directories(${COMPILE_ID} PRIVATE ${EXTERN_DIR}/includes/${CODEGEN_ID}/include)
 
-target_link_libraries(${COMPILE_ID} PRIVATE -llog -lz)
+# add assets
+add_assets(${COMPILE_ID}-assets STATIC ${CMAKE_CURRENT_LIST_DIR}/assets ${INCLUDE_DIR}/assets.hpp)
+target_link_libraries(${COMPILE_ID} PRIVATE -llog -lz  ${COMPILE_ID}-assets)
+
 # add extern stuff like libs and other includes
 include(extern.cmake)
 
@@ -89,5 +118,3 @@ add_custom_command(TARGET ${COMPILE_ID} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E rename stripped_lib${COMPILE_ID}.so lib${COMPILE_ID}.so
         COMMENT "Rename the stripped lib to regular"
         )
-
-include(assets_include.cmake)

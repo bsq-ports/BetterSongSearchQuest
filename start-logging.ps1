@@ -47,14 +47,15 @@ if ($all -eq $false) {
 }
 
 if ($self -eq $true) {
-    $command += " | Select-String -pattern `"(BetterSongSearch|AndroidRuntime|CRASH)`""
+    $command += " | Select-String -pattern `"(BetterSongSearch|AndroidRuntime|SongDetails|CRASH)`""
 } elseif ($custom -ne "") {
     $pattern = "(" + $custom + "|AndriodRuntime|CRASH)"
     $command += " | Select-String -pattern `"$pattern`""
 }
-elseif ($all -eq $false) {
-    $command += " | Select-String -pattern `"(BetterSongSearch|QuestHook|modloader|AndroidRuntime|CRASH)`""
-}
+# Prollly not needed
+# elseif ($all -eq $false) {
+#     $command += " | Select-String -pattern `"(BetterSongSearch|QuestHook|modloader|AndroidRuntime|CRASH)`""
+# }
 
 if ($file -eq $true) {
     $command += " | Out-File -FilePath $PSScriptRoot\logcat.log"

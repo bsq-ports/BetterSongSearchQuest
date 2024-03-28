@@ -5,8 +5,8 @@
 #include "System/String.hpp"
 #include "UnityEngine/Texture2D.hpp"
 #include "UnityEngine/Sprite.hpp"
-#include "songloader/shared/API.hpp"
-#include "GlobalNamespace/IBeatmapLevel.hpp"
+#include "songcore/shared/SongCore.hpp"
+#include "GlobalNamespace/BeatmapLevel.hpp"
 #include "song-details/shared/Data/RankedStates.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "FilterOptions.hpp"
@@ -14,7 +14,7 @@
 
 
 namespace BetterSongSearch::Util {
-    UnityEngine::Sprite* getLocalCoverSync(GlobalNamespace::CustomPreviewBeatmapLevel* level);
+    UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level);
 
 
     UnityEngine::Sprite* getLocalCoverSync(StringW songHash);

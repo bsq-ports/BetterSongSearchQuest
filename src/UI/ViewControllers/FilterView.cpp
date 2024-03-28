@@ -2,14 +2,15 @@
 
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Backgroundable.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
 #include "HMUI/ImageView.hpp"
 
 #include "main.hpp"
+#include "logging.hpp"
 #include "PluginConfig.hpp"
 #include "assets.hpp"
 
 #include <fmt/chrono.h>
+#include <UnityEngine/Resources.hpp>
 
 #include "FilterOptions.hpp"
 #include "DateUtils.hpp"
@@ -17,6 +18,7 @@
 #include "Util/BSMLStuff.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 
 
 using namespace BetterSongSearch::Util;
@@ -26,10 +28,11 @@ using namespace BetterSongSearch::UI::Util::BSMLStuff;
 static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
 #define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
     if (value != nullptr) { \
-        int index = get_##options()->IndexOf(value); \
+        int index = get_##options()->IndexOf(reinterpret_cast<System::String*> (value.convert())); \
         if (index < 0 ) { \
             ERROR("WE HAVE A BUG WITH SAVING VALUE {}", (std::string) value); \
         } else { \
@@ -64,7 +67,20 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
     // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
     bool filtersChanged = false;
-
+//    if (this->existingSongs != nullptr) {
+//        int index = get_downloadedFilterOptions()->IndexOf(reinterpret_cast<System::String*> (this->existingSongs.convert()));
+//        if (index < 0) {
+//            getLogger().fmtLog<Paper::LogLevel::ERR>("WE HAVE A BUG WITH SAVING VALUE {}",
+//                                                     (std::string) this->existingSongs);
+//        }
+//        else {
+//            if (index != getPluginConfig().DownloadType.GetValue()) {
+//                filtersChanged = true;
+//                getPluginConfig().DownloadType.SetValue(index);
+//                DataHolder::filterOptions.downloadType = (typeof(DataHolder::filterOptions.downloadType)) index;
+//            }
+//        }
+//    }
     SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
     SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
 
@@ -165,10 +181,10 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
 UnityEngine::Sprite* GetBGSprite(std::string str)
 {
-    return QuestUI::ArrayUtil::First(UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>(),
-                                     [str](UnityEngine::Sprite* x) {
-                                         return to_utf8(csstrtostr(x->get_name())) == str;
-                                     });
+    return UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>()->First([str](UnityEngine::Sprite* x) {
+        return x->get_name() == str;
+    });
+
 }
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
@@ -202,22 +218,18 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     // Custom string loader
     this->uploadersString = getPluginConfig().Uploaders.GetValue();
-
-    
-    // TODO: fix uploaders field loading
-    // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
     this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
     this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
     this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
     this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
 
     // Create bsml view
-    BSML::parse_and_construct(IncludedAssets::FilterView_bsml, this->get_transform(), this);
+    BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
 
-    auto x = reinterpret_cast<UnityEngine::RectTransform*>(this->get_gameObject()->get_transform());
+    auto x = this->get_gameObject()->get_transform().cast<UnityEngine::RectTransform>();
     x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
 
-    auto maxUploadDate = GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
+    auto maxUploadDate = BetterSongSearch::GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
 
     coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
 
@@ -225,7 +237,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
     std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
-        auto val = GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
+        auto val = BetterSongSearch::GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
         return fmt::format("{:%b:%Y}", fmt::localtime(system_clock::to_time_t(val)));
     };
 
@@ -240,17 +252,17 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     auto getBgSprite = GetBGSprite("RoundRect10BorderFade");
 
-    for(auto x : QuestUI::ArrayUtil::Select<HMUI::ImageView*>(GetComponentsInChildren<BSML::Backgroundable*>(), [](BSML::Backgroundable* x) {return x->GetComponent<HMUI::ImageView*>();})) {
-        if(!x || x->get_color0() != Color::get_white() || x->get_sprite()->get_name() != "RoundRect10")
+    auto backgroundables = GetComponentsInChildren<BSML::Backgroundable*>();
+    for (auto & backgroundable : backgroundables) {
+        auto imageView = backgroundable->GetComponent<HMUI::ImageView*>();
+        if (!imageView || !imageView->get_color0().Equals(Color::get_white()) || imageView->get_sprite()->get_name() != "RoundRect10") {
             continue;
-        x->skew = 0.0f;
-        x->set_overrideSprite(nullptr);
-        x->set_sprite(getBgSprite);
-        x->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
+        }
+        imageView->____skew = 0.0f;
+        imageView->set_overrideSprite(nullptr);
+        imageView->set_sprite(getBgSprite);
+        imageView->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
     }
-
-    for(auto x : QuestUI::ArrayUtil::Where(filterbarContainer->GetComponentsInChildren<HMUI::ImageView*>(), [](HMUI::ImageView* x) {return x->get_gameObject()->get_name() == "Underline";}))
-        x->set_sprite(getBgSprite);
 
     // Format other values
     std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
@@ -358,9 +370,8 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     FormatStringSettingValue(this->uploadersStringControl);
     
     // I hate BSML some times
-    auto m = modsRequirementDropdown->dropdown->modalView;
-    reinterpret_cast<UnityEngine::RectTransform *>(m->get_transform())->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
-
+    auto m = modsRequirementDropdown->dropdown->____modalView;
+    m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/FilterView.bsml";
@@ -484,12 +495,12 @@ void ViewControllers::FilterViewController::ClearFilters()
     SetSliderSettingValue(this->minimumVotesSlider, this->minimumVotes);
     SetSliderSettingValue(this->hideOlderThanSlider, this->hideOlderThan);
     SetStringSettingValue(this->uploadersStringControl, getPluginConfig().Uploaders.GetValue());
-    existingSongsSetting->set_Value(this->existingSongs);
-    existingScoreSetting->set_Value(this->existingScore);
-    rankedStateSetting->set_Value(this->rankedState);
-    characteristicDropdown->set_Value(this->characteristic);
-    difficultyDropdown->set_Value(this->difficulty);
-    modsRequirementDropdown->set_Value(this->mods);
+    existingSongsSetting->set_Value(reinterpret_cast<System::String*> (this->existingSongs.convert()));
+    existingScoreSetting->set_Value(reinterpret_cast<System::String*> (this->existingScore.convert()));
+    rankedStateSetting->set_Value(reinterpret_cast<System::String*> (this->rankedState.convert()));
+    characteristicDropdown->set_Value(reinterpret_cast<System::String*> (this->characteristic.convert()));
+    difficultyDropdown->set_Value(reinterpret_cast<System::String*> (this->difficulty.convert()));
+    modsRequirementDropdown->set_Value(reinterpret_cast<System::String*> (this->mods.convert()));
 
     DEBUG("Filters changed");
     auto controller = fcInstance->SongListController;
@@ -508,8 +519,8 @@ void ViewControllers::FilterViewController::ShowPresets()
 // }
 void ViewControllers::FilterViewController::TryToDownloadDataset()
 {
-    if (fcInstance != nullptr && fcInstance->m_CachedPtr.m_value != nullptr) {
-        if (fcInstance->SongListController !=nullptr && fcInstance->SongListController->m_CachedPtr.m_value != nullptr) {
+    if (fcInstance) {
+        if (fcInstance->SongListController) {
             fcInstance->SongListController->RetryDownloadSongList();
         }
     }

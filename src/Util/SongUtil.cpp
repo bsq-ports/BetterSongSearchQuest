@@ -1,28 +1,28 @@
-#pragma once
 #include "Util/SongUtil.hpp"
+#include "logging.hpp"
+#include "bsml/shared/BSML-Lite/Creation/Image.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
 #include "UI/ViewControllers/SongList.hpp"
-
+#include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
 namespace BetterSongSearch::Util {
-    UnityEngine::Sprite* getLocalCoverSync(GlobalNamespace::CustomPreviewBeatmapLevel* level) {
-        StringW path = System::IO::Path::Combine(level->customLevelPath, level->standardLevelInfoSaveData->coverImageFilename);
+    UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level) {
+        StringW path = System::IO::Path::Combine(level->get_customLevelPath(), level->get_standardLevelInfoSaveData()->get_coverImageFilename());
 
         if(!System::IO::File::Exists(path)) {
             DEBUG("File does not exist");
             return nullptr;
         }
 
-        auto sprite = QuestUI::BeatSaberUI::FileToSprite((std::string) path);
+        auto sprite = BSML::Lite::FileToSprite((std::string) path);
         return sprite;
     }
 
 
     UnityEngine::Sprite* getLocalCoverSync(StringW songHash) {
-        auto beatmap = RuntimeSongLoader::API::GetLevelByHash(std::string(songHash));
+        auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(songHash));
 
-        if (beatmap.has_value()) {
-            return getLocalCoverSync(beatmap.value());
+        if (beatmap) {
+            return getLocalCoverSync(beatmap);
         } else {
             return nullptr;
         }

@@ -1,14 +1,15 @@
 {
-  "_QPVersion": "0.1.2",
+  "_QPVersion": "1.1.0",
   "name": "${mod_name}",
   "id": "${mod_id}",
-  "modloader": "QuestLoader",
+  "modloader": "Scotland2",
   "author": "FrozenAlex, FernTheDev, FutureMapper, and Christoffyw",
   "version": "${version}",
   "description": "Search and download songs with a lot of filtering and sorting options and without frustration!",
-  "packageVersion": "1.28.0_4124311467",
+  "packageVersion": "1.35.0_8016709773",
   "dependencies": [],
-  "modFiles": [
+  "modFiles": [],
+  "lateModFiles": [
     "${binary}"
   ],
   "libraryFiles": [],

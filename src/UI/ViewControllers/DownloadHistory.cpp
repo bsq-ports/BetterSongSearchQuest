@@ -1,24 +1,29 @@
 #include "UI/ViewControllers/DownloadHistory.hpp"
-#include "main.hpp"
 
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
+#include <bsml/shared/BSML/MainThreadScheduler.hpp>
+
+#include "main.hpp"
+#include "logging.hpp"
+
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
+
 #include "bsml/shared/BSML.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
+
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace QuestUI;
+#include "UnityEngine/Resources.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
+
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController);
 
@@ -35,28 +40,28 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         return;
 
     limitedFullTableReload = new BetterSongSearch::Util::RatelimitCoroutine([this](){
-        this->downloadHistoryTable()->ReloadData();
-    }, 0.1f);
+        BSML::MainThreadScheduler::Schedule([this]{
+            auto table = this->downloadHistoryTable();
+            if (table) table->ReloadData();
+        });
+    }, 0.2f);
 
 
-    getLoggerOld().info("Download contoller activated");
-    BSML::parse_and_construct(IncludedAssets::DownloadHistory_bsml, this->get_transform(), this);
+    INFO("Download contoller activated");
+    BSML::parse_and_construct(Assets::DownloadHistory_bsml, this->get_transform(), this);
 
-    if (this->downloadList != nullptr && this->downloadList->m_CachedPtr.m_value != nullptr)
+    if (this->downloadList != nullptr)
     {
-        getLoggerOld().info("Table exists");
-
+        INFO("Table exists");
         downloadList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
-
-
     }
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>().First()->GetComponentInChildren<HMUI::ScrollView*>()->platformHelper;
+    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->____platformHelper;
     if (platformHelper == nullptr) {
     } else {
         for (auto x: this->GetComponentsInChildren<HMUI::ScrollView*>()){
-            x->platformHelper=platformHelper;
+            x->____platformHelper=platformHelper;
         }
     }
 
@@ -138,7 +143,7 @@ bool ViewControllers::DownloadHistoryViewController::TryAddDownload(const SongDe
         // var newPos = downloadList.FindLastIndex(x => x.status > DownloadHistoryEntry.DownloadStatus.Queued);
         downloadEntryList.push_back(new DownloadHistoryEntry(song));
         downloadHistoryTable()->ReloadData();
-        downloadHistoryTable()->ScrollToCellWithIdx(0, TableView::ScrollPositionType::Beginning, false);
+        downloadHistoryTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
     }
     else
     {
@@ -219,11 +224,11 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
 
         firstEntry->downloadProgress = downloadPercentage / 100.0f;
         if(firstEntry->UpdateProgressHandler != nullptr) {
-            QuestUI::MainThreadScheduler::Schedule([firstEntry]{
+            BSML::MainThreadScheduler::Schedule([firstEntry]{
                 firstEntry->UpdateProgressHandler();
             });
         }
-        fmtLog(Logging::Level::INFO, "DownloadProgress: {0:.2f}", downloadPercentage);     
+        INFO("DownloadProgress: {}", downloadPercentage);     
     };
     DEBUG("Hash {}", firstEntry->hash);
 
@@ -247,7 +252,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                     [this,firstEntry, forceTableReload](bool error)
                     {
 
-                        QuestUI::MainThreadScheduler::Schedule(
+                        BSML::MainThreadScheduler::Schedule(
                             [error, this, firstEntry, forceTableReload]
                             {
                                 if (error) {
@@ -268,7 +273,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                                 if (!this->HasPendingDownloads()) {
                                     // Do not refresh songs if not active anymore
                                     if (this->get_isActiveAndEnabled()) {
-                                        RuntimeSongLoader::API::RefreshSongs(false);
+                                        SongCore::API::Loading::RefreshSongs(false);
                                         hasUnloadedDownloads = false;
                                     }
                                 }
@@ -289,9 +294,11 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                     },
                     progressUpdate);
             } else {
-                errored("Error" ,firstEntry);
-                RefreshTable(true);
-                this->ProcessDownloads(forceTableReload);
+                BSML::MainThreadScheduler::Schedule([this, firstEntry, forceTableReload]{
+                    errored("Error" ,firstEntry);
+                    RefreshTable(true);
+                    this->ProcessDownloads(forceTableReload);
+                });
             }
         });
     this->ProcessDownloads(forceTableReload);
@@ -299,9 +306,10 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
 
 void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReload)
 {
-    QuestUI::MainThreadScheduler::Schedule(
+    BSML::MainThreadScheduler::Schedule(
     [this]
     {
+        DEBUG("Refreshing table");
         // Sort entry list
         std::stable_sort(downloadEntryList.begin(), downloadEntryList.end(),
             [] (DownloadHistoryEntry* entry1, DownloadHistoryEntry* entry2)
@@ -309,12 +317,14 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
                 return (entry1->orderValue() < entry2->orderValue());
             }
         );
-        coro(this->limitedFullTableReload->Call());
+        DEBUG("Starting coroutine to refresh table");
+        this->StartCoroutine(custom_types::Helpers::new_coro(this->limitedFullTableReload->Call()));
     });
 }
 
 bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(std::string songHash){
-    return RuntimeSongLoader::API::GetLevelByHash(songHash).has_value();
+    auto level = SongCore::API::Loading::GetLevelByHash(songHash);
+    return level != nullptr;
 };
 
 DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string hash){

@@ -13,27 +13,21 @@
   },
   "dependencies": [
     {
-      "id": "modloader",
-      "versionRange": "^1.2.3",
-      "additionalData": {}
-    },
-    {
-      "id": "beatsaber-hook",
-      "versionRange": "=3.14.0",
+      "id": "scotland2",
+      "versionRange": "^0.1.4",
       "additionalData": {
-        "extraFiles": [
-          "src/inline-hook"
-        ]
+        "includeQmod": false,
+        "private": true
       }
     },
     {
-      "id": "codegen",
-      "versionRange": "^0.33.0",
+      "id": "beatsaber-hook",
+      "versionRange": "^5.1.2",
       "additionalData": {}
     },
     {
-      "id": "questui",
-      "versionRange": "^0.17.11",
+      "id": "bs-cordl",
+      "versionRange": "^3500.0.0",
       "additionalData": {}
     },
     {
@@ -43,22 +37,22 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.15.24",
+      "versionRange": "^0.17.6",
       "additionalData": {}
     },
     {
       "id": "song-details",
-      "versionRange": "^0.3.1",
+      "versionRange": "^0.3.3",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^0.8.0",
+      "versionRange": "^1.4.2",
       "additionalData": {}
     },
     {
-      "id": "songloader",
-      "versionRange": "^0.10.14",
+      "id": "songcore",
+      "versionRange": "^1.1.3",
       "additionalData": {}
     },
     {
@@ -68,7 +62,7 @@
     },
     {
       "id": "songdownloader",
-      "versionRange": "^0.5.6",
+      "versionRange": "^0.7.3",
       "additionalData": {}
     },
     {
@@ -78,13 +72,20 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.3.1",
+      "versionRange": "^0.4.20",
       "additionalData": {}
     },
     {
       "id": "paper",
-      "versionRange": "^1.2.20",
+      "versionRange": "^3.6.3",
       "additionalData": {}
+    },
+    {
+      "id": "kaleb",
+      "versionRange": "^0.1.9",
+      "additionalData": {
+        "private": true
+      }
     }
   ],
   "additionalData": {}

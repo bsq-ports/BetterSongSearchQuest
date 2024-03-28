@@ -3,7 +3,7 @@
 
 #include "UnityEngine/Color.hpp"
 #include "sombrero/shared/FastColor.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/RankedStatus.hpp"
 #include "PluginConfig.hpp"
@@ -148,13 +148,13 @@ namespace BetterSongSearch::UI::ViewControllers
 				} else if(lbsvc == RankedStates::BeatleaderRanked && sortedDiffs[i].diff->starsBL > 0) {
 					stars = fmt::format(" <color=#{}>{}", (passesFilter ? "B1D" : "606"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
 				}
-                
-                diffs[i]->SetText(
-                    fmt::format("<color=#{}>{}</color>{}",
+                auto text = fmt::format("<color=#{}>{}</color>{}",
                         (passesFilter ? "EEE" : "888"),
                         diffname,
                         stars
-                    )
+                    );
+                diffs[i]->SetText(
+                    text, false
                 );
                 diffsLeft--;
             }

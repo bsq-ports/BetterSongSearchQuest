@@ -1,21 +1,18 @@
 #include "main.hpp"
-
-#include "questui/shared/QuestUI.hpp"
+#include "_config.h"
+#include "bsml/shared/BSML-Lite.hpp"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
-#include "HMUI/FlowCoordinator.hpp"
-#include "HMUI/ViewController_AnimationType.hpp"
-#include "HMUI/SelectableCell.hpp"
-#include "HMUI/ViewController_AnimationDirection.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "UnityEngine/GameObject.hpp"
+#include "UnityEngine/Resources.hpp"
 #include "GlobalNamespace/PlayerLevelStatsData.hpp"
-#include "GlobalNamespace/IDifficultyBeatmap.hpp"
+#include "GlobalNamespace/BeatmapKey.hpp"
 #include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/GameplaySetupViewController.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
-#include "GlobalNamespace/IBeatmapLevelPack.hpp"
+#include "GlobalNamespace/BeatmapLevelPack.hpp"
 #include "GlobalNamespace/SongPackMask.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
 #include "GlobalNamespace/MultiplayerLevelScenesTransitionSetupDataSO.hpp"
@@ -27,16 +24,20 @@
 #include "HMUI/TextSegmentedControlCell.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "Util/TextUtil.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
-#include "GlobalNamespace/SharedCoroutineStarter.hpp"
-
+#include "logging.hpp"
+#include "GlobalNamespace/CoroutineStarter.hpp"
+#include "GlobalNamespace/MainFlowCoordinator.hpp"
 #include <regex>
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
-using namespace QuestUI;
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
+
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+
 using namespace BetterSongSearch::Util;
 
-static ModInfo modInfo; // Stores the ID and version of our mod, and is sent to the modloader upon startup
+inline modloader::ModInfo modInfo = {MOD_ID, VERSION, GIT_COMMIT}; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
 // Loads the config from disk using our modInfo, then returns it for use
 Configuration& getConfig() {
@@ -44,34 +45,22 @@ Configuration& getConfig() {
     return config;
 }
 
-// Returns a logger, useful for printing debug messages
-Logger& getLoggerOld() {
-    static auto* logger = new Logger(modInfo, LoggerOptions(false, true));
-    return *logger;
-}
-
-// Returns a logger, useful for printing debug messages
-Paper::ConstLoggerContext<17UL> getLogger() {
-    static auto fastContext = Paper::Logger::WithContext<MOD_ID>();
-    return fastContext;
-}
-
 
 // Called at the early stages of game loading
-extern "C" void setup(ModInfo& info) {
+BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.id = MOD_ID;
     info.version = VERSION;
-    modInfo = info;
+    modInfo.assign(info);
 
     getConfig().Load(); // Load the config file
-    getPluginConfig().Init(info);
+    getPluginConfig().Init(modInfo);
     getConfig().Reload();
     getConfig().Write();
-    getLoggerOld().info("Completed setup!");
+    INFO("Completed setup!");
 
     std::thread([]{
         auto& filterOptions = DataHolder::filterOptions;
-        getLoggerOld().info("setting config values");
+        INFO("setting config values");
         filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
         filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
         filterOptions.minLength = getPluginConfig().MinLength.GetValue();
@@ -102,7 +91,7 @@ extern "C" void setup(ModInfo& info) {
         
         // Custom string loader
         auto uploadersString = getPluginConfig().Uploaders.GetValue();
-        if (uploadersString.size() > 0) {
+        if (!uploadersString.empty()) {
             if (uploadersString[0] == '!') {
                 uploadersString.erase(0,1);
                 filterOptions.uploadersBlackList = true;
@@ -121,9 +110,9 @@ MAKE_HOOK_MATCH(MainFlowCoordinator_DidActivate, &GlobalNamespace::MainFlowCoord
     static bool debugstarted = false; 
     if (!debugstarted) {
         debugstarted = true;
-        QuestUI::MainThreadScheduler::Schedule([]{
-            coro(manager.Debug());
-        });
+        self->StartCoroutine(custom_types::Helpers::new_coro(
+            manager.Debug()
+        ));
     }
 }
 
@@ -139,19 +128,19 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
 
     ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
     if (fromBSS) {
-        auto currentFlowCoordinator = QuestUI::BeatSaberUI::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-        auto betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>().FirstOrDefault();
+        auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+        UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault();
         if(betterSongSearchFlowCoordinator)
-            currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, HMUI::ViewController::AnimationType::Out, false);
+            currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, true, false);
     }
     
-}
+};
 
 MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::GameplaySetupViewController::RefreshContent, void, GlobalNamespace::GameplaySetupViewController* self)
 {
     GameplaySetupViewController_RefreshContent(self);
 
-    bool multiplayer = self->showMultiplayer;
+    bool multiplayer = self->____showMultiplayer;
 
     // Button instance
     static SafePtrUnity<UnityEngine::GameObject> button;
@@ -181,10 +170,10 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
 
         t->set_text("Better Song Search");
 
-        reinterpret_cast<HMUI::SelectableCell*>(t)->wasPressedSignal=nullptr;
+        reinterpret_cast<HMUI::SelectableCell*>(t)->____wasPressedSignal=nullptr;
 
         
-        std::function<void(HMUI::SelectableCell*, HMUI::SelectableCell::TransitionType, ::Il2CppObject*)> fun = [t](HMUI::SelectableCell* cell, HMUI::SelectableCell::TransitionType transition, Il2CppObject* obj) { 
+        std::function<void(UnityW<::HMUI::SelectableCell>, HMUI::SelectableCell::TransitionType, ::System::Object*)> fun = [t](UnityW<::HMUI::SelectableCell> cell, HMUI::SelectableCell::TransitionType transition, ::System::Object* obj) {
             if(!t->get_selected())
                 return;
 
@@ -200,13 +189,23 @@ MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::Ga
     button->set_active(multiplayer);
 }
 
-MAKE_HOOK_MATCH(LevelFilteringNavigationController_Setup, &GlobalNamespace::LevelFilteringNavigationController::Setup, void, GlobalNamespace::LevelFilteringNavigationController* self, GlobalNamespace::SongPackMask songPackMask, GlobalNamespace::IBeatmapLevelPack* levelPackToBeSelectedAfterPresent, GlobalNamespace::SelectLevelCategoryViewController::LevelCategory startLevelCategory, bool hidePacksIfOneOrNone, bool enableCustomLevels)
+MAKE_HOOK_MATCH(
+    LevelFilteringNavigationController_Setup, 
+    &GlobalNamespace::LevelFilteringNavigationController::Setup, 
+    void, 
+    GlobalNamespace::LevelFilteringNavigationController* self, 
+    GlobalNamespace::SongPackMask songPackMask,
+    GlobalNamespace::BeatmapLevelPack* levelPackToBeSelectedAfterPresent,
+    GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory startLevelCategory,
+    bool hidePacksIfOneOrNone,
+    bool enableCustomLevels
+)
 {
 	LevelFilteringNavigationController_Setup(self, songPackMask, levelPackToBeSelectedAfterPresent, startLevelCategory, hidePacksIfOneOrNone, enableCustomLevels);
 
     // To have interoperability with pinkcore I trigger it only if pressing play in the bss
 	if (openToCustom ) {
-		self->selectLevelCategoryViewController->Setup(startLevelCategory.CustomSongs, self->enabledLevelCategories);
+		self->____selectLevelCategoryViewController->Setup(startLevelCategory.CustomSongs, self->____enabledLevelCategories);
         openToCustom = false;
 	}
 }
@@ -217,38 +216,36 @@ MAKE_HOOK_MATCH(
     void,
     GlobalNamespace::MultiplayerLevelScenesTransitionSetupDataSO* self,
     StringW gameMode,
-    GlobalNamespace::IPreviewBeatmapLevel *previewBeatmapLevel,
-    GlobalNamespace::BeatmapDifficulty beatmapDifficulty,
-    GlobalNamespace::BeatmapCharacteristicSO *beatmapCharacteristic,
-    GlobalNamespace::IDifficultyBeatmap *difficultyBeatmap,
-    GlobalNamespace::ColorScheme *overrideColorScheme,
-    GlobalNamespace::GameplayModifiers *gameplayModifiers,
-    GlobalNamespace::PlayerSpecificSettings *playerSpecificSettings,
-    GlobalNamespace::PracticeSettings *practiceSettings,
+    ByRef<::GlobalNamespace::BeatmapKey> beatmapKey,
+    ::GlobalNamespace::BeatmapLevel* beatmapLevel,
+    ::GlobalNamespace::IBeatmapLevelData* beatmapLevelData,
+    ::GlobalNamespace::ColorScheme* overrideColorScheme,
+    ::GlobalNamespace::GameplayModifiers* gameplayModifiers,
+    ::GlobalNamespace::PlayerSpecificSettings* playerSpecificSettings,
+    ::GlobalNamespace::PracticeSettings* practiceSettings,
+    ::GlobalNamespace::AudioClipAsyncLoader* audioClipAsyncLoader,
+    ::GlobalNamespace::BeatmapDataLoader* beatmapDataLoader,
     bool useTestNoteCutSoundEffects
 ) {
     // Close manager first
     manager.Close(true, false);
-    MultiplayerLevelScenesTransitionSetupDataSO_Init(self, gameMode, previewBeatmapLevel, beatmapDifficulty, beatmapCharacteristic,difficultyBeatmap, overrideColorScheme, gameplayModifiers, playerSpecificSettings, practiceSettings, useTestNoteCutSoundEffects );
+    MultiplayerLevelScenesTransitionSetupDataSO_Init(self, gameMode, beatmapKey, beatmapLevel, beatmapLevelData,overrideColorScheme, gameplayModifiers, playerSpecificSettings, practiceSettings, audioClipAsyncLoader, beatmapDataLoader, useTestNoteCutSoundEffects );
 }
 	
 // Called later on in the game loading - a good time to install function hooks
-extern "C" void load() {
+BSS_EXPORT_FUNC void late_load() {
     il2cpp_functions::Init();
-
-    QuestUI::Init();
-    
     BSML::Init();
-
-    INSTALL_HOOK(getLoggerOld(), ReturnToBSS);
-    INSTALL_HOOK(getLoggerOld(), GameplaySetupViewController_RefreshContent);
-    INSTALL_HOOK(getLoggerOld(), LevelFilteringNavigationController_Setup);
-    // INSTALL_HOOK(getLoggerOld(), MainFlowCoordinator_DidActivate);
-    INSTALL_HOOK(getLoggerOld(), MultiplayerLevelScenesTransitionSetupDataSO_Init);
-
     custom_types::Register::AutoRegister();
 
-    modInfo.id = MOD_ID;
-    
+    auto logger = Paper::ConstLoggerContext("BSSHooks");
+
+    INSTALL_HOOK(logger, ReturnToBSS);
+    INSTALL_HOOK(logger, GameplaySetupViewController_RefreshContent);
+    INSTALL_HOOK(logger, LevelFilteringNavigationController_Setup);
+    // Auto open to BSS
+    // INSTALL_HOOK(logger, MainFlowCoordinator_DidActivate);
+    INSTALL_HOOK(logger, MultiplayerLevelScenesTransitionSetupDataSO_Init);
+
     manager.Init();
 }

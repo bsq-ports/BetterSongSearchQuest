@@ -1,12 +1,12 @@
 #include "UI/Modals/UploadDetails.hpp"
+
+#include <bsml/shared/BSML/MainThreadScheduler.hpp>
+
 #include "main.hpp"
 #include "PluginConfig.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 #include "BeatSaverRegionManager.hpp"
 #include "assets.hpp"
@@ -14,10 +14,9 @@
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 const std::vector<std::string> CHAR_GROUPING = {"Custom", "Standard", "OneSaber", "NoArrows", "NinetyDegree", "ThreeSixtyDegree", "LightShow", "Lawless"};
 
@@ -55,7 +54,7 @@ void Modals::UploadDetails::ctor()
 void Modals::UploadDetails::OpenModal(const SongDetailsCache::Song* song)
 {
     if (!initialized) {
-        BSML::parse_and_construct(IncludedAssets::UploadDetails_bsml, this->get_transform(), this);
+        BSML::parse_and_construct(Assets::UploadDetails_bsml, this->get_transform(), this);
         initialized = true;
     }
 
@@ -79,7 +78,7 @@ void Modals::UploadDetails::OpenModal(const SongDetailsCache::Song* song)
     songDetailsLoading->get_gameObject()->SetActive(true);
 
     BeatSaverRegionManager::GetSongDescription(std::string(song->key()), [this](std::string value) {
-        QuestUI::MainThreadScheduler::Schedule([this, value]{
+        BSML::MainThreadScheduler::Schedule([this, value]{
             selectedSongDescription->SetText(value);
             songDetailsLoading->get_gameObject()->SetActive(false);
         });

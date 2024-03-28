@@ -1,12 +1,9 @@
 #include "UI/Modals/Settings.hpp"
 #include "main.hpp"
 #include "PluginConfig.hpp"
-#include "questui/shared/BeatSaberUI.hpp"
-#include "questui/shared/CustomTypes/Components/MainThreadScheduler.hpp"
 #include "HMUI/TableView.hpp"
-#include "HMUI/TableView_ScrollPositionType.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "songloader/shared/API.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "songdownloader/shared/BeatSaverAPI.hpp"
 
 #include "assets.hpp"
@@ -14,10 +11,9 @@
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace QuestUI;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
-#define coro(coroutine) GlobalNamespace::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
+#define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, Settings);
 
@@ -40,7 +36,7 @@ void Modals::Settings::ctor()
 void Modals::Settings::OpenModal()
 {
     if (!initialized) {
-        BSML::parse_and_construct(IncludedAssets::Settings_bsml, this->get_transform(), this);
+        BSML::parse_and_construct(Assets::Settings_bsml, this->get_transform(), this);
         initialized = true;
     }
     this->settingsModal->Show();
@@ -78,7 +74,6 @@ StringW Modals::Settings::get_preferredLeaderboard() {
     } else {
         DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
         getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-        getPluginConfig().config->Write();
         return "Scoresaber";
     }
 }
@@ -87,7 +82,6 @@ void Modals::Settings::set_preferredLeaderboard(StringW value) {
     if (leaderBoardMap.contains(value)) {
         DataHolder::preferredLeaderboard = leaderBoardMap.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
-        getPluginConfig().config->Write();
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;
         controller->SortAndFilterSongs(controller->sort, controller->search, true);

@@ -2,7 +2,7 @@
 #include <string>
 #include "main.hpp"
 #include "UI/ViewControllers/SongList.hpp"
-
+#include "logging.hpp"
 using namespace std;
 
 
