@@ -91,7 +91,7 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
         
         // Custom string loader
         auto uploadersString = getPluginConfig().Uploaders.GetValue();
-        if (uploadersString.size() > 0) {
+        if (!uploadersString.empty()) {
             if (uploadersString[0] == '!') {
                 uploadersString.erase(0,1);
                 filterOptions.uploadersBlackList = true;
@@ -129,7 +129,7 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
     ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
     if (fromBSS) {
         auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-        auto betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault();
+        UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> betterSongSearchFlowCoordinator = UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault();
         if(betterSongSearchFlowCoordinator)
             currentFlowCoordinator->PresentFlowCoordinator(betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, true, false);
     }

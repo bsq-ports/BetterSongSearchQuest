@@ -218,10 +218,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     // Custom string loader
     this->uploadersString = getPluginConfig().Uploaders.GetValue();
-
-    
-    // TODO: fix uploaders field loading
-    // this->uploadersString = StringW(DataHolder::filterOptions.uploaders);
     this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
     this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
     this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);

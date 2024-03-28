@@ -18,7 +18,7 @@
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 #ifdef HotReload
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController,
+DECLARE_CLASS_CUSTOM(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController,
 #else
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController,
 #endif

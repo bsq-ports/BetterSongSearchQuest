@@ -1,5 +1,7 @@
 {
     "files.associations": {
+        "*.ejs": "html",
+        "*.php": "php",
         "iosfwd": "cpp",
         "__config": "cpp",
         "__nullptr": "cpp",
@@ -118,6 +120,8 @@
         "stop_token": "cpp",
         "resumable": "cpp",
         "source_location": "cpp",
-        "__std_stream": "cpp"
+        "__std_stream": "cpp",
+        "ranges": "cpp",
+        "__verbose_abort": "cpp"
     }
 }

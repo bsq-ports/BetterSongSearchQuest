@@ -130,7 +130,7 @@ using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
 extern std::unordered_map<SortMode, SortFunction> sortFunctionMap;
 
 #ifdef HotReload
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
 #else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
