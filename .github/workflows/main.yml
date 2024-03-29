@@ -24,13 +24,17 @@ jobs:
 
     - uses: seanmiddleditch/gha-setup-ninja@v3
 
+    - name: Setup Canary NDK
+      id: setup-ndk
+      uses: ./.github/actions/canary-ndk
+
     - name: Create ndkpath.txt
       run: |
-        echo "$ANDROID_NDK_LATEST_HOME" > ${GITHUB_WORKSPACE}/ndkpath.txt
+        echo ${{ steps.setup-ndk.outputs.ndk-path }} > ${GITHUB_WORKSPACE}/ndkpath.txt
         cat ${GITHUB_WORKSPACE}/ndkpath.txt
 
-    - name: Get QPM rust
-      uses: Fernthedev/qpm-rust-action@main
+    - name: Get QPM
+      uses: Fernthedev/qpm-action@main
       with:
         #required
         workflow_token: ${{secrets.GITHUB_TOKEN}}
@@ -41,7 +45,7 @@ jobs:
       run: |
         cd ${GITHUB_WORKSPACE}
         pwsh -Command ./build.ps1
-        qpm-rust qmod build
+        qpm qmod build
 
     - name: Create Qmod
       run: |
