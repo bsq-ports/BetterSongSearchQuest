@@ -1,15 +1,12 @@
 #include "main.hpp"
 #include "_config.h"
-#include "bsml/shared/BSML-Lite.hpp"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/BeatmapKey.hpp"
-#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
 #include "GlobalNamespace/GameplaySetupViewController.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
 #include "GlobalNamespace/BeatmapLevelPack.hpp"
@@ -25,11 +22,7 @@
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "Util/TextUtil.hpp"
 #include "logging.hpp"
-#include "GlobalNamespace/CoroutineStarter.hpp"
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
-#include <regex>
-
-#include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
 
@@ -224,12 +217,27 @@ MAKE_HOOK_MATCH(
     ::GlobalNamespace::PlayerSpecificSettings* playerSpecificSettings,
     ::GlobalNamespace::PracticeSettings* practiceSettings,
     ::GlobalNamespace::AudioClipAsyncLoader* audioClipAsyncLoader,
+    ::BeatSaber::PerformancePresets::PerformancePreset* performancePreset,
     ::GlobalNamespace::BeatmapDataLoader* beatmapDataLoader,
     bool useTestNoteCutSoundEffects
 ) {
     // Close manager first
     manager.Close(true, false);
-    MultiplayerLevelScenesTransitionSetupDataSO_Init(self, gameMode, beatmapKey, beatmapLevel, beatmapLevelData,overrideColorScheme, gameplayModifiers, playerSpecificSettings, practiceSettings, audioClipAsyncLoader, beatmapDataLoader, useTestNoteCutSoundEffects );
+    MultiplayerLevelScenesTransitionSetupDataSO_Init(
+            self,
+            gameMode,
+            beatmapKey,
+            beatmapLevel,
+            beatmapLevelData,
+            overrideColorScheme,
+            gameplayModifiers,
+            playerSpecificSettings,
+            practiceSettings,
+            audioClipAsyncLoader,
+            performancePreset,
+            beatmapDataLoader,
+            useTestNoteCutSoundEffects
+            );
 }
 	
 // Called later on in the game loading - a good time to install function hooks

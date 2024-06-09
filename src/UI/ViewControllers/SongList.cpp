@@ -1069,17 +1069,31 @@ void ViewControllers::SongListController::Download() {
 }
 
 void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
-    BeatSaverRegionManager::GetAsync(url,
-                                     [finished](long httpCode, std::string data) {
-                                         if (httpCode == 200) {
-                                             std::vector<uint8_t> bytes(data.begin(), data.end());
-                                             finished(true, bytes);
-                                         } else {
-                                             std::vector<uint8_t> bytes;
-                                             finished(false, bytes);
-                                         }
-                                     }, [](float progress) {}
-    );
+    std::thread([url, finished] {
+        auto response = WebUtils::GetAsync<DataResponse>(
+            WebUtils::URLOptions(url)
+        );
+
+        response.wait();
+        
+        auto responseValue = response.get();
+
+        bool success = responseValue.IsSuccessful();
+        if (!success) {
+            DEBUG("Failed to get response for cover image");
+            finished(false, {});
+            return;
+        }
+        if (!responseValue.responseData.has_value()) {
+            DEBUG("No value in responseData for cover image");
+            finished(false, {});
+            return;
+        }
+
+        auto data = responseValue.responseData.value();
+
+        finished(true, data);
+    }).detach();
 }
 
 custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip *)> finished) {
@@ -1481,7 +1495,7 @@ void ViewControllers::SongListController::SongDataError() {
     DataHolder::needsRefresh = false;
 
     BSML::MainThreadScheduler::Schedule([this] {
-        if (this != nullptr) {
+        if (fcInstance != nullptr) {
             fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
         }
     });

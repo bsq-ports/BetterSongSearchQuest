@@ -4,7 +4,7 @@
 #include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "songdownloader/shared/BeatSaverAPI.hpp"
+#include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "System/Tuple_2.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
