@@ -21,15 +21,11 @@ class BeatSaverRegionManager {
 
     static void GetSongDescription(std::string key, std::function<void(std::string)> finished) {
         std::thread([key, finished]() mutable {
-            auto result = GetAsync<JsonResponse>(URLOptions(detailsDownloadUrl + key));
+            auto result = Get<JsonResponse>(URLOptions(detailsDownloadUrl + key));
 
-            result.wait();
-
-            auto responseResult = result.get();
-
-            if (responseResult.IsSuccessful()) {
-                if (responseResult.responseData.has_value()) {
-                    auto& value = responseResult.responseData.value();
+            if (result.IsSuccessful()) {
+                if (result.responseData.has_value()) {
+                    auto& value = result.responseData.value();
                     std::string description = value["description"].GetString();
                     return finished(description);
                 }
@@ -44,13 +40,11 @@ class BeatSaverRegionManager {
             
             didTheThing = true;
             std::thread([]() {
-                auto response = GetAsync<JsonResponse>(URLOptions(detailsDownloadUrl + "225eb"));
-                response.wait();
+                auto response = Get<JsonResponse>(URLOptions(detailsDownloadUrl + "225eb"));
 
-                auto responseResult = response.get();
-                if (responseResult.IsSuccessful()) {
-                    if (responseResult.responseData.has_value()) {
-                        auto& value = responseResult.responseData.value();
+                if (response.IsSuccessful()) {
+                    if (response.responseData.has_value()) {
+                        auto& value = response.responseData.value();
                         std::string joe = value["versions"].GetArray()[0]["coverURL"].GetString();
                         if(joe.length() > 0) {
                             uri u(joe);
