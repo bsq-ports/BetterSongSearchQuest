@@ -9,7 +9,8 @@
 
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "songdownloader/shared/BeatSaverAPI.hpp"
+#include "beatsaverplusplus/shared/BeatSaver.hpp"
+#include "web-utils/shared/WebUtils.hpp"
 
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "assets.hpp"
@@ -211,24 +212,23 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
     firstEntry->lastUpdate = CurrentTimeMs();
     RefreshTable(true);
     
-    std::function<void(float)> progressUpdate = [this,  firstEntry](float downloadPercentage)
+    std::function<void(float)> progressUpdate = [this,  firstEntry](float downloadProgress)
     {
-
         auto now = CurrentTimeMs();
         if (now - firstEntry->lastUpdate < 50) {
             return;
         }
         
-        firstEntry->statusDetails = fmt::format("({}%{})", (int)round(downloadPercentage), firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
+        firstEntry->statusDetails = fmt::format("({}%{})", (int)round(downloadProgress*100), firstEntry->retries == 0 ? "": fmt::format(", retry {} / {}", firstEntry->retries, RETRY_COUNT));
         firstEntry->lastUpdate = now;
 
-        firstEntry->downloadProgress = downloadPercentage / 100.0f;
+        firstEntry->downloadProgress = downloadProgress;
         if(firstEntry->UpdateProgressHandler != nullptr) {
             BSML::MainThreadScheduler::Schedule([firstEntry]{
                 firstEntry->UpdateProgressHandler();
             });
         }
-        INFO("DownloadProgress: {}", downloadPercentage);     
+        DEBUG("DownloadProgress: {}", downloadProgress);
     };
     DEBUG("Hash {}", firstEntry->hash);
 
@@ -237,70 +237,80 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
 
     RefreshTable(true);
 
-    BeatSaver::API::GetBeatmapByHashAsync(std::string(firstEntry->hash),
-        [this, progressUpdate, firstEntry, forceTableReload](std::optional<BeatSaver::Beatmap> beatmap)
+    std::thread([this, firstEntry, forceTableReload, progressUpdate]{
+        auto response = WebUtils::Get<BeatSaver::API::BeatmapResponse>(
+            BeatSaver::API::GetBeatmapByHashURLOptions(std::string(firstEntry->hash))
+        );
+        
+        if (!response.IsSuccessful())
         {
-            if (beatmap.has_value())
-            {
-                DEBUG("Beatmap name: {}", beatmap->GetName());
-                auto value = beatmap.value();
-                
-                
-                DEBUG("1 {}", value.GetName());
-                BeatSaver::API::DownloadBeatmapAsync(
-                    beatmap.value(),
-                    [this,firstEntry, forceTableReload](bool error)
-                    {
+            BSML::MainThreadScheduler::Schedule([this, firstEntry, forceTableReload]{
+                errored("Failed" ,firstEntry);
+                RefreshTable(true);
+                this->ProcessDownloads(forceTableReload);
+            });
+            return;
+        }
 
-                        BSML::MainThreadScheduler::Schedule(
-                            [error, this, firstEntry, forceTableReload]
-                            {
-                                if (error) {
-                                    DEBUG("ERROR DOWNLOADING SONG");
-                                    errored("Error" ,firstEntry);
-                                    RefreshTable(true);
-                                    this->ProcessDownloads(forceTableReload);
-                                } else {
-                                    firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
-                                    firstEntry->statusDetails = "";
-                                    firstEntry->downloadProgress = 1.0f;
-                                    DEBUG("Success downloading the song");
-                                    RefreshTable(true);
-                                    hasUnloadedDownloads = true;
-                                    this->ProcessDownloads(forceTableReload);
-                                }
-                                // If has no more dls left, refresh songs
-                                if (!this->HasPendingDownloads()) {
-                                    // Do not refresh songs if not active anymore
-                                    if (this->get_isActiveAndEnabled()) {
-                                        SongCore::API::Loading::RefreshSongs(false);
-                                        hasUnloadedDownloads = false;
-                                    }
-                                }
-                                if (fcInstance->SongListController->currentSong != nullptr) {
-                                    if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
-                                        // NESTING HELLLL      
-                                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
-                                            fcInstance->SongListController->SetIsDownloaded(true);
-                                        }
-                                        fcInstance->SongListController->songListTable()->RefreshCells(false, true);
-                                    } else {
-                                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
-                                            fcInstance->SongListController->SetIsDownloaded(false);
-                                        }
-                                    }
-                                }
-                            });
-                    },
-                    progressUpdate);
-            } else {
-                BSML::MainThreadScheduler::Schedule([this, firstEntry, forceTableReload]{
+        auto gotBeatmap = response.responseData.has_value();
+        if (!gotBeatmap)
+        {
+            BSML::MainThreadScheduler::Schedule([this, firstEntry, forceTableReload]{
+                errored("Error" ,firstEntry);
+                RefreshTable(true);
+                this->ProcessDownloads(forceTableReload);
+            });
+            return;
+        }
+
+        auto beatmap = response.responseData.value();
+        DEBUG("Beatmap name: {}", beatmap.GetName());
+
+        auto path = BeatSaver::API::DownloadBeatmap(
+            BeatSaver::API::BeatmapDownloadInfo(beatmap),
+            progressUpdate
+        );
+
+        BSML::MainThreadScheduler::Schedule(
+            [path, this, firstEntry, forceTableReload]
+            {
+                if (!path.has_value()) {
+                    DEBUG("ERROR DOWNLOADING SONG");
                     errored("Error" ,firstEntry);
                     RefreshTable(true);
                     this->ProcessDownloads(forceTableReload);
-                });
-            }
+                } else {
+                    firstEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
+                    firstEntry->statusDetails = "";
+                    firstEntry->downloadProgress = 1.0f;
+                    DEBUG("Success downloading the song");
+                    RefreshTable(true);
+                    hasUnloadedDownloads = true;
+                    this->ProcessDownloads(forceTableReload);
+                }
+                // If has no more dls left, refresh songs
+                if (!this->HasPendingDownloads()) {
+                    // Do not refresh songs if not active anymore
+                    if (this->get_isActiveAndEnabled()) {
+                        SongCore::API::Loading::RefreshSongs(false);
+                        hasUnloadedDownloads = false;
+                    }
+                }
+                if (fcInstance->SongListController->currentSong != nullptr) {
+                    if(firstEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+                        // NESTING HELLLL      
+                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
+                            fcInstance->SongListController->SetIsDownloaded(true);
+                        }
+                        fcInstance->SongListController->songListTable()->RefreshCells(false, true);
+                    } else {
+                        if (fcInstance->SongListController->currentSong->hash() == firstEntry->hash) {
+                            fcInstance->SongListController->SetIsDownloaded(false);
+                        }
+                    }
+                }
         });
+    }).detach();
     this->ProcessDownloads(forceTableReload);
 }
 
@@ -380,3 +390,4 @@ bool ViewControllers::DownloadHistoryViewController::HasPendingDownloads(){
     }
     return false;
 };
+
