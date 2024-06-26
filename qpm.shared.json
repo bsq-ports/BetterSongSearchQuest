@@ -47,7 +47,7 @@
       },
       {
         "id": "song-details",
-        "versionRange": "^0.3.3",
+        "versionRange": "^0.3.4",
         "additionalData": {}
       },
       {
@@ -192,17 +192,17 @@
     {
       "dependency": {
         "id": "song-details",
-        "versionRange": "=0.3.3",
+        "versionRange": "=0.3.4",
         "additionalData": {
-          "soLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.3/libsongdetails.so",
-          "debugSoLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.3/debug_libsongdetails.so",
+          "soLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.4/libsongdetails.so",
+          "debugSoLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.4/debug_libsongdetails.so",
           "overrideSoName": "libsongdetails.so",
-          "modLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.3/SongDetails.qmod",
-          "branchName": "version/v0_3_3",
+          "modLink": "https://github.com/RedBrumbler/SongDetails/releases/download/v0.3.4/SongDetails.qmod",
+          "branchName": "version/v0_3_4",
           "cmake": false
         }
       },
-      "version": "0.3.3"
+      "version": "0.3.4"
     },
     {
       "dependency": {
