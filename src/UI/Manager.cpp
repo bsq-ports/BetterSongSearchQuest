@@ -62,7 +62,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         //                 songlist->PlaySong(songlist->currentSong);
         //                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(2.5f));
         //                 // Press back button
-        //                 UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("BackButton"))->GetComponent<HMUI::NoTransitionsButton*>()->Press();
+        //                 UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
         //             }
                     
                     
@@ -102,7 +102,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
 
         //     DEBUG("Press back button");
         //     // Press back button
-        //     UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("BackButton"))->GetComponent<HMUI::NoTransitionsButton*>()->Press();
+        //     UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
 
         //     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(3.0f));
 
@@ -123,7 +123,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.5f));
 
         //         // Press back button
-        //         UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("BackButton"))->GetComponent<HMUI::NoTransitionsButton*>()->Press();
+        //         UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
         //         // manager.ShowFlow(true);
                 
         //         ++iterations_count;
@@ -154,9 +154,9 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
 }
 
 void BetterSongSearch::UI::Manager::GoToSongSelect() {
-    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("SoloButton")).unsafePtr();
+    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find("SoloButton").unsafePtr();
     if (!songSelectButton) {
-        songSelectButton = UnityEngine::GameObject::Find(il2cpp_utils::newcsstr("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton"));
+        songSelectButton = UnityEngine::GameObject::Find("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton");
     }
     if (!songSelectButton) {
         return;
