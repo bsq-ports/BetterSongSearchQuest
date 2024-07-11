@@ -6,35 +6,7 @@
 #include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
 namespace BetterSongSearch::Util {
     UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level) {
-        if (level == nullptr) {
-            return nullptr;
-        }
-        
-        std::string imageFileName = "";
-        {
-            auto saveDataV2 = level->get_standardLevelInfoSaveDataV2();
-            if (saveDataV2.has_value()) {
-                auto name = saveDataV2.value()->get_coverImageFilename();
-                imageFileName = static_cast<std::string>(name);
-            }
-        }
-        {
-            if (imageFileName.empty()) {
-                auto saveData = level->get_beatmapLevelSaveDataV4();
-                if (saveData.has_value()) {
-                    auto name = saveData.value()->__cordl_internal_get_coverImageFilename();
-                    imageFileName = static_cast<std::string>(name);
-                }
-            }
-        }
-        if (imageFileName.empty()) {
-            DEBUG("No cover image found in level data");
-            return nullptr;
-        }
-
-        StringW path = System::IO::Path::Combine(
-                level->get_customLevelPath(),
-        imageFileName);
+        StringW path = System::IO::Path::Combine(level->get_customLevelPath(), level->get_standardLevelInfoSaveData()->get_coverImageFilename());
 
         if(!System::IO::File::Exists(path)) {
             DEBUG("File does not exist");

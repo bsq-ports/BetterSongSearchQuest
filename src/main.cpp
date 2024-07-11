@@ -217,27 +217,12 @@ MAKE_HOOK_MATCH(
     ::GlobalNamespace::PlayerSpecificSettings* playerSpecificSettings,
     ::GlobalNamespace::PracticeSettings* practiceSettings,
     ::GlobalNamespace::AudioClipAsyncLoader* audioClipAsyncLoader,
-    ::BeatSaber::PerformancePresets::PerformancePreset* performancePreset,
     ::GlobalNamespace::BeatmapDataLoader* beatmapDataLoader,
     bool useTestNoteCutSoundEffects
 ) {
     // Close manager first
     manager.Close(true, false);
-    MultiplayerLevelScenesTransitionSetupDataSO_Init(
-            self,
-            gameMode,
-            beatmapKey,
-            beatmapLevel,
-            beatmapLevelData,
-            overrideColorScheme,
-            gameplayModifiers,
-            playerSpecificSettings,
-            practiceSettings,
-            audioClipAsyncLoader,
-            performancePreset,
-            beatmapDataLoader,
-            useTestNoteCutSoundEffects
-            );
+    MultiplayerLevelScenesTransitionSetupDataSO_Init(self, gameMode, beatmapKey, beatmapLevel, beatmapLevelData,overrideColorScheme, gameplayModifiers, playerSpecificSettings, practiceSettings, audioClipAsyncLoader, beatmapDataLoader, useTestNoteCutSoundEffects );
 }
 	
 // Called later on in the game loading - a good time to install function hooks

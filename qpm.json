@@ -22,12 +22,12 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^5.1.7",
+      "versionRange": "=5.1.6",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3700.0.0",
+      "versionRange": "^3500.0.0",
       "additionalData": {}
     },
     {
@@ -52,7 +52,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.12",
+      "versionRange": "^1.1.9",
       "additionalData": {}
     },
     {
@@ -67,17 +67,17 @@
     },
     {
       "id": "beatsaverplusplus",
-      "versionRange": "^0.0.10",
+      "versionRange": "^0.1.5",
       "additionalData": {}
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.5.2",
+      "versionRange": "^0.6.6",
       "additionalData": {}
     },
     {
       "id": "paper",
-      "versionRange": "^3.6.3",
+      "versionRange": "^3.6.4",
       "additionalData": {}
     },
     {

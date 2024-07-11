@@ -25,7 +25,7 @@ namespace BetterSongSearch::UI::Util::BSMLStuff
 
         for (auto item : items)
         {
-            if (item != nullptr && item->___m_CachedPtr.m_value != nullptr && item->get_text() == "MERGE_TO_PREV")
+            if (item != nullptr && item->m_CachedPtr != nullptr && item->get_text() == "MERGE_TO_PREV")
             {
                 filteredItems.push_back(item);
             }
