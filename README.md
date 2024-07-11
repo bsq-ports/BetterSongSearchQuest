@@ -1,4 +1,6 @@
 # Better Song Search
+![GitHub Downloads (specific asset, latest release)](https://img.shields.io/github/downloads/bsq-ports/BetterSongSearchQuest/latest/BetterSongSearch.qmod)
+![GitHub Downloads (specific asset, all releases)](https://img.shields.io/github/downloads/bsq-ports/BetterSongSearchQuest/BetterSongSearch.qmod)
 
 Searching, downloading and playing songs, now with 100% less annoying!
 
