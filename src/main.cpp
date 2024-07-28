@@ -32,12 +32,6 @@ using namespace BetterSongSearch::Util;
 
 inline modloader::ModInfo modInfo = {MOD_ID, VERSION, GIT_COMMIT}; // Stores the ID and version of our mod, and is sent to the modloader upon startup
 
-// Loads the config from disk using our modInfo, then returns it for use
-Configuration& getConfig() {
-    static Configuration config(modInfo);
-    return config;
-}
-
 
 // Called at the early stages of game loading
 BSS_EXPORT_FUNC void setup(CModInfo& info) {
@@ -45,10 +39,7 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.version = VERSION;
     modInfo.assign(info);
 
-    getConfig().Load(); // Load the config file
     getPluginConfig().Init(modInfo);
-    getConfig().Reload();
-    getConfig().Write();
     INFO("Completed setup!");
 
     std::thread([]{
@@ -246,14 +237,13 @@ BSS_EXPORT_FUNC void late_load() {
     BSML::Init();
     custom_types::Register::AutoRegister();
 
-    auto logger = Paper::ConstLoggerContext("BSSHooks");
+    INSTALL_HOOK(Logger, ReturnToBSS);
+    INSTALL_HOOK(Logger, GameplaySetupViewController_RefreshContent);
+    INSTALL_HOOK(Logger, LevelFilteringNavigationController_Setup);
+    INSTALL_HOOK(Logger, MultiplayerLevelScenesTransitionSetupDataSO_Init);
 
-    INSTALL_HOOK(logger, ReturnToBSS);
-    INSTALL_HOOK(logger, GameplaySetupViewController_RefreshContent);
-    INSTALL_HOOK(logger, LevelFilteringNavigationController_Setup);
-    // Auto open to BSS
-    // INSTALL_HOOK(logger, MainFlowCoordinator_DidActivate);
-    INSTALL_HOOK(logger, MultiplayerLevelScenesTransitionSetupDataSO_Init);
+    // Automatic testing
+    // INSTALL_HOOK(Logger, MainFlowCoordinator_DidActivate);
 
     manager.Init();
 }
