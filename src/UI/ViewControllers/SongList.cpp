@@ -504,12 +504,10 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                     bool matchedAuthor = false;
                                     int prevMatchIndex = -1;
 
-
+                                    // TODO: Remove diacritics as well to support spanish, french, etc (about 300 songs in the index)
                                     std::string songName = removeSpecialCharacter(toLower(songe->songName()));
-                                    std::string songAuthorName = removeSpecialCharacter(
-                                            toLower(songe->songAuthorName()));
-                                    std::string levelAuthorName = removeSpecialCharacter(
-                                            toLower(songe->levelAuthorName()));
+                                    std::string songAuthorName = toLower(songe->songAuthorName());
+                                    std::string levelAuthorName = toLower(songe->levelAuthorName());
                                     uint32_t songKey = songe->mapId();
 
                                     // If song key is present and mapid == songkey, pull it to the top
@@ -524,9 +522,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
                                     if (songAuthorName.length() > 4 && authorFullMatch != std::string::npos &&
                                         // Checks if there is a space after the supposedly matched author name
-                                        (currentSearch.length() == songAuthorName.length() ||
-                                         IsSpace(currentSearch[songAuthorName.length()]))
-                                            ) {
+                                        (currentSearch.length() == songAuthorName.length() || IsSpace(currentSearch[songAuthorName.length()]))
+                                    ) {
                                         matchedAuthor = true;
                                         resultWeight += songAuthorName.length() > 5 ? 25 : 20;
 
@@ -551,29 +548,34 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                                 continue;
                                                 // Otherwise we'll have to check if its contained within this word
                                             } else if (!matchedAuthor && words[i].length() >= 3) {
+                                                // Find word in author name
                                                 int index = songAuthorName.find(words[i]);
-
-                                                // If found in the beginning or is space at the end of author name which means we matched the beginning of a word
+                                                // If we matched the start of the string
                                                 if (index == 0 || (index > 0 && IsSpace(songAuthorName[index - 1]))) {
-
                                                     matchedAuthor = true;
                                                     // Add weight
-                                                    resultWeight += (int) round((index == 0 ? 4.0f : 3.0f) *
-                                                                                ((float) words[i].length() /
-                                                                                 songAuthorName.length()));
+                                                    resultWeight += (int) round(
+                                                        (index == 0 ? 4.0f : 3.0f) *
+                                                        (
+                                                            (float) words[i].length() /
+                                                            (float) songAuthorName.length()
+                                                        )
+                                                    );
                                                     continue;
                                                 }
                                             }
                                         }
 
+                                        // Match the current split word in the song name
                                         int matchpos = songName.find(words[i]);
+
+                                        // If we found anything...
                                         if (matchpos != std::string::npos) {
                                             // Check if we matched the beginning of a word
                                             bool wordStart = matchpos == 0 || songName[matchpos - 1] == ' ';
 
                                             // If it was the beginning add 5 weighting, else 3
                                             resultWeight += wordStart ? 5 : 3;
-
 
                                             ///////////////// New algo  /////////////////////////
                                             // Find the position in the name
@@ -598,17 +600,6 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                                 if (maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
                                                     resultWeight += 2;
                                             }
-                                            /////////////////////////////////////////////////////
-
-                                            //// Old algo for testing pc compatibility (comment out new algo and uncomment this for comparison with PC) //////////
-                                            // bool maybeWordEnd = wordStart && matchpos + words[i].length() < songName.length();
-
-                                            // // Check if we actually end up at a non word char, if so add 2 weighting
-                                            // if(maybeWordEnd && songName[matchpos + words[i].length()] == ' ')
-                                            //     resultWeight += 2;
-                                            ////////////////////////////////////////////////////
-
-
                                             // If the word we just checked is behind the previous matched, add another 1 weight
                                             if (prevMatchIndex != -1 && matchpos > prevMatchIndex)
                                                 resultWeight += 1;
