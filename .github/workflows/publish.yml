@@ -36,15 +36,6 @@ jobs:
 
     - uses: seanmiddleditch/gha-setup-ninja@v5
 
-    - name: Setup Canary NDK
-      id: setup-ndk
-      uses: ./.github/actions/canary-ndk
-
-    - name: Create ndkpath.txt
-      run: |
-        echo ${{ steps.setup-ndk.outputs.ndk-path }} > ${GITHUB_WORKSPACE}/ndkpath.txt
-        cat ${GITHUB_WORKSPACE}/ndkpath.txt
-
     - name: Get QPM
       uses: Fernthedev/qpm-action@v1
       with:
