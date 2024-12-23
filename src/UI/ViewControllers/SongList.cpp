@@ -356,7 +356,8 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     // Grab current values for sort and search
     auto currentSort = sort;
-    auto currentSearch = search;
+    // Current search (processed)
+    auto currentSearch = toLower(search);
 
     // Save for debugging
     DataHolder::currentSort = sort;
