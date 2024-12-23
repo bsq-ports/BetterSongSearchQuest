@@ -28,13 +28,13 @@ jobs:
         echo "BS_VERSION=$TEMP" >> $GITHUB_ENV
         
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       name: Checkout
       with:
         submodules: true
         lfs: true
 
-    - uses: seanmiddleditch/gha-setup-ninja@v3
+    - uses: seanmiddleditch/gha-setup-ninja@v5
 
     - name: Setup Canary NDK
       id: setup-ndk
@@ -46,7 +46,7 @@ jobs:
         cat ${GITHUB_WORKSPACE}/ndkpath.txt
 
     - name: Get QPM
-      uses: Fernthedev/qpm-action@main
+      uses: Fernthedev/qpm-action@v1
       with:
         #required
         workflow_token: ${{secrets.GITHUB_TOKEN}}
@@ -85,7 +85,7 @@ jobs:
         echo "QMOD_SHA=$(sha256sum ./${{ env.qmodName }}.qmod | grep -Po "^[0-9a-f]+")" >> $GITHUB_ENV
 
     - name: Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
         tag_name: ${{ env.VERSION_TAG }}
