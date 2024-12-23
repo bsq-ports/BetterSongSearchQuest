@@ -48,7 +48,7 @@ jobs:
         cd ./build/
         pattern="lib${module_id}*.so"
         files=( $pattern )
-        echo ::set-output name=NAME::"${files[0]}"
+        echo "NAME=${files[0]}" >> ${GITHUB_OUTPUT} 
 
     - name: Upload non-debug artifact
       uses: actions/upload-artifact@v4
