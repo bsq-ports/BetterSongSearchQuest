@@ -36,6 +36,22 @@ void errored(std::string message, SafePtr<DownloadHistoryEntry> entry)
     entry->retries = 69;
 }
 
+struct CustomDLBeatMapResponse {
+    std::optional<std::filesystem::path> path;
+    int curlStatus;
+    int responseCode;
+};
+
+CustomDLBeatMapResponse CursomDownloadBeatmap(BeatSaver::API::BeatmapDownloadInfo info, std::function<void(float)> progressReport = nullptr) {
+    auto [options, response] = DownloadBeatmapURLOptionsAndResponse(info);
+    BeatSaver::API::GetBeatsaverDownloader().GetInto(options, &response, progressReport);
+    return {
+        response.responseData, 
+        response.get_CurlStatus(),
+        response.get_HttpCode()
+    };
+}
+
 void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
 {
     if (!firstActivation)
@@ -283,17 +299,35 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         auto beatmap = response.responseData.value();
         DEBUG("Beatmap name: {}", beatmap.GetName());
 
-        auto path = BeatSaver::API::DownloadBeatmap(
+        auto dlInfo = CursomDownloadBeatmap(
             BeatSaver::API::BeatmapDownloadInfo(beatmap),
             progressUpdate
         );
 
         BSML::MainThreadScheduler::Schedule(
-            [path, this, currentEntry, forceTableReload]
+            [dlInfo, this, currentEntry, forceTableReload]
             {
+                auto path = dlInfo.path;
+                int curlStatus = dlInfo.curlStatus;
+                int responseCode = dlInfo.responseCode;
+
                 if (!path.has_value()) {
                     DEBUG("ERROR DOWNLOADING SONG");
-                    errored("Failed to download the song file", currentEntry);
+
+                    std::string message = "";
+                    if (curlStatus != 0) {
+                        message = Util::curlErrorToString(curlStatus);
+                        message = fmt::format("Curl: {}", message);
+                    } else {
+                        if (responseCode == 404) {
+                            message = "Song file not found";
+                        } else {
+                            message = Util::httpErrorToString(responseCode);
+                        }
+                    }
+
+                    DEBUG("Error downloading the song: {}", message);
+                    errored(message, currentEntry);
                     RefreshTable(true);
                     this->ProcessDownloads(forceTableReload);
                 } else {
