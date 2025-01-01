@@ -195,17 +195,17 @@
     {
       "dependency": {
         "id": "song-details",
-        "versionRange": "=0.3.6",
+        "versionRange": "=0.3.7",
         "additionalData": {
-          "soLink": "https://github.com/FrozenAlex/SongDetails/releases/download/v0.3.6/libsongdetails.so",
-          "debugSoLink": "https://github.com/FrozenAlex/SongDetails/releases/download/v0.3.6/debug_libsongdetails.so",
+          "soLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/libsongdetails.so",
+          "debugSoLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/debug_libsongdetails.so",
           "overrideSoName": "libsongdetails.so",
-          "modLink": "https://github.com/FrozenAlex/SongDetails/releases/download/v0.3.6/SongDetails.qmod",
-          "branchName": "version/v0_3_6",
+          "modLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/SongDetails.qmod",
+          "branchName": "version/v0_3_7",
           "cmake": false
         }
       },
-      "version": "0.3.6"
+      "version": "0.3.7"
     },
     {
       "dependency": {
@@ -351,15 +351,15 @@
     {
       "dependency": {
         "id": "scotland2",
-        "versionRange": "=0.1.4",
+        "versionRange": "=0.1.6",
         "additionalData": {
-          "soLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.4/libsl2.so",
-          "debugSoLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.4/debug_libsl2.so",
+          "soLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.6/libsl2.so",
+          "debugSoLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.6/debug_libsl2.so",
           "overrideSoName": "libsl2.so",
-          "branchName": "version/v0_1_4"
+          "branchName": "version/v0_1_6"
         }
       },
-      "version": "0.1.4"
+      "version": "0.1.6"
     }
   ]
 }
