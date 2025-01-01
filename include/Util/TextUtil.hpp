@@ -17,4 +17,7 @@ namespace BetterSongSearch::Util {
     std::string toLower(char const* s);
 
     bool IsSpace(char x);
+
+    std::string httpErrorToString(int code);
+    std::string curlErrorToString(int code);
 }
