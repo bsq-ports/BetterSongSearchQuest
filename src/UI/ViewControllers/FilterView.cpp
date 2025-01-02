@@ -326,7 +326,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         return fmt::format("{:.1f}", value);
     };
     std::function<std::string(float)> maxStarFormat = [](float value) {
-        if (value >= DataHolder::filterOptions.STAR_FILTER_MAX) {
+        if (value >= FilterOptions::STAR_FILTER_MAX) {
             return  (std::string)  "Unlimited";
         }
         return fmt::format("{:.1f}", value);

@@ -190,7 +190,7 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     }
 
     // Min and max stars
-    if (currentFilter.maxStars != currentFilter.STAR_FILTER_MAX) {
+    if (currentFilter.maxStars != FilterOptions::STAR_FILTER_MAX) {
         if (getStars(diff) > currentFilter.maxStars) {
             return false;
         }

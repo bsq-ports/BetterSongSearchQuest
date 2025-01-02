@@ -68,10 +68,10 @@ public:
         None
     };
 
-    const float SONG_LENGTH_FILTER_MAX = 15.0f;
-    const float STAR_FILTER_MAX = 15.0f;
-    const float NJS_FILTER_MAX = 25.0f;
-    const float NPS_FILTER_MAX = 12.0f;
+    static inline const float SONG_LENGTH_FILTER_MAX = 15.0f;
+    static inline const float STAR_FILTER_MAX = 18.0f;
+    static inline const float NJS_FILTER_MAX = 25.0f;
+    static inline const float NPS_FILTER_MAX = 12.0f;
     static inline const int64_t BEATSAVER_EPOCH = 1525136400;
 
     //General
@@ -80,12 +80,12 @@ public:
     float minLength = 0, maxLength = 900;
 
     //Mapping
-    float minNJS = 0, maxNJS = 25;
-    float minNPS = 0, maxNPS = 12;
+    float minNJS = 0, maxNJS = NJS_FILTER_MAX;
+    float minNPS = 0, maxNPS = NPS_FILTER_MAX;
 
     // Ranked
     RankedFilterType rankedType = RankedFilterType::ShowAll;
-    float minStars = 0, maxStars = 15;
+    float minStars = 0, maxStars = STAR_FILTER_MAX;
 
     //BeatSaver
     int minUploadDate = BEATSAVER_EPOCH;
@@ -166,14 +166,14 @@ public:
         downloadType=s.downloadType;
         localScoreType=s.localScoreType;
         minLength=s.minLength;
-        if (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); } else { maxLength=s.maxLength;}
+        if (s.maxLength / 60 >= FilterOptions::SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); } else { maxLength=s.maxLength;}
         minNJS=s.minNJS;
-        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); } else { maxNJS=s.maxNJS;}
+        if (s.maxNJS >= FilterOptions::NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); } else { maxNJS=s.maxNJS;}
         minNPS=s.minNPS;
-        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); } else { maxNPS=s.maxNPS;}
+        if (s.maxNPS >= FilterOptions::NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); } else { maxNPS=s.maxNPS;}
         rankedType=s.rankedType;
         minStars=s.minStars;
-        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); } else { maxStars=s.maxStars;}
+        if (s.maxStars >= FilterOptions::STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); } else { maxStars=s.maxStars;}
         minUploadDate=s.minUploadDate;
         minRating=s.minRating;
         minVotes=s.minVotes;
@@ -198,15 +198,15 @@ public:
         skipFilter = (
             downloadType == FilterOptions::DownloadFilterType::All &&
             localScoreType ==  FilterOptions::LocalScoreFilterType::All &&
-            (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) && 
+            (s.maxLength / 60 >= FilterOptions::SONG_LENGTH_FILTER_MAX) && 
             (s.minLength == 0) &&
             minNJS == 0 && 
-            s.maxNJS >= NJS_FILTER_MAX &&
+            s.maxNJS >= FilterOptions::NJS_FILTER_MAX &&
             s.minNPS == 0 &&
-            s.maxNPS >= NPS_FILTER_MAX && 
+            s.maxNPS >= FilterOptions::NPS_FILTER_MAX && 
             rankedType == FilterOptions::RankedFilterType::ShowAll &&
             minStars == 0 &&
-            s.maxStars >= STAR_FILTER_MAX &&
+            s.maxStars >= FilterOptions::STAR_FILTER_MAX &&
             s.minUploadDateInMonths == 0 &&
             minRating == 0 &&
             minVotes == 0 &&
@@ -217,19 +217,14 @@ public:
         );
 
         // Do infinity checks for songs that are out of bounds
-        if (s.maxStars >= STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); }
-        if (s.maxNJS >= NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); }
-        if (s.maxNPS >= NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); }
-        if (s.maxLength / 60 >= SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); }
+        if (s.maxStars >= FilterOptions::STAR_FILTER_MAX) { maxStars=std::numeric_limits<float>::infinity(); }
+        if (s.maxNJS >= FilterOptions::NJS_FILTER_MAX) { maxNJS=std::numeric_limits<float>::infinity(); }
+        if (s.maxNPS >= FilterOptions::NPS_FILTER_MAX) { maxNPS=std::numeric_limits<float>::infinity(); }
+        if (s.maxLength / 60 >= FilterOptions::SONG_LENGTH_FILTER_MAX) { maxLength=std::numeric_limits<float>::infinity(); }
     }
 
     bool skipFilter = false;
     
-    // Prolly need to deduplicate these..
-    const float SONG_LENGTH_FILTER_MAX = 15.0f;
-    const float STAR_FILTER_MAX = 15.0f;
-    const float NJS_FILTER_MAX = 25.0f;
-    const float NPS_FILTER_MAX = 12.0f;
 
     //General
     FilterOptions::DownloadFilterType downloadType = FilterOptions::DownloadFilterType::All;
@@ -237,12 +232,12 @@ public:
     float minLength = 0, maxLength = 900;
 
     //Mapping
-    float minNJS = 0, maxNJS = 25;
-    float minNPS = 0, maxNPS = 12;
+    float minNJS = 0, maxNJS = FilterOptions::NJS_FILTER_MAX;
+    float minNPS = 0, maxNPS = FilterOptions::NPS_FILTER_MAX;
 
     //ScoreSaber
     FilterOptions::RankedFilterType rankedType = FilterOptions::RankedFilterType::ShowAll;
-    float minStars = 0, maxStars = 15;
+    float minStars = 0, maxStars = FilterOptions::STAR_FILTER_MAX;
 
     //BeatSaver
     int minUploadDate = FilterOptions::BEATSAVER_EPOCH;
