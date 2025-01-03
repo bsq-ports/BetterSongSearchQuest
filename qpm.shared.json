@@ -50,7 +50,7 @@
       },
       {
         "id": "song-details",
-        "versionRange": "^0.3.6",
+        "versionRange": "^1.0.0",
         "additionalData": {}
       },
       {
@@ -195,17 +195,13 @@
     {
       "dependency": {
         "id": "song-details",
-        "versionRange": "=0.3.7",
+        "versionRange": "=1.0.0",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/libsongdetails.so",
-          "debugSoLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/debug_libsongdetails.so",
           "overrideSoName": "libsongdetails.so",
-          "modLink": "https://github.com/bsq-ports/SongDetails/releases/download/v0.3.7/SongDetails.qmod",
-          "branchName": "version/v0_3_7",
           "cmake": false
         }
       },
-      "version": "0.3.7"
+      "version": "1.0.0"
     },
     {
       "dependency": {

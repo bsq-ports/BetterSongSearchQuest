@@ -1437,7 +1437,7 @@ void ViewControllers::SongListController::DownloadSongList() {
 
 
         if (!DataHolder::songDetails->songs.get_isDataAvailable()) {
-            this->SongDataError();
+            this->SongDataError("Failed to load song data");
         } else {
             this->SongDataDone();
         }
@@ -1485,7 +1485,7 @@ void ViewControllers::SongListController::SongDataDone() {
     });
 }
 
-void ViewControllers::SongListController::SongDataError() {
+void ViewControllers::SongListController::SongDataError(std::string message) {
     DEBUG("SongDataError");
 
     // Set state flags
@@ -1495,9 +1495,9 @@ void ViewControllers::SongListController::SongDataError() {
     DataHolder::invalid = true;
     DataHolder::needsRefresh = false;
 
-    BSML::MainThreadScheduler::Schedule([this] {
+    BSML::MainThreadScheduler::Schedule([this, message] {
         if (fcInstance != nullptr) {
-            fcInstance->FilterViewController->datasetInfoLabel->set_text("Failed to load, click to retry");
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{}, click to retry", message));
         }
     });
 }

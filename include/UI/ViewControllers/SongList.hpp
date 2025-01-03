@@ -255,6 +255,6 @@ public:
 
     // Event receivers
     void SongDataDone();
-    void SongDataError();
+    void SongDataError(std::string message);
 )
 

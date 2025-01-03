@@ -57,7 +57,6 @@ namespace BetterSongSearch::UI::ViewControllers
         this->levelAuthorName->set_text(entry->levelAuthorName());
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->songDurationSeconds), entry->upvotes, entry->downvotes));
         this->uploadDateFormatted->set_text(fmt::format("{:%d. %b %Y}", fmt::localtime(entry->uploadTimeUnix)));
-        auto ranked = entry->rankedStatus == SongDetailsCache::RankedStatus::Ranked;
         bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(entry->hash());
 
         Sombrero::FastColor songColor = Sombrero::FastColor::white();

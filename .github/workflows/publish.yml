@@ -51,12 +51,12 @@ jobs:
     - name: Build
       run: |
         cd ${GITHUB_WORKSPACE}
-        pwsh -Command ./build.ps1
+        pwsh -Command ./build.ps1 -release
         qpm qmod build
 
     - name: Create Qmod
       run: |
-        pwsh -Command ./createqmod.ps1 ${{env.qmodName}}
+        pwsh -Command ./createqmod.ps1 ${{env.qmodName}} -release
 
     - name: Get Library Name and Build ID
       id: libname
