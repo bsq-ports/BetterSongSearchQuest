@@ -589,7 +589,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                                             * The 8 character limitation for this is so that super short words like "those" dont end
                                             * up triggering this
                                             */
-                                            if (songName.length() > 7 && songName.length() == posInName) {
+                                            if (songName.length() >= 6 && songName.length() == posInName) {
                                                 resultWeight += 3;
                                             } else {
                                                 // If we did match the beginning, check if we matched an entire word. Get the end index as indicated by our needle
