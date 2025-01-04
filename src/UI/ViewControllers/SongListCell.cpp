@@ -91,7 +91,7 @@ namespace BetterSongSearch::UI::ViewControllers
         });
 
         // If most stars
-        if (DataHolder::currentSort == SortMode::Most_Stars) {
+        if (DataHolder::currentSort == FilterTypes::SortMode::Most_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
            
                 auto diff1 = - a.stars;
@@ -102,7 +102,7 @@ namespace BetterSongSearch::UI::ViewControllers
             });
         }
         // If least stars
-        if (DataHolder::currentSort == SortMode::Least_Stars) {
+        if (DataHolder::currentSort == FilterTypes::SortMode::Least_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
                 auto diff1 = a.stars > 0 ? a.stars: -420.0f;
                 auto diff2 = b.stars > 0 ? b.stars: -420.0f;

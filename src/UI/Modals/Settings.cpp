@@ -69,18 +69,18 @@ void Modals::Settings::set_smallerFontSize(bool value) {
 StringW Modals::Settings::get_preferredLeaderboard() {
     // Preferred Leaderboard
     std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
-    if (leaderBoardMap.contains(preferredLeaderboard)) {
+    if (LEADERBOARD_MAP.contains(preferredLeaderboard)) {
         return preferredLeaderboard;
     } else {
-        DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
+        DataHolder::preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
         getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
         return "Scoresaber";
     }
 }
 
 void Modals::Settings::set_preferredLeaderboard(StringW value) {
-    if (leaderBoardMap.contains(value)) {
-        DataHolder::preferredLeaderboard = leaderBoardMap.at(value);
+    if (LEADERBOARD_MAP.contains(value)) {
+        DataHolder::preferredLeaderboard = LEADERBOARD_MAP.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;

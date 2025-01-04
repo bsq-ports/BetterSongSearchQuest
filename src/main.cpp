@@ -29,9 +29,7 @@
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
 using namespace BetterSongSearch::Util;
-
-inline modloader::ModInfo modInfo = {MOD_ID, VERSION, GIT_COMMIT}; // Stores the ID and version of our mod, and is sent to the modloader upon startup
-
+using namespace BetterSongSearch;
 
 // Called at the early stages of game loading
 BSS_EXPORT_FUNC void setup(CModInfo& info) {
@@ -40,51 +38,23 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
     modInfo.assign(info);
 
     getPluginConfig().Init(modInfo);
+
     INFO("Completed setup!");
 
     std::thread([]{
-        auto& filterOptions = DataHolder::filterOptions;
         INFO("setting config values");
-        filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
-        filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
-        filterOptions.minLength = getPluginConfig().MinLength.GetValue();
-        filterOptions.maxLength = getPluginConfig().MaxLength.GetValue();
-        filterOptions.minNJS = getPluginConfig().MinNJS.GetValue();
-        filterOptions.maxNJS = getPluginConfig().MaxNJS.GetValue();
-        filterOptions.minNPS = getPluginConfig().MinNPS.GetValue();
-        filterOptions.maxNPS = getPluginConfig().MaxNPS.GetValue();
-        filterOptions.rankedType = (FilterOptions::RankedFilterType) getPluginConfig().RankedType.GetValue();
-        filterOptions.minStars = getPluginConfig().MinStars.GetValue();
-        filterOptions.maxStars = getPluginConfig().MaxStars.GetValue();
-        filterOptions.minUploadDate = getPluginConfig().MinUploadDate.GetValue();
-        filterOptions.minRating = getPluginConfig().MinRating.GetValue();
-        filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
-        filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
-        filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
-        filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
-        filterOptions.minUploadDateInMonths = getPluginConfig().MinUploadDateInMonths.GetValue();
-        
+
+        // Load configs
+        DataHolder::filterOptions.LoadFromConfig();
+        DataHolder::filterOptionsCache = DataHolder::filterOptions;
+
         // Preferred Leaderboard
         std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
-        if (leaderBoardMap.contains(preferredLeaderboard)) {
-            DataHolder::preferredLeaderboard = leaderBoardMap.at(preferredLeaderboard);
+        if (LEADERBOARD_MAP.contains(preferredLeaderboard)) {
+           DataHolder::preferredLeaderboard = LEADERBOARD_MAP.at(preferredLeaderboard);
         } else {
-            DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
-            getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-        }
-        
-        // Custom string loader
-        auto uploadersString = getPluginConfig().Uploaders.GetValue();
-        if (!uploadersString.empty()) {
-            if (uploadersString[0] == '!') {
-                uploadersString.erase(0,1);
-                filterOptions.uploadersBlackList = true;
-            } else {
-                filterOptions.uploadersBlackList = false;
-            }
-            filterOptions.uploaders = split(toLower(uploadersString), " ");
-        } else {
-            filterOptions.uploaders.clear();
+           DataHolder::preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
+           getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
         }
     }).detach();   
 }

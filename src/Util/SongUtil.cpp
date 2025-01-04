@@ -60,17 +60,19 @@ namespace BetterSongSearch::Util {
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff) {
         auto& rStates = diff->song().rankedStates;
 
+        FilterProfile filterOptions = UI::DataHolder::filterOptionsCache;
+
         // If song is scoresaber ranked
-        if (hasFlags(rStates, SongDetailsCache::RankedStates::ScoresaberRanked) && 
+        if (hasFlags(rStates, RankedStates::ScoresaberRanked) &&
             // And Not Filtering by BeatLeader ranked
-            UI::DataHolder::filterOptionsCache.rankedType != FilterOptions::RankedFilterType::BeatLeaderRanked && 
+            UI::DataHolder::filterOptionsCache.rankedType != FilterTypes::RankedFilter::BeatLeaderRanked &&
             (
                 // Beatleader is not preferred leaderboard
-                BetterSongSearch::UI::DataHolder::preferredLeaderboard != PreferredLeaderBoard::BeatLeader ||
+                BetterSongSearch::UI::DataHolder::preferredLeaderboard != FilterTypes::PreferredLeaderBoard::BeatLeader ||
                 // Song has no BeatLeader rank
-                !hasFlags(rStates, SongDetailsCache::RankedStates::BeatleaderRanked) ||
+                !hasFlags(rStates, RankedStates::BeatleaderRanked) ||
                 // Filtering by SS ranked
-                UI::DataHolder::filterOptionsCache.rankedType == FilterOptions::RankedFilterType::ScoreSaberRanked 
+                UI::DataHolder::filterOptionsCache.rankedType == FilterTypes::RankedFilter::ScoreSaberRanked
             )
         ) {
             return SongDetailsCache::RankedStates::ScoresaberRanked;

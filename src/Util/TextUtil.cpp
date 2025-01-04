@@ -19,6 +19,17 @@ namespace BetterSongSearch::Util {
         return ret;
     }
 
+    std::string join(std::vector<std::string> strings, const std::string_view delimeter) {
+        if (strings.empty()) return "";
+
+        std::string ret;
+        for (size_t i = 0; i < strings.size(); i++) {
+            ret += strings[i];
+            if (i != strings.size() - 1) ret += delimeter;
+        }
+        return ret;
+    }
+
     /**
      * Removes special characters from a string
     */

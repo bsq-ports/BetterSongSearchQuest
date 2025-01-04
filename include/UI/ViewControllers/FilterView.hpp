@@ -31,7 +31,13 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, CloseSponsorModal);
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsLink);
     DECLARE_INSTANCE_METHOD(void, TryToDownloadDataset);
-    
+
+    // @brief Update the global state from the filter settings withouth updating the UI
+    DECLARE_INSTANCE_METHOD(void, UpdateLocalState);
+
+    DECLARE_INSTANCE_METHOD(void, ForceRefreshUI);
+
+    DECLARE_INSTANCE_METHOD(void, ForceFormatValues);
 
     // Header buttons
     DECLARE_INSTANCE_METHOD(void, ClearFilters);

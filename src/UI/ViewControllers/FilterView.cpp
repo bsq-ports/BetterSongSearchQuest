@@ -25,12 +25,12 @@ using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::UI::Util::BSMLStuff;
 
-static const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
+
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
-#define SAVE_STRING_CONFIG(value, options, configName, filterProperty ) \
+#define SAVE_STRING_CONFIG(value, options, configName ) \
     if (value != nullptr) { \
         int index = get_##options()->IndexOf(reinterpret_cast<System::String*> (value.convert())); \
         if (index < 0 ) { \
@@ -39,24 +39,21 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
             if (index != getPluginConfig().configName.GetValue()) { \
                 filtersChanged = true; \
                 getPluginConfig().configName.SetValue(index); \
-                DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) index; \
             } \
         }\
     }
 
-#define SAVE_NUMBER_CONFIG(value, configName, filterProperty) \
+#define SAVE_NUMBER_CONFIG(value, configName) \
     if (value != getPluginConfig().configName.GetValue()) { \
         filtersChanged = true; \
         getPluginConfig().configName.SetValue(value); \
-        DataHolder::filterOptions.filterProperty = (typeof(DataHolder::filterOptions.filterProperty)) value; \
     } \
 
 // TODO: Fix saving last saved
-#define SAVE_INTEGER_CONFIG(value, configName, filterProperty) \
+#define SAVE_INTEGER_CONFIG(value, configName) \
     if (static_cast<int>(value) != getPluginConfig().configName.GetValue()) { \
         filtersChanged = true; \
         getPluginConfig().configName.SetValue(static_cast<int>(value)); \
-        DataHolder::filterOptions.filterProperty = static_cast<int>(value); \
     } \
 
 
@@ -67,45 +64,29 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
     // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
     bool filtersChanged = false;
-//    if (this->existingSongs != nullptr) {
-//        int index = get_downloadedFilterOptions()->IndexOf(reinterpret_cast<System::String*> (this->existingSongs.convert()));
-//        if (index < 0) {
-//            getLogger().fmtLog<Paper::LogLevel::ERR>("WE HAVE A BUG WITH SAVING VALUE {}",
-//                                                     (std::string) this->existingSongs);
-//        }
-//        else {
-//            if (index != getPluginConfig().DownloadType.GetValue()) {
-//                filtersChanged = true;
-//                getPluginConfig().DownloadType.SetValue(index);
-//                DataHolder::filterOptions.downloadType = (typeof(DataHolder::filterOptions.downloadType)) index;
-//            }
-//        }
-//    }
-    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType, downloadType);
-    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType , localScoreType);
 
-    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType, charFilter);
-    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType, difficultyFilter);
-    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType, rankedType);
-    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType, modRequirement);
-    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS, minNJS);
-    SAVE_NUMBER_CONFIG(this->maximumNjs,MaxNJS,  maxNJS);
-    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS, minNPS);
-    SAVE_NUMBER_CONFIG(this->maximumNps,MaxNPS,  maxNPS);
-    SAVE_NUMBER_CONFIG(this->minimumStars,MinStars, minStars);
-    SAVE_NUMBER_CONFIG(this->maximumStars,MaxStars,  maxStars);
-    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating, minRating);
-    SAVE_INTEGER_CONFIG(this->minimumVotes,MinVotes, minVotes);
+    SAVE_STRING_CONFIG(this->existingSongs, downloadedFilterOptions, DownloadType);
+    SAVE_STRING_CONFIG(this->existingScore, scoreFilterOptions, LocalScoreType);
+
+    SAVE_STRING_CONFIG(this->characteristic, characteristics, CharacteristicType);
+    SAVE_STRING_CONFIG(this->difficulty, difficulties, DifficultyType);
+    SAVE_STRING_CONFIG(this->rankedState, rankedFilterOptions, RankedType);
+    SAVE_STRING_CONFIG(this->mods, modOptions, RequirementType);
+    SAVE_NUMBER_CONFIG(this->minimumNjs, MinNJS);
+    SAVE_NUMBER_CONFIG(this->maximumNjs, MaxNJS);
+    SAVE_NUMBER_CONFIG(this->minimumNps, MinNPS);
+    SAVE_NUMBER_CONFIG(this->maximumNps, MaxNPS);
+    SAVE_NUMBER_CONFIG(this->minimumStars, MinStars);
+    SAVE_NUMBER_CONFIG(this->maximumStars, MaxStars);
+    SAVE_NUMBER_CONFIG(this->minimumRating, MinRating);
+    SAVE_INTEGER_CONFIG(this->minimumVotes, MinVotes);
 
     // Special case for saving date
     if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
         filtersChanged = true;
 
-        auto timestamp = GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan).count();
-
-        DataHolder::filterOptions.minUploadDate = timestamp;
-        DataHolder::filterOptions.minUploadDateInMonths = this->hideOlderThan;
-        DEBUG("Date {}", GetDateAfterMonths(DataHolder::filterOptions.BEATSAVER_EPOCH, this->hideOlderThan));
+        auto timestamp = GetDateAfterMonths(BEATSAVER_EPOCH, this->hideOlderThan).count();
+        DEBUG("Date {}", GetDateAfterMonths(BEATSAVER_EPOCH, this->hideOlderThan));
 
         getPluginConfig().MinUploadDate.SetValue(timestamp);
         getPluginConfig().MinUploadDateInMonths.SetValue(this->hideOlderThan);
@@ -116,7 +97,6 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         int seconds = minimumSongLength * 60;
 
         filtersChanged = true;
-        DataHolder::filterOptions.minLength = seconds;
         getPluginConfig().MinLength.SetValue(seconds);
     }
 
@@ -125,7 +105,6 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         int seconds = maximumSongLength * 60;
 
         filtersChanged = true;
-        DataHolder::filterOptions.maxLength = seconds;
         getPluginConfig().MaxLength.SetValue(seconds);
     }
 
@@ -135,48 +114,20 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 
         // Save to config
         getPluginConfig().Uploaders.SetValue(this->uploadersString);
-
-        // Apply to filters
-        std::string copy = uploadersString;
-        if (copy.size() > 0) {
-            if (copy[0] == '!') {
-                copy.erase(0,1);
-                DataHolder::filterOptions.uploadersBlackList = true;
-            } else {
-                DataHolder::filterOptions.uploadersBlackList = false;
-            }
-            DataHolder::filterOptions.uploaders = split(toLower(copy), " ");
-        } else {
-            DataHolder::filterOptions.uploaders.clear();
-        }
     }
-    
-    std::function<std::string(StringW)> uploadersStringFormat = [](std::string value) {
-        bool blacklist = false;
-        if (value.size() > 0) {
-            if (value[0] == '!') {
-                value.erase(0,1);
-                blacklist = true;
-            }
-        } else {
-            return (std::string) "";
-        }
-        auto uploaders = split(value, " ");
-
-        return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
-    };
-
 
     if (filtersChanged) {
         DEBUG("Filters changed");
+
+        // Update filter options state
+        DataHolder::filterOptions.LoadFromConfig();
+
         auto controller = fcInstance->SongListController;
         controller->filterChanged = true;
         controller->SortAndFilterSongs(controller->sort, controller->search, true);
     } else {
         DEBUG("Filters did not change");
     }
-
-
 }
 
 UnityEngine::Sprite* GetBGSprite(std::string str)
@@ -199,29 +150,10 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
         coro(this->_UpdateFilterSettings());
     }, 0.2f);
 
-    INFO("Filter View contoller activated");
+    INFO("Filter View controller activated");
 
-    // Get settings and set stuff
-    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
-    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
-    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
-    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
-    this->minimumNjs = DataHolder::filterOptions.minNJS;
-    this->maximumNjs = DataHolder::filterOptions.maxNJS;
-    this->minimumNps = DataHolder::filterOptions.minNPS;
-    this->maximumNps = DataHolder::filterOptions.maxNPS;
-    this->minimumStars = DataHolder::filterOptions.minStars;
-    this->maximumStars = DataHolder::filterOptions.maxStars;
-    this->minimumRating = DataHolder::filterOptions.minRating;
-    this->minimumVotes = DataHolder::filterOptions.minVotes;
-    this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
-
-    // Custom string loader
-    this->uploadersString = getPluginConfig().Uploaders.GetValue();
-    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
-    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
-    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
-    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
+    // Load the values from the config
+    UpdateLocalState();
 
     // Create bsml view
     BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
@@ -229,15 +161,14 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     auto x = this->get_gameObject()->get_transform().cast<UnityEngine::RectTransform>();
     x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
 
-    auto maxUploadDate = BetterSongSearch::GetMonthsSinceDate(FilterOptions::BEATSAVER_EPOCH);
+    auto maxUploadDate = BetterSongSearch::GetMonthsSinceDate(BEATSAVER_EPOCH);
 
     coro(BetterSongSearch::UI::Util::BSMLStuff::MergeSliders(this->get_gameObject()));
-
 
     // Apply formatter functions Manually cause Red did not implement parsing for them in bsml
     std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
-        auto val = BetterSongSearch::GetTimepointAfterMonths(FilterOptions::BEATSAVER_EPOCH,monthsSinceFirstUpload);
+        auto val = BetterSongSearch::GetTimepointAfterMonths(BEATSAVER_EPOCH,monthsSinceFirstUpload);
         return fmt::format("{:%b:%Y}", fmt::localtime(system_clock::to_time_t(val)));
     };
 
@@ -265,7 +196,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     }
 
     // Format other values
-    std::function<std::string(float)> minLengthSliderFormatFunction = [](float value) {
+    std::function minLengthSliderFormatFunction = [](float value) {
         float totalSeconds = value * 60;
         int minutes = ((int)totalSeconds % 3600) / 60;
         int seconds = (int)totalSeconds % 60;
@@ -276,12 +207,12 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     minimumSongLengthSlider->formatter = minLengthSliderFormatFunction;
 
     // Max length format
-    std::function<std::string(float)> maxLengthSliderFormatFunction = [](float value) {
+    std::function maxLengthSliderFormatFunction = [](float value) {
         float totalSeconds = value * 60;
         int minutes = ((int)totalSeconds % 3600) / 60;
         int seconds = (int)totalSeconds % 60;
 
-        if (value >= DataHolder::filterOptions.SONG_LENGTH_FILTER_MAX) {
+        if (value >= SONG_LENGTH_FILTER_MAX) {
             return (std::string) "Unlimited";
         } else {
             return fmt::format("{:02}:{:02}", minutes, seconds);
@@ -290,17 +221,17 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     maximumSongLengthSlider->formatter = maxLengthSliderFormatFunction;
 
     // Min rating format
-    std::function<std::string(float)> minRatingSliderFormatFunction = [](float value) {
+    std::function minRatingSliderFormatFunction = [](float value) {
         return fmt::format("{:.1f}%", value*100);
     };
     minimumRatingSlider->formatter = minRatingSliderFormatFunction;
 
     // NJS format
-    std::function<std::string(float)> minNJSFormat = [](float value) {
+    std::function minNJSFormat = [](float value) {
             return fmt::format("{:.1f}", value);
     };
-    std::function<std::string(float)> maxNJSFormat = [](float value) {
-        if (value >= DataHolder::filterOptions.NJS_FILTER_MAX) {
+    std::function maxNJSFormat = [](float value) {
+        if (value >= NJS_FILTER_MAX) {
             return  (std::string)  "Unlimited";
         }
         return fmt::format("{:.1f}", value);
@@ -309,11 +240,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     maximumNjsSlider->formatter = maxNJSFormat;
     
     // NPS format
-    std::function<std::string(float)> minNPSFormat = [](float value) {
+    std::function minNPSFormat = [](float value) {
         return fmt::format("{:.1f}", value);
     };
-    std::function<std::string(float)> maxNPSFormat = [](float value) {
-        if (value >= DataHolder::filterOptions.NPS_FILTER_MAX) {
+    std::function maxNPSFormat = [](float value) {
+        if (value >= NPS_FILTER_MAX) {
             return  (std::string)  "Unlimited";
         }
         return fmt::format("{:.1f}", value);
@@ -322,18 +253,18 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     maximumNpsSlider->formatter = maxNPSFormat;
 
     // Stars formatting
-    std::function<std::string(float)> minStarFormat = [](float value) {
+    std::function minStarFormat = [](float value) {
         return fmt::format("{:.1f}", value);
     };
-    std::function<std::string(float)> maxStarFormat = [](float value) {
-        if (value >= FilterOptions::STAR_FILTER_MAX) {
+    std::function maxStarFormat = [](float value) {
+        if (value >= STAR_FILTER_MAX) {
             return  (std::string)  "Unlimited";
         }
         return fmt::format("{:.1f}", value);
     };
     minStarsSetting->formatter = minStarFormat;
     maxStarsSetting->formatter = maxStarFormat;
-    std::function<std::string(float)> minimumVotesFormat = [](float value) {
+    std::function minimumVotesFormat = [](float value) {
         return fmt::format("{}", (int) value);
     };
     minimumVotesSlider->formatter = minimumVotesFormat;
@@ -356,6 +287,18 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     uploadersStringControl->formatter = uploadersStringFormat;
 
+    ForceFormatValues();
+    
+    // I hate BSML sometimes
+    auto m = modsRequirementDropdown->dropdown->____modalView;
+    m->get_transform().cast<RectTransform>()->set_pivot(Vector2(0.5f, 0.3f));
+
+    #ifdef HotReload
+        fileWatcher->filePath = "/sdcard/FilterView.bsml";
+    #endif
+}
+
+void ViewControllers::FilterViewController::ForceFormatValues() {
     // Force format values
     FormatSliderSettingValue(this->minStarsSetting);
     FormatSliderSettingValue(this->maxStarsSetting);
@@ -368,14 +311,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     FormatSliderSettingValue(this->minimumRatingSlider);
     FormatSliderSettingValue(this->minimumVotesSlider);
     FormatStringSettingValue(this->uploadersStringControl);
-    
-    // I hate BSML some times
-    auto m = modsRequirementDropdown->dropdown->____modalView;
-    m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
-
-    #ifdef HotReload
-        fileWatcher->filePath = "/sdcard/FilterView.bsml";
-    #endif
 }
 
 void ViewControllers::FilterViewController::UpdateFilterSettings()
@@ -399,67 +334,9 @@ void ViewControllers::FilterViewController::OpenSponsorsLink()
 }
 
 
-// Top buttons
-void ViewControllers::FilterViewController::ClearFilters()
-{
-    DEBUG("ClearFilters FIRED");
 
-    // Reset config
-    getPluginConfig().DownloadType.SetValue(getPluginConfig().DownloadType.GetDefaultValue());
-    getPluginConfig().LocalScoreType.SetValue(getPluginConfig().LocalScoreType.GetDefaultValue());
-    getPluginConfig().CharacteristicType.SetValue(getPluginConfig().CharacteristicType.GetDefaultValue());
-    getPluginConfig().RankedType.SetValue(getPluginConfig().RankedType.GetDefaultValue());
-    getPluginConfig().DifficultyType.SetValue(getPluginConfig().DifficultyType.GetDefaultValue());
-    getPluginConfig().RequirementType.SetValue(getPluginConfig().RequirementType.GetDefaultValue());
-
-    getPluginConfig().MinLength.SetValue(getPluginConfig().MinLength.GetDefaultValue());
-    getPluginConfig().MaxLength.SetValue(getPluginConfig().MaxLength.GetDefaultValue());
-    getPluginConfig().MinNJS.SetValue(getPluginConfig().MinNJS.GetDefaultValue());
-    getPluginConfig().MaxNJS.SetValue(getPluginConfig().MaxNJS.GetDefaultValue());
-    getPluginConfig().MinNPS.SetValue(getPluginConfig().MinNPS.GetDefaultValue());
-    getPluginConfig().MaxNPS.SetValue(getPluginConfig().MaxNPS.GetDefaultValue());
-    getPluginConfig().MinStars.SetValue(getPluginConfig().MinStars.GetDefaultValue());
-    getPluginConfig().MaxStars.SetValue(getPluginConfig().MaxStars.GetDefaultValue());
-    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
-    getPluginConfig().MinRating.SetValue(getPluginConfig().MinRating.GetDefaultValue());
-    getPluginConfig().MinVotes.SetValue(getPluginConfig().MinVotes.GetDefaultValue());
-    getPluginConfig().Uploaders.SetValue(getPluginConfig().Uploaders.GetDefaultValue());
-    getPluginConfig().MinUploadDateInMonths.SetValue(getPluginConfig().MinUploadDateInMonths.GetDefaultValue());
-    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
-    
-
-    // Load to dataHolder
-    DataHolder::filterOptions.downloadType = (FilterOptions::DownloadFilterType) getPluginConfig().DownloadType.GetValue();
-    DataHolder::filterOptions.localScoreType = (FilterOptions::LocalScoreFilterType) getPluginConfig().LocalScoreType.GetValue();
-    DataHolder::filterOptions.charFilter = (FilterOptions::CharFilterType) getPluginConfig().CharacteristicType.GetValue();
-    DataHolder::filterOptions.rankedType = (FilterOptions::RankedFilterType) getPluginConfig().RankedType.GetValue();
-    DataHolder::filterOptions.difficultyFilter = (FilterOptions::DifficultyFilterType) getPluginConfig().DifficultyType.GetValue();
-    DataHolder::filterOptions.modRequirement = (FilterOptions::RequirementType) getPluginConfig().RequirementType.GetValue();
-    DataHolder::filterOptions.minLength = getPluginConfig().MinLength.GetValue();
-    DataHolder::filterOptions.maxLength = getPluginConfig().MaxLength.GetValue();
-    DataHolder::filterOptions.minNJS = getPluginConfig().MinNJS.GetValue();
-    DataHolder::filterOptions.maxNJS = getPluginConfig().MaxNJS.GetValue();
-    DataHolder::filterOptions.minNPS = getPluginConfig().MinNPS.GetValue();
-    DataHolder::filterOptions.maxNPS = getPluginConfig().MaxNPS.GetValue();
-    DataHolder::filterOptions.minStars = getPluginConfig().MinStars.GetValue();
-    DataHolder::filterOptions.maxStars = getPluginConfig().MaxStars.GetValue();
-    DataHolder::filterOptions.minUploadDate = getPluginConfig().MinUploadDate.GetValue();
-    DataHolder::filterOptions.minRating = getPluginConfig().MinRating.GetValue();
-    DataHolder::filterOptions.minVotes = getPluginConfig().MinVotes.GetValue();
-    auto uploadersString = getPluginConfig().Uploaders.GetValue();
-    if (uploadersString.size() > 0) {
-        if (uploadersString[0] == '!') {
-            uploadersString.erase(0,1);
-            DataHolder::filterOptions.uploadersBlackList = true;
-        } else {
-            DataHolder::filterOptions.uploadersBlackList = false;
-        }
-        DataHolder::filterOptions.uploaders = split(toLower(uploadersString), " ");
-    } else {
-        DataHolder::filterOptions.uploaders.clear();
-    }
-
-    // Load to UI
+void ViewControllers::FilterViewController::UpdateLocalState() {
+    // Load from dataHolder
     this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
     this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
     this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
@@ -477,10 +354,13 @@ void ViewControllers::FilterViewController::ClearFilters()
     this->maximumStars = DataHolder::filterOptions.maxStars;
     this->minimumRating = DataHolder::filterOptions.minRating;
     this->minimumVotes = DataHolder::filterOptions.minVotes;
+
+    // TODO: Maybe save it to the preset too
     this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
     this->uploadersString = getPluginConfig().Uploaders.GetValue();
+}
 
-
+void ViewControllers::FilterViewController::ForceRefreshUI() {
     // Refresh UI
     // Force format values
     SetSliderSettingValue(this->minimumSongLengthSlider, this->minimumSongLength);
@@ -501,6 +381,43 @@ void ViewControllers::FilterViewController::ClearFilters()
     characteristicDropdown->set_Value(reinterpret_cast<System::String*> (this->characteristic.convert()));
     difficultyDropdown->set_Value(reinterpret_cast<System::String*> (this->difficulty.convert()));
     modsRequirementDropdown->set_Value(reinterpret_cast<System::String*> (this->mods.convert()));
+}
+
+// Top buttons
+void ViewControllers::FilterViewController::ClearFilters()
+{
+    DEBUG("ClearFilters FIRED");
+
+    // Reset config
+    getPluginConfig().DownloadType.SetValue(getPluginConfig().DownloadType.GetDefaultValue());
+    getPluginConfig().LocalScoreType.SetValue(getPluginConfig().LocalScoreType.GetDefaultValue());
+    getPluginConfig().CharacteristicType.SetValue(getPluginConfig().CharacteristicType.GetDefaultValue());
+    getPluginConfig().RankedType.SetValue(getPluginConfig().RankedType.GetDefaultValue());
+    getPluginConfig().DifficultyType.SetValue(getPluginConfig().DifficultyType.GetDefaultValue());
+    getPluginConfig().RequirementType.SetValue(getPluginConfig().RequirementType.GetDefaultValue());
+    getPluginConfig().MinLength.SetValue(getPluginConfig().MinLength.GetDefaultValue());
+    getPluginConfig().MaxLength.SetValue(getPluginConfig().MaxLength.GetDefaultValue());
+    getPluginConfig().MinNJS.SetValue(getPluginConfig().MinNJS.GetDefaultValue());
+    getPluginConfig().MaxNJS.SetValue(getPluginConfig().MaxNJS.GetDefaultValue());
+    getPluginConfig().MinNPS.SetValue(getPluginConfig().MinNPS.GetDefaultValue());
+    getPluginConfig().MaxNPS.SetValue(getPluginConfig().MaxNPS.GetDefaultValue());
+    getPluginConfig().MinStars.SetValue(getPluginConfig().MinStars.GetDefaultValue());
+    getPluginConfig().MaxStars.SetValue(getPluginConfig().MaxStars.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    getPluginConfig().MinRating.SetValue(getPluginConfig().MinRating.GetDefaultValue());
+    getPluginConfig().MinVotes.SetValue(getPluginConfig().MinVotes.GetDefaultValue());
+    getPluginConfig().Uploaders.SetValue(getPluginConfig().Uploaders.GetDefaultValue());
+    getPluginConfig().MinUploadDateInMonths.SetValue(getPluginConfig().MinUploadDateInMonths.GetDefaultValue());
+    getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+
+    // Load to dataHolder
+    DataHolder::filterOptions.LoadFromConfig();
+
+    // Refresh FilterView state from settings and DataHolder
+    UpdateLocalState();
+
+    // Force refresh UI
+    ForceRefreshUI();
 
     DEBUG("Filters changed");
     auto controller = fcInstance->SongListController;
@@ -511,8 +428,6 @@ void ViewControllers::FilterViewController::ShowPresets()
 {
     DEBUG("ShowPresets FIRED");
 }
-
-
 
 // StringW ViewControllers::FilterViewController::DateTimeToStr(int d) {
 //     // FilterView.hideOlderThanOptions[d].ToString("MMM yyyy", CultureInfo.InvariantCulture);

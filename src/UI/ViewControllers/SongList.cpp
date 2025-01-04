@@ -87,21 +87,18 @@ const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard
 const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
 const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
 
-const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{
-        std::chrono::seconds(FilterOptions::BEATSAVER_EPOCH)};
-
 
 std::string prevSearch;
-SortMode prevSort = (SortMode) 0;
+FilterTypes::SortMode prevSort = FilterTypes::SortMode::Newest;
 
 using SortFunction = std::function<float(SongDetailsCache::Song const *)>;
 
 //////////////////// UTILS //////////////////////
 bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
-    auto const &filterOptions = DataHolder::filterOptionsCache;
+    auto& filterOptions = DataHolder::filterOptionsCache;
     std::string songHash = song->hash();
 
-    if (filterOptions.uploaders.size() != 0) {
+    if (!filterOptions.uploaders.empty()) {
         if (std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(),
                       removeSpecialCharacter(toLower(song->uploaderName()))) != filterOptions.uploaders.end()) {
             if (filterOptions.uploadersBlackList)
@@ -121,23 +118,23 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
     if (((int) song->upvotes + (int) song->downvotes) < filterOptions.minVotes) return false;
 
     // Skip if not needed
-    if (filterOptions.localScoreType != FilterOptions::LocalScoreFilterType::All) {
+    if (filterOptions.localScoreType != FilterTypes::LocalScoreFilter::All) {
         bool hasLocalScore = false;
         if (DataHolder::songsWithScores.contains(songHash)) {
             hasLocalScore = true;
         }
         if (hasLocalScore) {
-            if (filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::HidePassed)
+            if (filterOptions.localScoreType == FilterTypes::LocalScoreFilter::HidePassed)
                 return false;
         } else {
-            if (filterOptions.localScoreType == FilterOptions::LocalScoreFilterType::OnlyPassed)
+            if (filterOptions.localScoreType == FilterTypes::LocalScoreFilter::OnlyPassed)
                 return false;
         }
     }
 
-    if (filterOptions.rankedType != FilterOptions::RankedFilterType::ShowAll) {
+    if (filterOptions.rankedType != FilterTypes::RankedFilter::ShowAll) {
         // if not the ranked that we want, skip
-        if (!hasFlags(song->rankedStates, rankMap.at(filterOptions.rankedType))) {
+        if (!hasFlags(song->rankedStates, RANK_MAP.at(filterOptions.rankedType))) {
             return false;
         }
     }
@@ -160,13 +157,13 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
 
 
     // This is the most heavy filter, check it last
-    if (filterOptions.downloadType != FilterOptions::DownloadFilterType::All) {
+    if (filterOptions.downloadType != FilterTypes::DownloadFilter::All) {
         bool downloaded = SongCore::API::Loading::GetLevelByHash(songHash) != nullptr;
         if (downloaded) {
-            if (filterOptions.downloadType == FilterOptions::DownloadFilterType::HideDownloaded)
+            if (filterOptions.downloadType == FilterTypes::DownloadFilter::HideDownloaded)
                 return false;
         } else {
-            if (filterOptions.downloadType == FilterOptions::DownloadFilterType::OnlyDownloaded)
+            if (filterOptions.downloadType == FilterTypes::DownloadFilter::OnlyDownloaded)
                 return false;
         }
     }
@@ -177,20 +174,20 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
 bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficulty *diff,
                                            const SongDetailsCache::Song *song) {
     auto const &currentFilter = DataHolder::filterOptionsCache;
-    if (currentFilter.skipFilter) {
+    if (currentFilter.isDefaultPreprocessed) {
         return true;
     }
 
 
-    if (currentFilter.rankedType != FilterOptions::RankedFilterType::ShowAll) {
+    if (currentFilter.rankedType != FilterTypes::RankedFilter::ShowAll) {
         // if not the ranked that we want, skip
-        if (!hasFlags(song->rankedStates, rankMap.at(currentFilter.rankedType))) {
+        if (!hasFlags(song->rankedStates, RANK_MAP.at(currentFilter.rankedType))) {
             return false;
         }
     }
 
     // Min and max stars
-    if (currentFilter.maxStars != FilterOptions::STAR_FILTER_MAX) {
+    if (currentFilter.maxStars != STAR_FILTER_MAX) {
         if (getStars(diff) > currentFilter.maxStars) {
             return false;
         }
@@ -201,13 +198,13 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
         }
     }
 
-    if (currentFilter.difficultyFilter != FilterOptions::DifficultyFilterType::All) {
+    if (currentFilter.difficultyFilter != FilterTypes::DifficultyFilter::All) {
         if (diff->difficulty != currentFilter.difficultyFilterPreprocessed) {
             return false;
         }
     }
 
-    if (currentFilter.charFilter != FilterOptions::CharFilterType::All) {
+    if (currentFilter.charFilter != FilterTypes::CharFilter::All) {
         if (diff->characteristic != currentFilter.charFilterPreprocessed) {
             return false;
         }
@@ -216,21 +213,21 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     if (diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    if (currentFilter.modRequirement != FilterOptions::RequirementType::Any) {
+    if (currentFilter.modRequirement != FilterTypes::Requirement::Any) {
         switch (currentFilter.modRequirement) {
-            case FilterOptions::RequirementType::Chroma:
+            case FilterTypes::Requirement::Chroma:
                 if (!hasFlags(diff->mods, MapMods::Chroma)) return false;
                 break;
-            case FilterOptions::RequirementType::Cinema:
+            case FilterTypes::Requirement::Cinema:
                 if (!hasFlags(diff->mods, MapMods::Cinema)) return false;
                 break;
-            case FilterOptions::RequirementType::MappingExtensions:
+            case FilterTypes::Requirement::MappingExtensions:
                 if (!hasFlags(diff->mods, MapMods::MappingExtensions)) return false;
                 break;
-            case FilterOptions::RequirementType::NoodleExtensions:
+            case FilterTypes::Requirement::NoodleExtensions:
                 if (!hasFlags(diff->mods, MapMods::NoodleExtensions)) return false;
                 break;
-            case FilterOptions::RequirementType::None:
+            case FilterTypes::Requirement::None:
                 if (!((diff->mods & (MapMods::NE | MapMods::ME)) == MapMods::None)) return false;
                 break;
             default:
@@ -249,23 +246,23 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
 }
 
 
-std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
-        {SortMode::Newest,        [](const SongDetailsCache::Song *x) // Newest
+std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap = {
+        {FilterTypes::SortMode::Newest,        [](const SongDetailsCache::Song *x) // Newest
                                   {
                                       return (x->uploadTimeUnix);
                                   }},
-        {SortMode::Oldest,        [](const SongDetailsCache::Song *x) // Oldest
+        {FilterTypes::SortMode::Oldest,        [](const SongDetailsCache::Song *x) // Oldest
                                   {
                                       return (std::numeric_limits<uint32_t>::max() - x->uploadTimeUnix);
                                   }},
-        {SortMode::Latest_Ranked, [](const SongDetailsCache::Song *x) // Latest Ranked
+        {FilterTypes::SortMode::Latest_Ranked, [](const SongDetailsCache::Song *x) // Latest Ranked
                                   {
                                       return (hasFlags(x->rankedStates,
                                                        (SongDetailsCache::RankedStates::BeatleaderRanked |
                                                         SongDetailsCache::RankedStates::ScoresaberRanked)))
                                              ? x->rankedChangeUnix : 0.0f;
                                   }},
-        {SortMode::Most_Stars,    [](const SongDetailsCache::Song *x) // Most Stars
+        {FilterTypes::SortMode::Most_Stars,    [](const SongDetailsCache::Song *x) // Most Stars
                                   {
                                       return x->max([x](const auto &diff) {
                                           bool passesFilter = DifficultyCheck(&diff, x);
@@ -276,7 +273,7 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                                           }
                                       });
                                   }},
-        {SortMode::Least_Stars,   [](const SongDetailsCache::Song *x) // Least Stars
+        {FilterTypes::SortMode::Least_Stars,   [](const SongDetailsCache::Song *x) // Least Stars
                                   {
                                       return 420.0f - x->min([x](const auto &diff) {
                                           bool passesFilter = DifficultyCheck(&diff, x);
@@ -287,11 +284,11 @@ std::unordered_map<SortMode, SortFunction> sortFunctionMap = {
                                           }
                                       });
                                   }},
-        {SortMode::Best_rated,    [](const SongDetailsCache::Song *x) // Best rated
+        {FilterTypes::SortMode::Best_rated,    [](const SongDetailsCache::Song *x) // Best rated
                                   {
                                       return x->rating();
                                   }},
-        {SortMode::Worst_rated,   [](const SongDetailsCache::Song *x)//Worst rated
+        {FilterTypes::SortMode::Worst_rated,   [](const SongDetailsCache::Song *x)//Worst rated
                                   {
                                       return 420.0f - (x->rating() != 0 ? x->rating() : 420.0f);
                                   }}
@@ -323,7 +320,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     bool currentSearchChanged = prevSearch != search;
 
     // Take a snapshot of current filter options
-    DataHolder::filterOptionsCache.cache(DataHolder::filterOptions);
+    DataHolder::filterOptionsCache = DataHolder::filterOptions;
 
     DEBUG("SEARCHING Cache");
     DEBUG("Sort: {}", SortToString((int) sort));
@@ -422,7 +419,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
             DEBUG("Filtering");
             int totalSongs = DataHolder::songDetails->songs.size();
             DataHolder::filteredSongList.clear();
-            if (DataHolder::filterOptionsCache.skipFilter) {
+            if (DataHolder::filterOptionsCache.IsDefault()) {
                 DEBUG("Filtering skipped");
                 DataHolder::filteredSongList.reserve(totalSongs);
                 for (auto &song: DataHolder::songDetails->songs) {
@@ -874,7 +871,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     auto sortMode = getPluginConfig().SortMode.GetValue();
     if (sortMode < get_sortModeSelections()->get_Count()) {
         selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
-        sort = (SortMode) sortMode;
+        sort = (FilterTypes::SortMode) sortMode;
     }
 
     BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
@@ -1015,7 +1012,7 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateData
     bool filtersChanged = false;
 
 
-    SortMode sort = prevSort;
+    FilterTypes::SortMode sort = prevSort;
     if (selectedSortMode != nullptr) {
         int index = get_sortModeSelections()->IndexOf(reinterpret_cast<System::String *> (selectedSortMode.convert()));
         if (index < 0) {}
@@ -1023,7 +1020,7 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateData
             if (index != getPluginConfig().SortMode.GetValue()) {
                 filtersChanged = true;
                 getPluginConfig().SortMode.SetValue(index);
-                sort = (SortMode) index;
+                sort = (FilterTypes::SortMode) index;
             }
         }
     }
@@ -1387,15 +1384,12 @@ void ViewControllers::SongListController::UpdateSearch() {
 
 }
 
-void
-ViewControllers::SongListController::SortAndFilterSongs(SortMode sort, std::string_view const search, bool resetTable) {
+void ViewControllers::SongListController::SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view const search, bool resetTable) {
     // Skip if not active 
-    if (get_isActiveAndEnabled() == false) {
-        return;
-    }
+    if (!get_isActiveAndEnabled()) return;
+
     this->sort = sort;
     this->search = search;
-
     this->UpdateSearchedSongsList();
 }
 

@@ -45,6 +45,7 @@
     DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
 #endif
 
+using namespace BetterSongSearch;
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
@@ -66,30 +67,29 @@ namespace BetterSongSearch::UI {
         inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
 
         // State variables to be globally accessible
-        inline static SortMode currentSort = SortMode::Newest;
+        inline static FilterTypes::SortMode currentSort = FilterTypes::SortMode::Newest;
         inline static std::string currentSearch = "";
 
         inline static std::unordered_set<std::string> songsWithScores;
 
-        inline static FilterOptions filterOptions;
-        inline static FilterOptionsCache filterOptionsCache;
+        inline static FilterProfile filterOptions;
+        inline static FilterProfile filterOptionsCache;
         /// @brief Player data model to get the scores
         inline static UnityW<GlobalNamespace::PlayerDataModel> playerDataModel = nullptr;
 
         // Preferred Leaderboard
-        inline static PreferredLeaderBoard preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
+        inline static FilterTypes::PreferredLeaderBoard preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
 
         /// @brief Song data is loaded
         inline static bool loaded = false;
         /// @brief Song data failed to load
         inline static bool failed = false;
-        // Song data is loading 
+        // Song data is loading
         inline static bool loading = false;
         /// @brief Flag to say that the song list needs a refresh when the user opens the BSS because the data got updated
         inline static bool needsRefresh = false;
         // Song list is invalid (means that we should not touch anything in the song list rn)
         inline static bool invalid = false;
-
     };
 
 #define PROP_GET(jsonName, varName)                                \
@@ -127,7 +127,7 @@ namespace BetterSongSearch::UI {
 }
 
 using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
-extern std::unordered_map<SortMode, SortFunction> sortFunctionMap;
+extern std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap;
 
 #ifdef HotReload
 DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
@@ -228,7 +228,7 @@ public:
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;
 
-    void SortAndFilterSongs(SortMode sort, std::string_view search, bool resetTable);
+    void SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
     const SongDetailsCache::Song* currentSong = nullptr;
     void UpdateDetails();
@@ -236,10 +236,10 @@ public:
 
     // Temp values
     std::string search = "";
-    SortMode sort = (SortMode) 0;
+    FilterTypes::SortMode sort = (FilterTypes::SortMode) 0;
     // Prev values
     std::string prevSearch = "";
-    SortMode prevSort = (SortMode) 0;
+    FilterTypes::SortMode prevSort = (FilterTypes::SortMode) 0;
     
     bool filterChanged = true;
 
