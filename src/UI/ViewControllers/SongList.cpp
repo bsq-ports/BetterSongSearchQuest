@@ -119,23 +119,24 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
     if (((int) song->upvotes + (int) song->downvotes) < filterOptions.minVotes) return false;
 
     // Skip if not needed
-    if (filterOptions.localScoreType != FilterTypes::LocalScoreFilter::All) {
+    auto localScoreType = static_cast<FilterTypes::LocalScoreFilter>(filterOptions.localScoreType);
+    if (localScoreType != FilterTypes::LocalScoreFilter::All) {
         bool hasLocalScore = false;
         if (DataHolder::songsWithScores.contains(songHash)) {
             hasLocalScore = true;
         }
         if (hasLocalScore) {
-            if (filterOptions.localScoreType == FilterTypes::LocalScoreFilter::HidePassed)
+            if (localScoreType == FilterTypes::LocalScoreFilter::HidePassed)
                 return false;
         } else {
-            if (filterOptions.localScoreType == FilterTypes::LocalScoreFilter::OnlyPassed)
+            if (localScoreType == FilterTypes::LocalScoreFilter::OnlyPassed)
                 return false;
         }
     }
 
-    if (filterOptions.rankedType != FilterTypes::RankedFilter::ShowAll) {
+    if (static_cast<FilterTypes::RankedFilter>(filterOptions.rankedType) != FilterTypes::RankedFilter::ShowAll) {
         // if not the ranked that we want, skip
-        if (!hasFlags(song->rankedStates, RANK_MAP.at(filterOptions.rankedType))) {
+        if (!hasFlags(song->rankedStates, RANK_MAP.at(static_cast<FilterTypes::RankedFilter>(filterOptions.rankedType)))) {
             return false;
         }
     }
@@ -158,13 +159,13 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
 
 
     // This is the most heavy filter, check it last
-    if (filterOptions.downloadType != FilterTypes::DownloadFilter::All) {
+    if (static_cast<FilterTypes::DownloadFilter>(filterOptions.downloadType) != FilterTypes::DownloadFilter::All) {
         bool downloaded = SongCore::API::Loading::GetLevelByHash(songHash) != nullptr;
         if (downloaded) {
-            if (filterOptions.downloadType == FilterTypes::DownloadFilter::HideDownloaded)
+            if (static_cast<FilterTypes::DownloadFilter>(filterOptions.downloadType) == FilterTypes::DownloadFilter::HideDownloaded)
                 return false;
         } else {
-            if (filterOptions.downloadType == FilterTypes::DownloadFilter::OnlyDownloaded)
+            if (static_cast<FilterTypes::DownloadFilter>(filterOptions.downloadType) == FilterTypes::DownloadFilter::OnlyDownloaded)
                 return false;
         }
     }
@@ -180,9 +181,9 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     }
 
 
-    if (currentFilter.rankedType != FilterTypes::RankedFilter::ShowAll) {
+    if (static_cast<FilterTypes::RankedFilter>(currentFilter.rankedType) != FilterTypes::RankedFilter::ShowAll) {
         // if not the ranked that we want, skip
-        if (!hasFlags(song->rankedStates, RANK_MAP.at(currentFilter.rankedType))) {
+        if (!hasFlags(song->rankedStates, RANK_MAP.at(static_cast<FilterTypes::RankedFilter>(currentFilter.rankedType)))) {
             return false;
         }
     }
@@ -199,13 +200,13 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
         }
     }
 
-    if (currentFilter.difficultyFilter != FilterTypes::DifficultyFilter::All) {
+    if (static_cast<FilterTypes::DifficultyFilter>(currentFilter.difficultyFilter) != FilterTypes::DifficultyFilter::All) {
         if (diff->difficulty != currentFilter.difficultyFilterPreprocessed) {
             return false;
         }
     }
 
-    if (currentFilter.charFilter != FilterTypes::CharFilter::All) {
+    if (static_cast<FilterTypes::CharFilter>(currentFilter.charFilter) != FilterTypes::CharFilter::All) {
         if (diff->characteristic != currentFilter.charFilterPreprocessed) {
             return false;
         }
@@ -214,8 +215,8 @@ bool BetterSongSearch::UI::DifficultyCheck(const SongDetailsCache::SongDifficult
     if (diff->njs < currentFilter.minNJS || diff->njs > currentFilter.maxNJS)
         return false;
 
-    if (currentFilter.modRequirement != FilterTypes::Requirement::Any) {
-        switch (currentFilter.modRequirement) {
+    if (static_cast<FilterTypes::Requirement>(currentFilter.modRequirement) != FilterTypes::Requirement::Any) {
+        switch (static_cast<FilterTypes::Requirement>(currentFilter.modRequirement)) {
             case FilterTypes::Requirement::Chroma:
                 if (!hasFlags(diff->mods, MapMods::Chroma)) return false;
                 break;
@@ -322,6 +323,9 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
 
     // Take a snapshot of current filter options
     DataHolder::filterOptionsCache = DataHolder::filterOptions;
+    
+    // Calculate temp values
+    DataHolder::filterOptionsCache.RecalculatePreprocessedValues();
 
     DEBUG("SEARCHING Cache");
     DEBUG("Sort: {}", SortToString((int) sort));

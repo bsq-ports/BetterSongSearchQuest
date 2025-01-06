@@ -9,12 +9,12 @@
 
 namespace BetterSongSearch {
     DECLARE_JSON_CLASS(FilterProfile,
-        VALUE_DEFAULT(FilterTypes::DownloadFilter, downloadType, FilterTypes::DownloadFilter::All);
-        VALUE_DEFAULT(FilterTypes::LocalScoreFilter, localScoreType, FilterTypes::LocalScoreFilter::All);
-        VALUE_DEFAULT(FilterTypes::RankedFilter, rankedType, FilterTypes::RankedFilter::ShowAll);
-        VALUE_DEFAULT(FilterTypes::DifficultyFilter, difficultyFilter, FilterTypes::DifficultyFilter::All);
-        VALUE_DEFAULT(FilterTypes::CharFilter, charFilter, FilterTypes::CharFilter::All);
-        VALUE_DEFAULT(FilterTypes::Requirement, modRequirement, FilterTypes::Requirement::Any);
+        VALUE_DEFAULT(int, downloadType, (int)FilterTypes::DownloadFilter::All);
+        VALUE_DEFAULT(int, localScoreType, (int)FilterTypes::LocalScoreFilter::All);
+        VALUE_DEFAULT(int, rankedType, (int)FilterTypes::RankedFilter::ShowAll);
+        VALUE_DEFAULT(int, difficultyFilter, (int)FilterTypes::DifficultyFilter::All);
+        VALUE_DEFAULT(int, charFilter, (int)FilterTypes::CharFilter::All);
+        VALUE_DEFAULT(int, modRequirement, (int)FilterTypes::Requirement::Any);
 
         VALUE_DEFAULT(float, minLength, 0);
         VALUE_DEFAULT(float, maxLength, 900);
@@ -34,7 +34,25 @@ namespace BetterSongSearch {
         VALUE_DEFAULT(bool, uploadersBlackList, false);
 
         public:
+
+            // Because RapidJSON does not support enums... we have to make methods to convert them to/from int
+            FilterTypes::DownloadFilter getDownloadType() { return (FilterTypes::DownloadFilter) downloadType; };
+            FilterTypes::LocalScoreFilter getLocalScoreType() { return (FilterTypes::LocalScoreFilter) localScoreType; };
+            FilterTypes::RankedFilter getRankedType() { return (FilterTypes::RankedFilter) rankedType; };
+            FilterTypes::DifficultyFilter getDifficultyFilter() { return (FilterTypes::DifficultyFilter) difficultyFilter; };
+            FilterTypes::CharFilter getCharFilter() { return (FilterTypes::CharFilter) charFilter; };
+            FilterTypes::Requirement getModRequirement() { return (FilterTypes::Requirement) modRequirement; };
+            void setDownloadType(FilterTypes::DownloadFilter value) { downloadType = (int) value; };
+            void setLocalScoreType(FilterTypes::LocalScoreFilter value) { localScoreType = (int) value; };
+            void setRankedType(FilterTypes::RankedFilter value) { rankedType = (int) value; };
+            void setDifficultyFilter(FilterTypes::DifficultyFilter value) { difficultyFilter = (int) value; };
+            void setCharFilter(FilterTypes::CharFilter value) { charFilter = (int) value; };
+            void setModRequirement(FilterTypes::Requirement value) { modRequirement = (int) value; };
+
+
+            // This value is valid only if the related filter is not set to "All" and recalculated
             SongDetailsCache::MapCharacteristic charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
+            // This value is valid only if the related filter is not set to "All" and recalculated
             SongDetailsCache::MapDifficulty difficultyFilterPreprocessed = SongDetailsCache::MapDifficulty::Easy;
 
             bool isDefaultPreprocessed = true;
@@ -42,7 +60,7 @@ namespace BetterSongSearch {
             // @brief Checks if the profile is the default profile (no filters)
             bool IsDefault();
 
-            // @brief Recalculates preprocessed values
+            // @brief Recalculates preprocessed values (variables that are used in search)
             void RecalculatePreprocessedValues();
 
             // @brief Loads the profile from the mod config
@@ -50,6 +68,8 @@ namespace BetterSongSearch {
 
             // @brief Saves the profile to the mod config
             void SaveToConfig();
+
+            void PrintToDebug();
 
             // @brief Saves the profile to a preset
             // @param presetName The name of the preset to save

@@ -11,45 +11,45 @@ using namespace BetterSongSearch::Util;
 
 bool BetterSongSearch::FilterProfile::IsDefault(){
     return ( 
-        downloadType == FilterTypes::DownloadFilter::All &&
-        localScoreType ==  FilterTypes::LocalScoreFilter::All &&
+        downloadType == (int)FilterTypes::DownloadFilter::All &&
+        localScoreType ==  (int)FilterTypes::LocalScoreFilter::All &&
         (maxLength / 60 >= SONG_LENGTH_FILTER_MAX) && 
         (minLength == 0) &&
         minNJS == 0 && 
         maxNJS >= NJS_FILTER_MAX &&
         minNPS == 0 &&
         maxNPS >= NPS_FILTER_MAX && 
-        rankedType == FilterTypes::RankedFilter::ShowAll &&
+        rankedType == (int)FilterTypes::RankedFilter::ShowAll &&
         minStars == 0 &&
         maxStars >= STAR_FILTER_MAX &&
         minUploadDateInMonths == 0 &&
         minRating == 0 &&
         minVotes == 0 &&
         uploaders.empty() &&
-        difficultyFilter == FilterTypes::DifficultyFilter::All &&
-        charFilter == FilterTypes::CharFilter::All &&
-        modRequirement == FilterTypes::Requirement::Any
+        difficultyFilter == (int)FilterTypes::DifficultyFilter::All &&
+        charFilter == (int)FilterTypes::CharFilter::All &&
+        modRequirement == (int)FilterTypes::Requirement::Any
     );
 }
 
 void BetterSongSearch::FilterProfile::LoadFromConfig() {
-    downloadType = (FilterTypes::DownloadFilter) getPluginConfig().DownloadType.GetValue();
-    localScoreType = (FilterTypes::LocalScoreFilter) getPluginConfig().LocalScoreType.GetValue();
+    downloadType = getPluginConfig().DownloadType.GetValue();
+    localScoreType = getPluginConfig().LocalScoreType.GetValue();
     minLength = getPluginConfig().MinLength.GetValue();
     maxLength = getPluginConfig().MaxLength.GetValue();
     minNJS = getPluginConfig().MinNJS.GetValue();
     maxNJS = getPluginConfig().MaxNJS.GetValue();
     minNPS = getPluginConfig().MinNPS.GetValue();
     maxNPS = getPluginConfig().MaxNPS.GetValue();
-    rankedType = (FilterTypes::RankedFilter) getPluginConfig().RankedType.GetValue();
+    rankedType = getPluginConfig().RankedType.GetValue();
     minStars = getPluginConfig().MinStars.GetValue();
     maxStars = getPluginConfig().MaxStars.GetValue();
     minUploadDate = getPluginConfig().MinUploadDate.GetValue();
     minRating = getPluginConfig().MinRating.GetValue();
     minVotes = getPluginConfig().MinVotes.GetValue();
-    charFilter = (FilterTypes::CharFilter) getPluginConfig().CharacteristicType.GetValue();
-    difficultyFilter = (FilterTypes::DifficultyFilter) getPluginConfig().DifficultyType.GetValue();
-    modRequirement = (FilterTypes::Requirement) getPluginConfig().RequirementType.GetValue();
+    charFilter = getPluginConfig().CharacteristicType.GetValue();
+    difficultyFilter = getPluginConfig().DifficultyType.GetValue();
+    modRequirement = getPluginConfig().RequirementType.GetValue();
     minUploadDateInMonths = getPluginConfig().MinUploadDateInMonths.GetValue();
 
     // Custom string loader
@@ -107,7 +107,11 @@ std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::
     }
 
     try {
-        return ReadFromFile<FilterProfile>(path);
+        DEBUG("Loading preset: {}", presetName);
+        auto preset = ReadFromFile<FilterProfile>(path);
+        preset.PrintToDebug();
+        DEBUG("Loaded preset: {}", presetName);
+        return preset;
     } catch (const std::exception &e) {
         ERROR("Failed to load preset: {}", e.what());
         return std::nullopt;
@@ -125,10 +129,12 @@ bool BetterSongSearch::FilterProfile::SaveToPreset(std::string presetName) const
     std::string path = presetsDir + presetName + ".json";
 
     try {
+        DEBUG("Saving preset: {}", presetName);
         WriteToFile<FilterProfile>(path, *this);
+        DEBUG("Saved preset: {}", presetName);
         return true;
-    } catch (const std::exception &e) {
-        ERROR("Failed to save preset: {}", e.what());
+    } catch (...) {
+        ERROR("Failed to save preset: {}", presetName);
         return false;
     }
 }
@@ -161,8 +167,18 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
 }
 
 void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
-    charFilterPreprocessed = CHARACTERISTIC_MAP.at(charFilter);
-    difficultyFilterPreprocessed = DIFFICULTY_MAP.at(difficultyFilter);
+    if (charFilter == (int)FilterTypes::CharFilter::All) {
+        charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
+    } else {
+        charFilterPreprocessed = CHARACTERISTIC_MAP.at((FilterTypes::CharFilter) charFilter);
+    }
+
+    if (difficultyFilter == (int)FilterTypes::DifficultyFilter::All) {
+        difficultyFilterPreprocessed = SongDetailsCache::MapDifficulty::Easy;
+    } else {
+        difficultyFilterPreprocessed = DIFFICULTY_MAP.at((FilterTypes::DifficultyFilter) difficultyFilter);
+    }
+
     isDefaultPreprocessed = IsDefault();
 }
 
@@ -189,4 +205,29 @@ bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
         ERROR("Failed to delete preset: {}", e.what());
         return false;
     }
+}
+
+
+void BetterSongSearch::FilterProfile::PrintToDebug() {
+    DEBUG("FilterProfile: ");
+    DEBUG("DownloadType: {}", downloadType);
+    DEBUG("LocalScoreType: {}", localScoreType);
+    DEBUG("RankedType: {}", rankedType);
+    DEBUG("DifficultyFilter: {}", difficultyFilter);
+    DEBUG("ModRequirement: {}", modRequirement);
+    DEBUG("MinLength: {}", minLength);
+    DEBUG("MaxLength: {}", maxLength);
+    DEBUG("MinNJS: {}", minNJS);
+    DEBUG("MaxNJS: {}", maxNJS);
+    DEBUG("MinNPS: {}", minNPS);
+    DEBUG("MaxNPS: {}", maxNPS);
+    DEBUG("MinStars: {}", minStars);
+    DEBUG("MaxStars: {}", maxStars);
+    DEBUG("MinUploadDate: {}", minUploadDate);
+    DEBUG("MinRating: {}", minRating);
+    DEBUG("MinVotes: {}", minVotes);
+    DEBUG("CharFilter: {}", charFilter);
+    DEBUG("MinUploadDateInMonths: {}", minUploadDateInMonths);
+    DEBUG("Uploaders: {}", join(uploaders, " "));
+    DEBUG("UploadersBlackList: {}", uploadersBlackList);
 }

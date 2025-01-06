@@ -429,6 +429,9 @@ void ViewControllers::FilterViewController::ClearFilters()
 void ViewControllers::FilterViewController::ShowPresets()
 {
     DEBUG("ShowPresets FIRED");
+
+
+    this->presetsModal->OpenModal();
 }
 
 // StringW ViewControllers::FilterViewController::DateTimeToStr(int d) {

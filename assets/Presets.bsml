@@ -6,14 +6,14 @@
 			</horizontal>
 			<horizontal horizontal-fit='PreferredSize'>
 				<vertical horizontal-fit='Unconstrained'>
-					<list visible-cells='8' cell-size='7' id='presetList' select-cell='PresetSelected' show-scrollbar='true' />
+					<list visible-cells='8' cell-size='7' id='presetListTableData' select-cell='PresetSelected' show-scrollbar='true' />
 				</vertical>
 			</horizontal>
 			<horizontal>
-				<button text='Save..'  on-click='OpenSavePresetModal' />
-				<button text='Load' id='loadButton'  on-click='LoadPreset'/>
-				<button text='Delete' id='deleteButton' on-click='DeletePreset'/>
-				<button text='Close' on-click='CloseModal' />
+				<button text='Save..'  on-click='OpenSavePresetModal' pref-width="15"  />
+				<button text='Load' id='loadButton'  on-click='LoadPreset' pref-width="15"  />
+				<button text='Delete' id='deleteButton' on-click='DeletePreset' pref-width="15" />
+				<button text='Close' on-click='CloseModal' pref-width="15"  />
 			</horizontal>
 		</vertical>
 	</modal>
@@ -27,8 +27,8 @@
 			</horizontal>
 			<string-setting text='Name' id='newPresetName' value='newPresetName' bind-value='true' apply-on-change='true' />
 			<horizontal>
-				<button text='Save' on-click='AddPreset'/>
-				<button text='Cancel' on-click='CloseSavePresetModal' />
+				<button text='Save' on-click='AddPreset' pref-width="15"  />
+				<button text='Cancel' on-click='CloseSavePresetModal' pref-width="15"  />
 			</horizontal>
 		</vertical>
 	</modal>

@@ -68,14 +68,14 @@ namespace BetterSongSearch::Util {
         // If song is scoresaber ranked
         if (hasFlags(rStates, RankedStates::ScoresaberRanked) &&
             // And Not Filtering by BeatLeader ranked
-            UI::DataHolder::filterOptionsCache.rankedType != FilterTypes::RankedFilter::BeatLeaderRanked &&
+            static_cast<FilterTypes::RankedFilter>(UI::DataHolder::filterOptionsCache.rankedType) != FilterTypes::RankedFilter::BeatLeaderRanked &&
             (
                 // Beatleader is not preferred leaderboard
                 BetterSongSearch::UI::DataHolder::preferredLeaderboard != FilterTypes::PreferredLeaderBoard::BeatLeader ||
                 // Song has no BeatLeader rank
                 !hasFlags(rStates, RankedStates::BeatleaderRanked) ||
                 // Filtering by SS ranked
-                UI::DataHolder::filterOptionsCache.rankedType == FilterTypes::RankedFilter::ScoreSaberRanked
+                static_cast<FilterTypes::RankedFilter>(UI::DataHolder::filterOptionsCache.rankedType) == FilterTypes::RankedFilter::ScoreSaberRanked
             )
         ) {
             return SongDetailsCache::RankedStates::ScoresaberRanked;
