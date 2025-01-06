@@ -113,6 +113,21 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         // Save to config
         getPluginConfig().Uploaders.SetValue(this->uploadersString);
     }
+    
+    if (this->onlyCuratedMaps != getPluginConfig().OnlyCuratedMaps.GetValue()) {
+        filtersChanged = true;
+        getPluginConfig().OnlyCuratedMaps.SetValue(this->onlyCuratedMaps);
+    }
+
+    if (this->onlyVerifiedMappers != getPluginConfig().OnlyVerifiedMappers.GetValue()) {
+        filtersChanged = true;
+        getPluginConfig().OnlyVerifiedMappers.SetValue(this->onlyVerifiedMappers);
+    }
+
+    if (this->onlyV3Maps != getPluginConfig().OnlyV3Maps.GetValue()) {
+        filtersChanged = true;
+        getPluginConfig().OnlyV3Maps.SetValue(this->onlyV3Maps);
+    }
 
     if (filtersChanged) {
         DEBUG("Filters changed");
@@ -136,29 +151,7 @@ UnityEngine::Sprite* GetBGSprite(std::string str)
 
 }
 
-void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
-{
-    if (!firstActivation)
-        return;
-
-    // Register modals
-    presetsModal = this->get_gameObject()->AddComponent<UI::Modals::Presets *>();
-
-    // It needs to be registered
-    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
-    {
-        DEBUG("RUNNING update");
-        coro(this->_UpdateFilterSettings());
-    }, 0.2f);
-
-    INFO("Filter View controller activated");
-
-    // Load the values from the config
-    UpdateLocalState();
-
-    // Create bsml view
-    BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
-
+void ViewControllers::FilterViewController::PostParse() {
     auto x = this->get_gameObject()->get_transform().cast<UnityEngine::RectTransform>();
     x->set_offsetMax(UnityEngine::Vector2(20.0f, 22.0f));
 
@@ -181,6 +174,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     hideOlderThanSlider->slider->set_numberOfSteps(steps + 1);
     hideOlderThanSlider->set_Value(getPluginConfig().MinUploadDateInMonths.GetValue());
     hideOlderThanSlider->ReceiveValue();
+
 
     auto getBgSprite = GetBGSprite("RoundRect10BorderFade");
 
@@ -293,6 +287,30 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     // I hate BSML sometimes
     auto m = modsRequirementDropdown->dropdown->____modalView;
     m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
+}
+
+void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling)
+{
+    if (!firstActivation)
+        return;
+
+    // Register modals
+    presetsModal = this->get_gameObject()->AddComponent<UI::Modals::Presets *>();
+
+    // It needs to be registered
+    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
+    {
+        DEBUG("RUNNING update");
+        coro(this->_UpdateFilterSettings());
+    }, 0.2f);
+
+    INFO("Filter View controller activated");
+
+    // Load the values from the config
+    UpdateLocalState();
+
+    // Create bsml view
+    BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
 
     #ifdef HotReload
         fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/FilterView.bsml";
@@ -360,6 +378,10 @@ void ViewControllers::FilterViewController::UpdateLocalState() {
     // TODO: Maybe save it to the preset too
     this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
     this->uploadersString = getPluginConfig().Uploaders.GetValue();
+
+    this->onlyCuratedMaps = getPluginConfig().OnlyCuratedMaps.GetValue();
+    this->onlyVerifiedMappers = getPluginConfig().OnlyVerifiedMappers.GetValue();
+    this->onlyV3Maps = getPluginConfig().OnlyV3Maps.GetValue();
 }
 
 void ViewControllers::FilterViewController::ForceRefreshUI() {
@@ -411,6 +433,9 @@ void ViewControllers::FilterViewController::ClearFilters()
     getPluginConfig().Uploaders.SetValue(getPluginConfig().Uploaders.GetDefaultValue());
     getPluginConfig().MinUploadDateInMonths.SetValue(getPluginConfig().MinUploadDateInMonths.GetDefaultValue());
     getPluginConfig().MinUploadDate.SetValue(getPluginConfig().MinUploadDate.GetDefaultValue());
+    getPluginConfig().OnlyVerifiedMappers.SetValue(getPluginConfig().OnlyVerifiedMappers.GetDefaultValue());
+    getPluginConfig().OnlyCuratedMaps.SetValue(getPluginConfig().OnlyCuratedMaps.GetDefaultValue());
+    getPluginConfig().OnlyV3Maps.SetValue(getPluginConfig().OnlyV3Maps.GetDefaultValue());
 
     // Load to dataHolder
     DataHolder::filterOptions.LoadFromConfig();
@@ -428,9 +453,6 @@ void ViewControllers::FilterViewController::ClearFilters()
 }
 void ViewControllers::FilterViewController::ShowPresets()
 {
-    DEBUG("ShowPresets FIRED");
-
-
     this->presetsModal->OpenModal();
 }
 

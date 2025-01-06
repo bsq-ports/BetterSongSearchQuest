@@ -99,6 +99,24 @@ bool BetterSongSearch::UI::MeetsFilter(const SongDetailsCache::Song *song) {
     auto& filterOptions = DataHolder::filterOptionsCache;
     std::string songHash = song->hash();
 
+    if (filterOptions.onlyCuratedMaps) {
+        if (!hasFlags(song->uploadFlags, SongDetailsCache::UploadFlags::Curated)) {
+            return false;
+        }
+    }
+
+    if (filterOptions.onlyVerifiedMappers) {
+        if (!hasFlags(song->uploadFlags, SongDetailsCache::UploadFlags::VerifiedUploader)) {
+            return false;
+        }
+    }
+
+    if (filterOptions.onlyV3Maps) {
+        if (!hasFlags(song->uploadFlags, SongDetailsCache::UploadFlags::HasV3Environment)) {
+            return false;
+        }
+    }
+
     if (!filterOptions.uploaders.empty()) {
         if (std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(),
                       removeSpecialCharacter(toLower(song->uploaderName()))) != filterOptions.uploaders.end()) {
@@ -328,24 +346,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     DataHolder::filterOptionsCache.RecalculatePreprocessedValues();
 
     DEBUG("SEARCHING Cache");
-    DEBUG("Sort: {}", SortToString((int) sort));
-    DEBUG("Requirement: {}", RequirementTypeToString((int) DataHolder::filterOptionsCache.modRequirement));
-    DEBUG("Char: {}", CharFilterTypeToString((int) DataHolder::filterOptionsCache.charFilter));
-    DEBUG("Difficulty: {}", DifficultyFilterTypeToString((int) DataHolder::filterOptionsCache.difficultyFilter));
-    DEBUG("Ranked: {}", RankedFilterTypeToString((int) DataHolder::filterOptionsCache.rankedType));
-    DEBUG("LocalScore: {}", LocalScoreFilterTypeToString((int) DataHolder::filterOptionsCache.localScoreType));
-    DEBUG("Download: {}", DownloadFilterTypeToString((int) DataHolder::filterOptionsCache.downloadType));
-    DEBUG("MinNJS: {}", DataHolder::filterOptionsCache.minNJS);
-    DEBUG("MaxNJS: {}", DataHolder::filterOptionsCache.maxNJS);
-    DEBUG("MinNPS: {}", DataHolder::filterOptionsCache.minNPS);
-    DEBUG("MaxNPS: {}", DataHolder::filterOptionsCache.maxNPS);
-    DEBUG("MinStars: {}", DataHolder::filterOptionsCache.minStars);
-    DEBUG("MaxStars: {}", DataHolder::filterOptionsCache.maxStars);
-    DEBUG("MinLength: {}", DataHolder::filterOptionsCache.minLength);
-    DEBUG("MaxLength: {}", DataHolder::filterOptionsCache.maxLength);
-    DEBUG("MinRating: {}", DataHolder::filterOptionsCache.minRating);
-    DEBUG("MinVotes: {}", DataHolder::filterOptionsCache.minVotes);
-    DEBUG("Uploaders number: {}", DataHolder::filterOptionsCache.uploaders.size());
+    DataHolder::filterOptionsCache.PrintToDebug();
 
     this->searchInProgress->get_gameObject()->set_active(true);
 
@@ -824,6 +825,10 @@ void ViewControllers::SongListController::PostParse() {
     sortDropdown->dropdown->ReloadData();
     auto m = sortDropdown->dropdown->____modalView;
     m->get_transform().cast<RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
+
+    if (this->songList) {
+        songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
+    }
 }
 
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy,
@@ -880,11 +885,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     }
 
     BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
-
-    if (this->songList) {
-        INFO("Table exists");
-        songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
-    }
 
     multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL *>();
     settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings *>();

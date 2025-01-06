@@ -30,6 +30,9 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
 
+
+    DECLARE_INSTANCE_METHOD(void, PostParse);
+
     // Modal related things
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);
     DECLARE_INSTANCE_METHOD(void, CloseSponsorModal);
@@ -55,6 +58,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     BSML_OPTIONS_LIST_OBJECT(characteristics, "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless");
     BSML_OPTIONS_LIST_OBJECT(difficulties, "Any", "Easy", "Normal", "Hard", "Expert", "Expert+");
     BSML_OPTIONS_LIST_OBJECT(modOptions, "Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema", "None");
+    BSML_OPTIONS_LIST_OBJECT(mapStyles,  "Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech");
 
     // Values for dropdowns
     DECLARE_INSTANCE_FIELD(StringW, existingSongs);
@@ -74,6 +78,12 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(float, minimumStars);
     DECLARE_INSTANCE_FIELD(float, maximumStars);
     DECLARE_INSTANCE_FIELD(float, minimumRating);
+
+    // Values for toggles
+    DECLARE_INSTANCE_FIELD(bool, onlyCuratedMaps);
+    DECLARE_INSTANCE_FIELD(bool, onlyVerifiedMappers);
+    DECLARE_INSTANCE_FIELD(bool, onlyV3Maps);
+
     // These are float because there is some bug in 
     DECLARE_INSTANCE_FIELD(float, minimumVotes);
     DECLARE_INSTANCE_FIELD(float, hideOlderThan);

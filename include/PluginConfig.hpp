@@ -146,4 +146,7 @@ DECLARE_CONFIG(PluginConfig,
     CONFIG_VALUE(Uploaders, std::string, "Uploaders filter", "");
     CONFIG_VALUE(RequirementType, int, "Requirement Type", 0);
     CONFIG_VALUE(PreferredLeaderboard, std::string, "Preferred Leaderboard", "Scoresaber");
+    CONFIG_VALUE(OnlyVerifiedMappers, bool, "Only Verified Mappers", false);
+    CONFIG_VALUE(OnlyCuratedMaps, bool, "Only Curated Maps", false);
+    CONFIG_VALUE(OnlyV3Maps, bool, "Only V3 Maps", false);
 )

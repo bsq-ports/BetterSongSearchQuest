@@ -28,7 +28,10 @@ bool BetterSongSearch::FilterProfile::IsDefault(){
         uploaders.empty() &&
         difficultyFilter == (int)FilterTypes::DifficultyFilter::All &&
         charFilter == (int)FilterTypes::CharFilter::All &&
-        modRequirement == (int)FilterTypes::Requirement::Any
+        modRequirement == (int)FilterTypes::Requirement::Any && 
+        !onlyCuratedMaps &&
+        !onlyVerifiedMappers &&
+        !onlyV3Maps
     );
 }
 
@@ -51,6 +54,9 @@ void BetterSongSearch::FilterProfile::LoadFromConfig() {
     difficultyFilter = getPluginConfig().DifficultyType.GetValue();
     modRequirement = getPluginConfig().RequirementType.GetValue();
     minUploadDateInMonths = getPluginConfig().MinUploadDateInMonths.GetValue();
+    onlyCuratedMaps = getPluginConfig().OnlyCuratedMaps.GetValue();
+    onlyVerifiedMappers = getPluginConfig().OnlyVerifiedMappers.GetValue();
+    onlyV3Maps = getPluginConfig().OnlyV3Maps.GetValue();
 
     // Custom string loader
     auto uploadersString = getPluginConfig().Uploaders.GetValue();
@@ -86,6 +92,9 @@ void BetterSongSearch::FilterProfile::SaveToConfig() {
     getPluginConfig().DifficultyType.SetValue((int) difficultyFilter, false);
     getPluginConfig().RequirementType.SetValue((int) modRequirement, false);
     getPluginConfig().MinUploadDateInMonths.SetValue(minUploadDateInMonths, false);
+    getPluginConfig().OnlyCuratedMaps.SetValue(onlyCuratedMaps, false);
+    getPluginConfig().OnlyVerifiedMappers.SetValue(onlyVerifiedMappers, false);
+    getPluginConfig().OnlyV3Maps.SetValue(onlyV3Maps, false);
 
     getPluginConfig().Uploaders.SetValue((uploadersBlackList ? "!" : "") + join(uploaders, " "), false);
 
@@ -230,4 +239,7 @@ void BetterSongSearch::FilterProfile::PrintToDebug() {
     DEBUG("MinUploadDateInMonths: {}", minUploadDateInMonths);
     DEBUG("Uploaders: {}", join(uploaders, " "));
     DEBUG("UploadersBlackList: {}", uploadersBlackList);
+    DEBUG("OnlyCuratedMaps: {}", onlyCuratedMaps);
+    DEBUG("OnlyVerifiedMappers: {}", onlyVerifiedMappers);
+    DEBUG("OnlyV3Maps: {}", onlyV3Maps);
 }

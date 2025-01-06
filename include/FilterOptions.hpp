@@ -33,6 +33,10 @@ namespace BetterSongSearch {
         VECTOR_DEFAULT(std::string, uploaders, {});
         VALUE_DEFAULT(bool, uploadersBlackList, false);
 
+        VALUE_DEFAULT(bool, onlyCuratedMaps, false);
+        VALUE_DEFAULT(bool, onlyVerifiedMappers, false);
+        VALUE_DEFAULT(bool, onlyV3Maps, false);
+
         public:
 
             // Because RapidJSON does not support enums... we have to make methods to convert them to/from int
