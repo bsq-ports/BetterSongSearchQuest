@@ -1,16 +1,13 @@
 #include "UI/Modals/MultiDL.hpp"
-#include "main.hpp"
 
-#include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "System/Tuple_2.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
-#include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "logging.hpp"
+
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))

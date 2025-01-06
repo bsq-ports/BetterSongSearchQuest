@@ -165,3 +165,28 @@ void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
     difficultyFilterPreprocessed = DIFFICULTY_MAP.at(difficultyFilter);
     isDefaultPreprocessed = IsDefault();
 }
+
+
+
+bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
+    std::string presetsDir = getDataDir(modInfo) + "/Presets/";
+
+    // Ensure the directory exists
+    if (!direxists(presetsDir)) {
+        mkpath(presetsDir);
+    }
+
+    std::string path = presetsDir + presetName + ".json";
+
+    if (!fileexists(path)) {
+        return false;
+    }
+
+    try {
+        std::filesystem::remove(path);
+        return true;
+    } catch (const std::exception &e) {
+        ERROR("Failed to delete preset: {}", e.what());
+        return false;
+    }
+}

@@ -4,6 +4,9 @@
 
 #include "UI/ViewControllers/SongList.hpp"
 #include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
+
+using namespace SongDetailsCache;
+
 namespace BetterSongSearch::Util {
     UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level) {
         if (level == nullptr) {

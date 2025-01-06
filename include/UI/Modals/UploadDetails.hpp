@@ -1,5 +1,5 @@
 #pragma once
-#include "main.hpp"
+
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"

@@ -9,10 +9,6 @@
 #include "UnityEngine/UI/Button.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace BetterSongSearch::UI;
-using namespace BetterSongSearch::Util;
-using namespace GlobalNamespace;
-
 namespace BetterSongSearch::UI {
     class Manager
     {

@@ -7,8 +7,6 @@
 #include "song-details/shared/Data/MapMods.hpp"
 #include "PluginConfig.hpp"
 
-using namespace SongDetailsCache;
-
 namespace BetterSongSearch {
     DECLARE_JSON_CLASS(FilterProfile,
         VALUE_DEFAULT(FilterTypes::DownloadFilter, downloadType, FilterTypes::DownloadFilter::All);
@@ -57,6 +55,11 @@ namespace BetterSongSearch {
             // @param presetName The name of the preset to save
             // @return True if the preset was saved successfully
             bool SaveToPreset(std::string presetName) const;
+
+            // @brief Deletes a preset
+            // @param presetName The name of the preset to delete
+            // @return True if the preset was deleted successfully
+            static bool DeletePreset(std::string presetName);
 
             // @brief Gets a list of all available presets
             // @return A list of all available presets

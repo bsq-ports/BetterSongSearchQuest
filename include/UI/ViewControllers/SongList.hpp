@@ -30,7 +30,6 @@
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "System/Threading/CancellationToken.hpp"
 #include "System/Threading/CancellationTokenSource.hpp"
-#include "main.hpp"
 #include "FilterOptions.hpp"
 #include "Util/RatelimitCoroutine.hpp"
 #include "UI/Modals/MultiDL.hpp"
@@ -44,10 +43,6 @@
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
     DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
 #endif
-
-using namespace BetterSongSearch;
-
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 namespace BetterSongSearch::UI {
     inline bool fromBSS = false;
@@ -130,7 +125,7 @@ using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
 extern std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap;
 
 #ifdef HotReload
-DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
 #else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif

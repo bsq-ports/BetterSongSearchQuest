@@ -1,12 +1,10 @@
 #pragma once
 
-#include "main.hpp"
 #include "uri.hh"
 #include "web-utils/shared/WebUtils.hpp"
 #include "logging.hpp"
 #include <future>
 
-using namespace WebUtils;
 class BeatSaverRegionManager {
     public:
         static inline const std::string mapDownloadUrlFallback = "https://cdn.beatsaver.com";
@@ -21,7 +19,7 @@ class BeatSaverRegionManager {
 
     static void GetSongDescription(std::string key, std::function<void(std::string)> finished) {
         std::thread([key, finished]() mutable {
-            auto result = Get<JsonResponse>(URLOptions(detailsDownloadUrl + key));
+            auto result = Get<WebUtils::JsonResponse>(WebUtils::URLOptions(detailsDownloadUrl + key));
 
             if (result.IsSuccessful()) {
                 if (result.responseData.has_value()) {
@@ -40,7 +38,7 @@ class BeatSaverRegionManager {
             
             didTheThing = true;
             std::thread([]() {
-                auto response = Get<JsonResponse>(URLOptions(detailsDownloadUrl + "225eb"));
+                auto response = Get<WebUtils::JsonResponse>(WebUtils::URLOptions(detailsDownloadUrl + "225eb"));
 
                 if (response.IsSuccessful()) {
                     if (response.responseData.has_value()) {

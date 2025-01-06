@@ -7,8 +7,6 @@
 #include "bsml/shared/BSML.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
-
-#include "main.hpp"
 #include "assets.hpp"
 
 const StringW CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";

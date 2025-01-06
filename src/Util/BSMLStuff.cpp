@@ -13,6 +13,8 @@
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
+using namespace UnityEngine;
+
 namespace BetterSongSearch::UI::Util::BSMLStuff
 {
     custom_types::Helpers::Coroutine MergeSliders(GameObject* container, bool constrictValuesMinMax)

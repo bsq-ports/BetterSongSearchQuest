@@ -14,10 +14,9 @@
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/StringSetting.hpp"
-using namespace UnityEngine;
 
 namespace BetterSongSearch::UI::Util::BSMLStuff {
-    custom_types::Helpers::Coroutine MergeSliders(GameObject* container, bool constrictValuesMinMax = true);
+    custom_types::Helpers::Coroutine MergeSliders(UnityEngine::GameObject* container, bool constrictValuesMinMax = true);
 
     void SetStringSettingValue(BSML::StringSetting* element, std::string value);
     void SetSliderSettingValue(BSML::SliderSetting* element, float value);

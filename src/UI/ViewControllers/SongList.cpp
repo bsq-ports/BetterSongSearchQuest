@@ -66,6 +66,7 @@ using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI::Util::BSMLStuff;
 using namespace GlobalNamespace;
 using namespace SongDetailsCache;
+using namespace UnityEngine;
 
 #define SONGDOWNLOADER
 
@@ -662,7 +663,7 @@ void ViewControllers::SongListController::_UpdateSearchedSongsList() {
                     // Calculate total search weight
                     for (auto &item: prefiltered) {
                         float searchWeight = item.searchWeight * maxSearchWeightInverse;
-                        item.searchWeight = searchWeight + min(searchWeight / 2,
+                        item.searchWeight = searchWeight + std::min(searchWeight / 2,
                                                                item.sortWeight * maxSortWeightInverse *
                                                                (searchWeight / 2));
                     }
@@ -898,7 +899,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     }
 
 #ifdef HotReload
-    fileWatcher->filePath = "/sdcard/SongList.bsml";
+    fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/SongList.bsml";
+    fileWatcher->checkInterval = 0.5f;
 #endif
 }
 
@@ -1068,7 +1070,7 @@ void ViewControllers::SongListController::Download() {
 
 void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
     std::thread([url, finished] {
-        auto response = WebUtils::GetAsync<DataResponse>(
+        auto response = WebUtils::GetAsync<WebUtils::DataResponse>(
             WebUtils::URLOptions(url)
         );
 

@@ -9,8 +9,6 @@
 #include "UI/ViewControllers/FilterView.hpp"
 #include "UI/ViewControllers/DownloadHistory.hpp"
 
-using namespace BetterSongSearch::UI;
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator, HMUI::FlowCoordinator,
     DECLARE_INSTANCE_FIELD(UnityW<ViewControllers::SongListController>, SongListController);

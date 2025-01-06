@@ -30,6 +30,9 @@ if(${CMAKE_BUILD_TYPE} STREQUAL "RELEASE" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWi
     # LTO
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     add_compile_options(-flto)
+else()
+    # Debug options
+    add_compile_options(-O0 -g)
 endif()
 
 # get git info

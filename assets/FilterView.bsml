@@ -6,7 +6,7 @@
 		</horizontal>
 		<horizontal horizontal-fit='PreferredSize' spacing='2' pad-right='1'>
 			<button text='Clear' on-click='ClearFilters' pref-width="15" />
-			<!-- <button text='Presets' on-click='ShowPresets' pref-width="15" /> -->
+			<button text='Presets' on-click='ShowPresets' pref-width="15" />
 		</horizontal>
 	</horizontal>
 	<!-- <macro.as-host host='currentFilter'> -->

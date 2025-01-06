@@ -1,14 +1,12 @@
 #include "UI/Modals/Settings.hpp"
-#include "main.hpp"
+
 #include "PluginConfig.hpp"
-#include "HMUI/TableView.hpp"
+
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "beatsaverplusplus/shared/BeatSaver.hpp"
 
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
-#include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 using namespace BetterSongSearch::UI;

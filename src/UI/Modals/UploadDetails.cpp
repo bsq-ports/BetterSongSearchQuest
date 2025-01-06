@@ -2,7 +2,6 @@
 
 #include <bsml/shared/BSML/MainThreadScheduler.hpp>
 
-#include "main.hpp"
 #include "PluginConfig.hpp"
 #include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"

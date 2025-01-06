@@ -4,7 +4,6 @@
 #include "bsml/shared/BSML/Components/Backgroundable.hpp"
 #include "HMUI/ImageView.hpp"
 
-#include "main.hpp"
 #include "logging.hpp"
 #include "PluginConfig.hpp"
 #include "assets.hpp"
@@ -12,7 +11,6 @@
 #include <fmt/chrono.h>
 #include <UnityEngine/Resources.hpp>
 
-#include "FilterOptions.hpp"
 #include "DateUtils.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "Util/BSMLStuff.hpp"
@@ -143,6 +141,9 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     if (!firstActivation)
         return;
 
+    // Register modals
+    presetsModal = this->get_gameObject()->AddComponent<UI::Modals::Presets *>();
+
     // It needs to be registered
     limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
     {
@@ -169,7 +170,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     std::function<StringW(float monthsSinceFirstUpload)> DateTimeToStr = [](float monthsSinceFirstUpload)
     {
         auto val = BetterSongSearch::GetTimepointAfterMonths(BEATSAVER_EPOCH,monthsSinceFirstUpload);
-        return fmt::format("{:%b:%Y}", fmt::localtime(system_clock::to_time_t(val)));
+        return fmt::format("{:%b:%Y}", fmt::localtime(std::chrono::system_clock::to_time_t(val)));
     };
 
     // Update the value and set the formatter
@@ -186,13 +187,13 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     auto backgroundables = GetComponentsInChildren<BSML::Backgroundable*>();
     for (auto & backgroundable : backgroundables) {
         auto imageView = backgroundable->GetComponent<HMUI::ImageView*>();
-        if (!imageView || !imageView->get_color0().Equals(Color::get_white()) || imageView->get_sprite()->get_name() != "RoundRect10") {
+        if (!imageView || !imageView->get_color0().Equals(UnityEngine::Color::get_white()) || imageView->get_sprite()->get_name() != "RoundRect10") {
             continue;
         }
         imageView->____skew = 0.0f;
         imageView->set_overrideSprite(nullptr);
         imageView->set_sprite(getBgSprite);
-        imageView->set_color(Color(0.0f, 0.7f, 1.0f, 0.4f));
+        imageView->set_color(UnityEngine::Color(0.0f, 0.7f, 1.0f, 0.4f));
     }
 
     // Format other values
@@ -291,10 +292,11 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     
     // I hate BSML sometimes
     auto m = modsRequirementDropdown->dropdown->____modalView;
-    m->get_transform().cast<RectTransform>()->set_pivot(Vector2(0.5f, 0.3f));
+    m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     #ifdef HotReload
-        fileWatcher->filePath = "/sdcard/FilterView.bsml";
+        fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/FilterView.bsml";
+        fileWatcher->checkInterval = 0.5f;
     #endif
 }
 

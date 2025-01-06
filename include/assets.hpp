@@ -8,6 +8,7 @@ DECLARE_FILE(_binary_DownloadListCell_bsml, Assets, DownloadListCell_bsml);
 DECLARE_FILE(_binary_FilterView_bsml, Assets, FilterView_bsml);
 DECLARE_FILE(_binary_MultiDl_bsml, Assets, MultiDl_bsml);
 DECLARE_FILE(_binary_Presets_bsml, Assets, Presets_bsml);
+DECLARE_FILE(_binary_PresetsListCell_bsml, Assets, PresetsListCell_bsml);
 DECLARE_FILE(_binary_Settings_bsml, Assets, Settings_bsml);
 DECLARE_FILE(_binary_SongList_bsml, Assets, SongList_bsml);
 DECLARE_FILE(_binary_SongListCell_bsml, Assets, SongListCell_bsml);

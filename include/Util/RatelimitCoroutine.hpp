@@ -3,7 +3,6 @@
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/WaitForSeconds.hpp"
-#include "main.hpp"
 
 namespace BetterSongSearch::Util {
 	class RatelimitCoroutine {

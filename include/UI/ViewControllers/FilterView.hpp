@@ -12,6 +12,7 @@
 #include "bsml/shared/BSML/Components/ClickableText.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
+#include "UI/Modals/Presets.hpp"
 
 #include "Util/RatelimitCoroutine.hpp"
 
@@ -25,6 +26,9 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
 
     DECLARE_SIMPLE_DTOR();
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    
+    // Modals
+    DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
 
     // Modal related things
     DECLARE_INSTANCE_METHOD(void, OpenSponsorsModal);

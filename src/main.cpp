@@ -30,6 +30,7 @@
 
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch;
+using namespace BetterSongSearch::UI;
 
 // Called at the early stages of game loading
 BSS_EXPORT_FUNC void setup(CModInfo& info) {

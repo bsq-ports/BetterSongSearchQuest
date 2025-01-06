@@ -2,7 +2,6 @@
 
 #include <bsml/shared/BSML/MainThreadScheduler.hpp>
 
-#include "main.hpp"
 #include "logging.hpp"
 
 #include "HMUI/TableView.hpp"
@@ -85,7 +84,8 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
 
     #ifdef HotReload
-        fileWatcher->filePath = "/sdcard/DownloadHistory.bsml";
+        fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/DownloadHistory.bsml";
+        fileWatcher->checkInterval = 0.5f;
     #endif
 }
 
