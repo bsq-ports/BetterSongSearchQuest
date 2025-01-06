@@ -131,7 +131,7 @@ DECLARE_CONFIG(PluginConfig,
     CONFIG_VALUE(MinLength, float, "Minimum Song Length", 0);
     CONFIG_VALUE(MaxLength, float, "Maximum Song Length", 900);
     CONFIG_VALUE(MinNJS, float, "Minimum Note Jump Speed", 0);
-    CONFIG_VALUE(MaxNJS, float, "Maximum Note Jump Speed", SONG_LENGTH_FILTER_MAX);
+    CONFIG_VALUE(MaxNJS, float, "Maximum Note Jump Speed", NJS_FILTER_MAX);
     CONFIG_VALUE(MinNPS, float, "Minimum Notes Per Second", 0);
     CONFIG_VALUE(MaxNPS, float, "Maximum Note Per Second", NPS_FILTER_MAX);
     CONFIG_VALUE(RankedType, int, "Ranked Type", 0);
