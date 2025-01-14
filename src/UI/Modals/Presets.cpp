@@ -74,7 +74,7 @@ HMUI::TableCell *Modals::Presets::CellForIdx(HMUI::TableView *tableView, int idx
 
 float Modals::Presets::CellSize()
 {
-    return 8.05f;
+    return 7.0f;
 }
 
 int Modals::Presets::NumberOfCells()

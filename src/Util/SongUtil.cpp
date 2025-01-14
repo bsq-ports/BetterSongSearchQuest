@@ -65,7 +65,7 @@ namespace BetterSongSearch::Util {
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff) {
         auto& rStates = diff->song().rankedStates;
 
-        FilterProfile filterOptions = dataHolder.filterOptionsCache;
+        auto& filterOptions = dataHolder.filterOptionsCache;
 
         // If song is scoresaber ranked
         if (hasFlags(rStates, RankedStates::ScoresaberRanked) &&

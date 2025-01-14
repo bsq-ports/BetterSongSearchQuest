@@ -90,5 +90,5 @@ namespace BetterSongSearch {
 
 
     // Instance of the data holder
-    static DataHolder& dataHolder = *new DataHolder();
+    extern DataHolder dataHolder;
 }

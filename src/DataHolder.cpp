@@ -19,6 +19,9 @@
 
 using namespace BetterSongSearch::Util;
 
+// Initialize the data holder
+BetterSongSearch::DataHolder BetterSongSearch::dataHolder{};
+
 void BetterSongSearch::DataHolder::Init() {
     // Subscribe to events
     SongDetailsCache::SongDetails::dataAvailableOrUpdated += {&DataHolder::SongDataDone, this};
@@ -26,7 +29,7 @@ void BetterSongSearch::DataHolder::Init() {
 
     // Load configs
     dataHolder.filterOptions.LoadFromConfig();
-    dataHolder.filterOptionsCache = dataHolder.filterOptions;
+    dataHolder.filterOptionsCache.CopyFrom(dataHolder.filterOptions);
 
     // set preferred leaderboard
     std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
@@ -233,7 +236,7 @@ void BetterSongSearch::DataHolder::Search() {
     // Detect changes
     bool currentSortChanged = this->sort != this->currentSort;
     bool currentSearchChanged = this->search != this->currentSearch;
-    bool currentFilterChanged = this->filterOptionsCache.IsEqual(this->filterOptions);
+    bool currentFilterChanged = !this->filterOptionsCache.IsEqual(this->filterOptions);
     bool currentForceReload = this->forceReload;
     DEBUG("Current sort changed: {}, current search changed: {}, filter changed: {}, force reload: {}", currentSortChanged, currentSearchChanged, currentFilterChanged, currentForceReload);
     if (
@@ -252,23 +255,16 @@ void BetterSongSearch::DataHolder::Search() {
         this->forceReload = false;
     }
     
-    DEBUG("Before copy");
-    DEBUG("SEARCHING current");
-    this->filterOptions.PrintToDebug();
-    DEBUG("SEARCHING cache");
-    this->filterOptionsCache.PrintToDebug();
+
 
 
     // Take a snapshot of current filter options
-    this->filterOptionsCache = this->filterOptions;
+    this->filterOptionsCache.CopyFrom(this->filterOptions);
     
     // Calculate temp values
     this->filterOptionsCache.RecalculatePreprocessedValues();
 
-    DEBUG("After copy");
-    DEBUG("SEARCHING current");
-    this->filterOptions.PrintToDebug();
-    DEBUG("SEARCHING cache");
+    DEBUG("SEARCHING");
     this->filterOptionsCache.PrintToDebug();
 
     // Grab current values for sort and search

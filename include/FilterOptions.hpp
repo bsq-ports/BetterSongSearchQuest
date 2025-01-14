@@ -102,6 +102,8 @@ namespace BetterSongSearch {
             // @param presetName The name of the preset to load
             // @return The loaded profile
             static std::optional<FilterProfile> LoadFromPreset(std::string presetName);
+
+            void CopyFrom(const FilterProfile& other);
     )
 }
 

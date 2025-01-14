@@ -112,6 +112,35 @@ void BetterSongSearch::FilterProfile::SaveToConfig() {
     getPluginConfig().Save();
 }
 
+void BetterSongSearch::FilterProfile::CopyFrom(const FilterProfile& other){
+    downloadType = other.downloadType;
+    localScoreType = other.localScoreType;
+    minLength = other.minLength;
+    maxLength = other.maxLength;
+    minNJS = other.minNJS;
+    maxNJS = other.maxNJS;
+    minNPS = other.minNPS;
+    maxNPS = other.maxNPS;
+    rankedType = other.rankedType;
+    minStars = other.minStars;
+    maxStars = other.maxStars;
+    minUploadDate = other.minUploadDate;
+    minRating = other.minRating;
+    minVotes = other.minVotes;
+    charFilter = other.charFilter;
+    difficultyFilter = other.difficultyFilter;
+    modRequirement = other.modRequirement;
+    minUploadDateInMonths = other.minUploadDateInMonths;
+    onlyCuratedMaps = other.onlyCuratedMaps;
+    onlyVerifiedMappers = other.onlyVerifiedMappers;
+    onlyV3Maps = other.onlyV3Maps;
+    mapStyleString = other.mapStyleString;
+    mapGenreString = other.mapGenreString;
+    mapGenreExcludeString = other.mapGenreExcludeString;
+    uploaders = other.uploaders;
+    uploadersBlackList = other.uploadersBlackList;
+}
+
 std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::LoadFromPreset(std::string presetName){
     std::string presetsDir = getDataDir(modInfo) + "/Presets/";
 
@@ -188,7 +217,9 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
 
 
 static uint64_t CalculateTagsBitfield(std::string tags) {
-    if (tags == "" || BetterSongSearch::dataHolder.songDetails != nullptr) return 0;
+    if (tags == "" || BetterSongSearch::dataHolder.songDetails == nullptr) {
+        return 0;
+    } 
 
     std::vector<std::string> items = split(toLower(tags), " ");
 
@@ -312,4 +343,7 @@ void BetterSongSearch::FilterProfile::PrintToDebug() {
     DEBUG("OnlyCuratedMaps: {}", onlyCuratedMaps);
     DEBUG("OnlyVerifiedMappers: {}", onlyVerifiedMappers);
     DEBUG("OnlyV3Maps: {}", onlyV3Maps);
+    DEBUG("MapStyleString: {}", mapStyleString);
+    DEBUG("MapGenreString: {}", mapGenreString);
+    DEBUG("MapGenreExcludeString: {}", mapGenreExcludeString);
 }
