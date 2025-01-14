@@ -11,22 +11,30 @@
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
+#include "bsml/shared/BSML/Components/ClickableText.hpp"
 #include "HMUI/Touchable.hpp"
 #include "HMUI/TableView.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "assets.hpp"
+#include "UI/Modals/GenrePicker.hpp"
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, GenrePickerCell, HMUI::TableCell,
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
-    DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, presetNameLabel);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, bgContainer);   
+
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, includeButton);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, excludeButton);
+
+    DECLARE_INSTANCE_METHOD(void, IncludeGenre);
+    DECLARE_INSTANCE_METHOD(void, ExcludeGenre);
+
+    DECLARE_INSTANCE_METHOD(void, Refresh);
 
 public:
-    PresetsTableCell* PopulateWithPresetName(StringW presetName);
-    static PresetsTableCell *GetCell(HMUI::TableView *tableView);
+    BetterSongSearch::UI::Modals::GenrePickerCell* PopulateWithGenre(BetterSongSearch::UI::Modals::GenreCellState* state);
+    static BetterSongSearch::UI::Modals::GenrePickerCell *GetCell(HMUI::TableView *tableView);
 
-    private:
-        void RefreshBgState();
+private:
+    BetterSongSearch::UI::Modals::GenreCellState* genre;
 )

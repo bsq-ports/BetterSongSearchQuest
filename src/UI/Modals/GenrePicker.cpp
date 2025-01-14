@@ -5,11 +5,13 @@
 #include "bsml/shared/BSML.hpp"
 
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/Modals/GenrePickerCell.hpp"
 
 #include "logging.hpp"
 #include "assets.hpp"
 #include "FilterOptions.hpp"
 #include "DataHolder.hpp"
+
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -35,6 +37,47 @@ void Modals::GenrePicker::ctor()
 {
     INVOKE_CTOR();
     this->initialized = false;
+
+    // Subscribe to events
+    dataHolder.loadingFinished += {&Modals::GenrePicker::PostParse, this};
+}
+void Modals::GenrePicker::dtor()
+{
+    // Unsub from events
+    dataHolder.loadingFinished -= {&Modals::GenrePicker::PostParse, this};
+}
+
+void Modals::GenrePicker::RefreshGenreList() {
+    if (!this->genrePickerModal) return;
+    if (!initialized) return;
+
+    auto table = this->genrePickerModal->get_transform()->Find("TableView")->GetComponent<HMUI::TableView*>();
+    if (!table) return;
+
+    if (dataHolder.tags.size() == 0) return;
+
+    // Recalculate preprocessed values
+    dataHolder.filterOptions.RecalculatePreprocessedValues();
+    
+    std::vector<GenreCellState> tempGenres;
+    for (auto& genre : dataHolder.tags)
+    {
+        GenreCellStatus state = GenreCellStatus::None;
+        auto mask = genre.mask;
+
+        auto isExcluded = dataHolder.filterOptions._mapGenreExcludeBitfield & mask;
+        auto isIncluded = dataHolder.filterOptions._mapGenreBitfield & mask;
+
+        if (isExcluded) state = GenreCellStatus::Exclude;
+        if (isIncluded) state = GenreCellStatus::Include;
+
+        genres.push_back({genre.tag, mask, state, genre.songCount});
+    }
+
+    tempGenres.swap(genres);
+    
+    table->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
+    table->ReloadData();
 }
 
 void Modals::GenrePicker::OpenModal()
@@ -43,6 +86,8 @@ void Modals::GenrePicker::OpenModal()
         BSML::parse_and_construct(Assets::GenrePicker_bsml, this->get_transform(), this);
         initialized = true;
     }
+
+    RefreshGenreList();
 
     INFO("Opening genre picker modal");
     this->genrePickerModal->Show();
@@ -53,7 +98,6 @@ void Modals::GenrePicker::OpenModal()
     if (!fv) return;
 
     dataHolder.PreprocessTags();
-
 }
 
 void Modals::GenrePicker::ClearGenre()
@@ -73,4 +117,20 @@ void Modals::GenrePicker::ClearGenre()
     fcInstance->FilterViewController->ForceRefreshUI();
 
     this->genrePickerModal->Hide();
+}
+
+// Table stuff
+HMUI::TableCell *Modals::GenrePicker::CellForIdx(HMUI::TableView *tableView, int idx)
+{
+    return Modals::GenrePickerCell::GetCell(tableView)->PopulateWithGenre(&genres[idx]);
+}
+
+float Modals::GenrePicker::CellSize()
+{
+    return 6.05f;
+}
+
+int Modals::GenrePicker::NumberOfCells()
+{
+    return genres.size();
 }
