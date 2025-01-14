@@ -135,7 +135,6 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         dataHolder.filterOptions.LoadFromConfig();
 
         auto controller = fcInstance->SongListController;
-        dataHolder.filterChanged = true;
         controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
     } else {
         DEBUG("Filters did not change");
@@ -456,7 +455,6 @@ void ViewControllers::FilterViewController::ClearFilters()
 
     DEBUG("Filters changed");
     auto controller = fcInstance->SongListController;
-    dataHolder.filterChanged = true;
     controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 }
 void ViewControllers::FilterViewController::ShowPresets()

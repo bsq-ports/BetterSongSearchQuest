@@ -125,7 +125,6 @@ void Modals::Presets::LoadPreset()
 
     // Update filter options state
     auto slController = fcInstance->SongListController;
-    dataHolder.filterChanged = true;
     slController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 
     CloseModal();

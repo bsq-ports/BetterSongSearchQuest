@@ -45,17 +45,16 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, Unit
     DECLARE_INSTANCE_METHOD(void, OpenModal);
     DECLARE_INSTANCE_METHOD(void, CloseModal);
 
-
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::CustomListTableData>, genresTableData);
 
     DECLARE_INSTANCE_METHOD(void, ClearGenre);
+    DECLARE_INSTANCE_METHOD(void, SelectGenre);
     DECLARE_INSTANCE_METHOD(void, RefreshGenreList);
+    
     DECLARE_INSTANCE_FIELD(bool, initialized);
     
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, genrePickerModal);
-
-    public:
-        void SelectGenre();
 
     private:
         std::vector<BetterSongSearch::UI::Modals::GenreCellState> genres;

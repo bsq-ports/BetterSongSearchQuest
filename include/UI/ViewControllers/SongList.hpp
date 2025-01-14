@@ -165,6 +165,7 @@ public:
     void EnterSolo(GlobalNamespace::BeatmapLevel* level);
 
     // Event receivers
+    void SearchDone();
     void SongDataDone();
     void SongDataError(std::string message);
 )

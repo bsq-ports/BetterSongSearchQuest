@@ -13,7 +13,7 @@
 #include "Util/TextUtil.hpp"
 #include "Util/SongUtil.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
-
+#include "Util/CurrentTimeMs.hpp"
 #include "logging.hpp"
 #include <regex>
 
@@ -62,18 +62,18 @@ void BetterSongSearch::DataHolder::SongDataError(std::string message) {
 
 void BetterSongSearch::DataHolder::DownloadSongList() {
     DEBUG("DownloadSongList");
-    if (dataHolder.loading) {
+    if (this->loading) {
         return;
     }
 
     std::thread([this] {
-        dataHolder.loading = true;
+        this->loading = true;
         DEBUG("Getting songdetails");
-        dataHolder.songDetails = SongDetailsCache::SongDetails::Init().get();
+        this->songDetails = SongDetailsCache::SongDetails::Init().get();
         DEBUG("Got songdetails");
 
 
-        if (!dataHolder.songDetails->songs.get_isDataAvailable()) {
+        if (!this->songDetails->songs.get_isDataAvailable()) {
             this->SongDataError("Failed to load song data");
         } else {
             this->SongDataDone();
@@ -196,12 +196,16 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
 
 bool BetterSongSearch::DataHolder::SongHasScore(std::string_view songhash) {
     std::shared_lock<std::shared_mutex> lock(mutex_songsWithScores);
-    if (songsWithScores.empty()) return false;
-    return songsWithScores.contains(songhash.data());
+    if (this->songsWithScores.empty()) return false;
+    return this->songsWithScores.contains(songhash.data());
 }
 
 bool BetterSongSearch::DataHolder::SongHasScore(const SongDetailsCache::Song* song) {
     return SongHasScore(song->hash());
+}
+
+void BetterSongSearch::DataHolder::SongListUIDone(){
+    this->searchInProgress = false;
 }
 
 struct xd {
@@ -211,43 +215,72 @@ struct xd {
 };
 
 void BetterSongSearch::DataHolder::Search() {
+    DEBUG("BetterSongSearch::DataHolder::Search called");
     // Skip if song details is null or if data is not loaded yet
-    if (dataHolder.songDetails == nullptr || !dataHolder.songDetails->songs.get_isDataAvailable()) return;
+    if (this->songDetails == nullptr || !this->songDetails->songs.get_isDataAvailable()) {
+        DEBUG("Skipping search as song details are not loaded yet");
+        return;
+    };
 
     // Skip if we have no songs
-    int totalSongs = dataHolder.songDetails->songs.size();
+    int totalSongs = this->songDetails->songs.size();
+    DEBUG("Total songs: {}", totalSongs);
     if (totalSongs == 0) return;
+    if (this->searchInProgress) return;
 
-    searchInProgress = true;
+    this->searchInProgress = true;
 
     // Detect changes
-    bool currentFilterChanged = dataHolder.filterChanged;
-    bool currentSortChanged = dataHolder.sort != dataHolder.currentSort;
-    bool currentSearchChanged = dataHolder.search != dataHolder.currentSearch;
+    bool currentSortChanged = this->sort != this->currentSort;
+    bool currentSearchChanged = this->search != this->currentSearch;
+    bool currentFilterChanged = this->filterOptionsCache.IsEqual(this->filterOptions);
+    bool currentForceReload = this->forceReload;
+    DEBUG("Current sort changed: {}, current search changed: {}, filter changed: {}, force reload: {}", currentSortChanged, currentSearchChanged, currentFilterChanged, currentForceReload);
+    if (
+            !currentForceReload &&
+            !currentSortChanged &&
+            !currentSearchChanged &&
+            !currentFilterChanged
+    ) {
+        this->searchInProgress = false;
+        DEBUG("Skipping search as nothing changed");
+        return;
+    }
+    
+    if (currentForceReload) {
+        DEBUG("Force reload");
+        this->forceReload = false;
+    }
+    
+    DEBUG("Before copy");
+    DEBUG("SEARCHING current");
+    this->filterOptions.PrintToDebug();
+    DEBUG("SEARCHING cache");
+    this->filterOptionsCache.PrintToDebug();
+
 
     // Take a snapshot of current filter options
-    dataHolder.filterOptionsCache = dataHolder.filterOptions;
+    this->filterOptionsCache = this->filterOptions;
     
     // Calculate temp values
-    dataHolder.filterOptionsCache.RecalculatePreprocessedValues();
+    this->filterOptionsCache.RecalculatePreprocessedValues();
 
-    DEBUG("SEARCHING Cache");
-    dataHolder.filterOptionsCache.PrintToDebug();
-
+    DEBUG("After copy");
+    DEBUG("SEARCHING current");
+    this->filterOptions.PrintToDebug();
+    DEBUG("SEARCHING cache");
+    this->filterOptionsCache.PrintToDebug();
 
     // Grab current values for sort and search
-    auto currentSort = dataHolder.sort;
+    auto currentSort = this->sort;
     // Current search (processed)
-    auto currentSearch = toLower(dataHolder.search);
+    auto currentSearch = toLower(this->search);
 
     // Save
-    dataHolder.currentSort = dataHolder.sort;
-    dataHolder.currentSearch = dataHolder.search;
+    this->currentSort = this->sort;
+    this->currentSearch = this->search;
 
-    // Reset flag that the filter has changed
-    dataHolder.filterChanged = false;
-
-    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged] {
+    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, currentForceReload] {
         long long before = CurrentTimeMs();
 
         // 4 threads are fine
@@ -255,15 +288,15 @@ void BetterSongSearch::DataHolder::Search() {
         std::thread t[num_threads];
 
         // Filter songs if needed
-        if (currentFilterChanged) {
+        if (currentFilterChanged || currentForceReload) {
             DEBUG("Filtering");
-            int totalSongs = dataHolder.songDetails->songs.size();
-            dataHolder.filteredSongList.clear();
-            if (dataHolder.filterOptionsCache.IsDefault()) {
+            int totalSongs = this->songDetails->songs.size();
+            this->filteredSongList.clear();
+            if (this->filterOptionsCache.IsDefault()) {
                 DEBUG("Filtering skipped");
-                dataHolder.filteredSongList.reserve(totalSongs);
-                for (auto &song: dataHolder.songDetails->songs) {
-                    dataHolder.filteredSongList.push_back(&song);
+                this->filteredSongList.reserve(totalSongs);
+                for (auto &song: this->songDetails->songs) {
+                    this->filteredSongList.push_back(&song);
                 }
             } else {
                 // Set up variables for threads
@@ -272,14 +305,14 @@ void BetterSongSearch::DataHolder::Search() {
 
                 //Launch a group of threads
                 for (int i = 0; i < num_threads; ++i) {
-                    t[i] = std::thread([&index, &valuesMutex, totalSongs]() {
+                    t[i] = std::thread([&index, &valuesMutex, totalSongs, this]() {
                         int i = index++;
                         while (i < totalSongs) {
-                            const SongDetailsCache::Song &item = dataHolder.songDetails->songs.at(i);
+                            const SongDetailsCache::Song &item = this->songDetails->songs.at(i);
                             bool meetsFilter = MeetsFilter(&item);
                             if (meetsFilter) {
                                 std::lock_guard<std::mutex> lock(valuesMutex);
-                                dataHolder.filteredSongList.push_back(&item);
+                                filteredSongList.push_back(&item);
                             }
                             i = index++;
                         }
@@ -294,7 +327,7 @@ void BetterSongSearch::DataHolder::Search() {
         INFO("Filtered in {} ms", CurrentTimeMs() - before);
 
 
-        if (currentFilterChanged || currentSearchChanged || currentSortChanged) {
+        if (currentFilterChanged || currentSearchChanged || currentSortChanged || currentForceReload) {
             if (currentSearch.length() > 0) {
                 auto words = split(currentSearch, " ");
                 DEBUG("Words length {}", words.size());
@@ -316,9 +349,9 @@ void BetterSongSearch::DataHolder::Search() {
 
                 DEBUG("Searching");
                 long long before = CurrentTimeMs();
-                dataHolder.searchedSongList.clear();
+                this->searchedSongList.clear();
                 // Set up variables for threads
-                int totalSongs = dataHolder.filteredSongList.size();
+                int totalSongs = this->filteredSongList.size();
 
                 std::mutex valuesMutex;
                 std::atomic_int index = 0;
@@ -329,12 +362,12 @@ void BetterSongSearch::DataHolder::Search() {
                 //Launch a group of threads
                 for (int i = 0; i < num_threads; ++i) {
                     t[i] = std::thread(
-                            [&index, &valuesMutex, totalSongs, currentSearch, words, &prefiltered, &maxSearchWeight, &maxSortWeight, currentSort, possibleSongKey](
+                            [this, &index, &valuesMutex, totalSongs, currentSearch, words, &prefiltered, &maxSearchWeight, &maxSortWeight, currentSort, possibleSongKey](
                                     std::vector<std::string> searchQuery) {
 
                                 int j = index++;
                                 while (j < totalSongs) {
-                                    auto songe = dataHolder.filteredSongList[j];
+                                    auto songe = this->filteredSongList[j];
 
                                     float resultWeight = 0;
                                     bool matchedAuthor = false;
@@ -491,7 +524,7 @@ void BetterSongSearch::DataHolder::Search() {
 
                 INFO("Calculated search indexes in {} ms", CurrentTimeMs() - before);
                 if (prefiltered.size() == 0) {
-                    dataHolder.searchedSongList.clear();
+                    this->searchedSongList.clear();
                 } else {
                     long long before = CurrentTimeMs();
                     float maxSearchWeightInverse = 1.0f / maxSearchWeight;
@@ -511,9 +544,9 @@ void BetterSongSearch::DataHolder::Search() {
                                      }
                     );
 
-                    dataHolder.searchedSongList.reserve(prefiltered.size());
+                    this->searchedSongList.reserve(prefiltered.size());
                     for (auto &x: prefiltered) {
-                        dataHolder.searchedSongList.push_back(x.song);
+                        this->searchedSongList.push_back(x.song);
                     }
                     INFO("sorted search results in {} ms", CurrentTimeMs() - before);
                 }
@@ -522,11 +555,11 @@ void BetterSongSearch::DataHolder::Search() {
 
                 std::vector<xd> prefiltered;
                 auto sortFunction = sortFunctionMap.at(currentSort);
-                for (auto item: dataHolder.filteredSongList) {
+                for (auto item: filteredSongList) {
                     auto score = sortFunction(item);
                     prefiltered.push_back({
-                                                  item, 0, score
-                                          });
+                        item, 0, score
+                    });
                 }
 
                 std::stable_sort(
@@ -537,12 +570,12 @@ void BetterSongSearch::DataHolder::Search() {
                         }
                 );
 
-                dataHolder.searchedSongList.clear();
-                dataHolder.searchedSongList.reserve(dataHolder.filteredSongList.size());
+                this->searchedSongList.clear();
+                this->searchedSongList.reserve(this->filteredSongList.size());
 
                 // Push to searched
                 for (auto &x: prefiltered) {
-                    dataHolder.searchedSongList.push_back(x.song);
+                    this->searchedSongList.push_back(x.song);
                 }
 
                 INFO("Sort without search in {} ms", CurrentTimeMs() - before);
@@ -551,51 +584,20 @@ void BetterSongSearch::DataHolder::Search() {
 
 
         DEBUG("Search time: {}ms", CurrentTimeMs() - before);
+        DEBUG("Found {} songs", searchedSongList.size());
 
-        // Schedule the UI update
-        
+        // Replace the list with the searched one in the main thread to prevent unsafe stuff
+        BSML::MainThreadScheduler::Schedule([this] {
+            DEBUG("Clearing displayedSongList");
+            // Copy the list to the displayed one
+            this->displayedSongList.clear();
+            this->displayedSongList = this->searchedSongList;
 
+            DEBUG("Found {} songs", this->displayedSongList.size());
 
-        // BSML::MainThreadScheduler::Schedule([this] {
-        //     long long before = 0;
-        //     before = CurrentTimeMs();
-
-        //     // Copy the list to the displayed one
-        //     dataHolder.sortedSongList.clear();
-        //     dataHolder.sortedSongList = dataHolder.searchedSongList;
-        //     this->ResetTable();
-
-        //     INFO("table reset in {} ms", CurrentTimeMs() - before);
-
-        //     if (songSearchPlaceholder) {
-        //         if (dataHolder.filteredSongList.size() == dataHolder.songDetails->songs.size()) {
-        //             songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
-        //         } else {
-        //             songSearchPlaceholder->set_text(
-        //                     fmt::format("Search {} songs", dataHolder.filteredSongList.size()));
-        //         }
-        //     }
-        //     if (!currentSong) {
-        //         SelectSong(songListTable(), 0);
-        //     } else {
-        //         // Always un-select in the list to prevent wrong-selections on resorting, etc.
-        //         songListTable()->ClearSelection();
-        //     }
-
-        //     this->searchInProgress->get_gameObject()->set_active(false);
-
-
-        //     // Run search again if something wants to
-        //     bool currentSortChanged = dataHolder.currentSort != dataHolder.sort;
-        //     bool currentSearchChanged = dataHolder.currentSearch != dataHolder.search;
-        //     bool currentFilterChanged = dataHolder.filterChanged;
-
-        //     IsSearching = false;
-
-        //     // Queue another search at the end of this one
-        //     if (currentSearchChanged || currentSortChanged || currentFilterChanged) {
-        //         this->UpdateSearchedSongsList();
-        //     }
-        // });
+            this->searchInProgress = false;
+            
+            this->searchEnded.invoke();
+        });
     }).detach();
 }

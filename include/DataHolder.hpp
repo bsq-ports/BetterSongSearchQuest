@@ -28,22 +28,25 @@ namespace BetterSongSearch {
     // Global variables
     class DataHolder {
         public:
+            DataHolder() = default; // Default constructor
+            DataHolder(const DataHolder&) = delete; // Disable copy constructor
             SongDetailsCache::SongDetails* songDetails = nullptr; // Song details cache
 
             // Events
             UnorderedEventCallback<> loadingFinished; // Gets called when the loading is done
             UnorderedEventCallback<std::string> loadingFailed; // Gets called when the loading failed with the error message
             UnorderedEventCallback<> playerDataLoaded; // Callback when we process more player data
+            UnorderedEventCallback<> searchEnded; // Callback when the search is done and we have the results
 
             std::vector<PreprocessedTag> tags = {}; // Preprocessed tags for filter UI
             std::unordered_map<std::string, uint64_t> tagMap = {};
 
-            // Flag to say that the filter has changed and the song list needs to be updated, to be cleared after the update
-            bool filterChanged = true;
+            // Allow to force reload the song list
+            bool forceReload = false;
 
             std::vector<const SongDetailsCache::Song*> filteredSongList; // Filtered songs
             std::vector<const SongDetailsCache::Song*> searchedSongList; // Searched songs
-            std::vector<const SongDetailsCache::Song*> sortedSongList; // Sorted songs (actually displayed)
+            std::vector<const SongDetailsCache::Song*> displayedSongList; // Sorted songs (actually displayed)
 
             FilterTypes::SortMode sort = (FilterTypes::SortMode) 0; // UI sort state
             FilterTypes::SortMode currentSort = FilterTypes::SortMode::Newest; // Current search sort state
@@ -74,6 +77,9 @@ namespace BetterSongSearch {
             bool SongHasScore(const SongDetailsCache::Song* song);
             bool SongHasScore(std::string_view songhash);
             void Search();
+            /// @brief Called when the song list UI is done updating the song list
+            void SongListUIDone();
+
         private:
             std::shared_mutex mutex_songsWithScores;
             std::unordered_set<std::string> songsWithScores; // Songs with scores (hashes) for played songs filtering
@@ -84,5 +90,5 @@ namespace BetterSongSearch {
 
 
     // Instance of the data holder
-    inline static DataHolder dataHolder;
+    static DataHolder& dataHolder = *new DataHolder();
 }

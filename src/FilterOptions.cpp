@@ -23,6 +23,7 @@ bool BetterSongSearch::FilterProfile::IsDefault(){
         rankedType == (int)FilterTypes::RankedFilter::ShowAll &&
         minStars == 0 &&
         maxStars >= STAR_FILTER_MAX &&
+        minUploadDate == BEATSAVER_EPOCH &&
         minUploadDateInMonths == 0 &&
         minRating == 0 &&
         minVotes == 0 &&
@@ -255,6 +256,36 @@ bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
     }
 }
 
+ bool BetterSongSearch::FilterProfile::IsEqual(const BetterSongSearch::FilterProfile& other) const {
+    return (
+        downloadType == other.downloadType &&
+        localScoreType == other.localScoreType &&
+        minLength == other.minLength &&
+        maxLength == other.maxLength &&
+        minNJS == other.minNJS &&
+        maxNJS == other.maxNJS &&
+        minNPS == other.minNPS &&
+        maxNPS == other.maxNPS &&
+        rankedType == other.rankedType &&
+        minStars == other.minStars &&
+        maxStars == other.maxStars &&
+        minUploadDate == other.minUploadDate &&
+        minRating == other.minRating &&
+        minVotes == other.minVotes &&
+        charFilter == other.charFilter &&
+        difficultyFilter == other.difficultyFilter &&
+        modRequirement == other.modRequirement &&
+        minUploadDateInMonths == other.minUploadDateInMonths &&
+        onlyCuratedMaps == other.onlyCuratedMaps &&
+        onlyVerifiedMappers == other.onlyVerifiedMappers &&
+        onlyV3Maps == other.onlyV3Maps &&
+        uploaders == other.uploaders &&
+        uploadersBlackList == other.uploadersBlackList &&
+        mapStyleString == other.mapStyleString &&
+        mapGenreString == other.mapGenreString &&
+        mapGenreExcludeString == other.mapGenreExcludeString
+    );
+}
 
 void BetterSongSearch::FilterProfile::PrintToDebug() {
     DEBUG("FilterProfile: ");

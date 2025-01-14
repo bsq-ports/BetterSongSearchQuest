@@ -45,6 +45,7 @@
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
 #include "Util/Debug.hpp"
+#include "Util/CurrentTimeMs.hpp"
 #include <limits>
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
@@ -159,7 +160,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (dataHolder.needsRefresh) {
         // Initial search
         dataHolder.needsRefresh = false; // Clear the flag
-        dataHolder.filterChanged = true;
+        dataHolder.forceReload = true;
         fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
         fcInstance->FilterViewController->datasetInfoLabel->set_text(
                 fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
@@ -213,7 +214,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (dataHolder.loaded) {
         DEBUG("Loaded is true");
         // Initial search
-        dataHolder.filterChanged = true;
+        dataHolder.forceReload = true;
         fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
         fcInstance->FilterViewController->datasetInfoLabel->set_text(
                 fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
@@ -248,11 +249,11 @@ void ViewControllers::SongListController::SelectSong(UnityW<HMUI::TableView> tab
     if (!table)
         return;
     DEBUG("Cell clicked {}", id);
-    if (dataHolder.sortedSongList.size() <= id) {
+    if (dataHolder.displayedSongList.size() <= id) {
         // Return if the id is invalid
         return;
     }
-    auto song = dataHolder.sortedSongList[id];
+    auto song = dataHolder.displayedSongList[id];
     DEBUG("Selecting song {}", id);
     this->SetSelectedSong(song);
 
@@ -267,7 +268,7 @@ float ViewControllers::SongListController::CellSize() {
 void ViewControllers::SongListController::ResetTable() {
 
     if (songListTable() != nullptr) {
-        DEBUG("Songs size: {}", dataHolder.sortedSongList.size());
+        DEBUG("Songs size: {}", dataHolder.displayedSongList.size());
         DEBUG("TABLE RESET");
         songListTable()->ReloadData();
         songListTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
@@ -275,7 +276,7 @@ void ViewControllers::SongListController::ResetTable() {
 }
 
 int ViewControllers::SongListController::NumberOfCells() {
-    return dataHolder.sortedSongList.size();
+    return dataHolder.displayedSongList.size();
 }
 
 void ViewControllers::SongListController::ctor() {
@@ -285,12 +286,14 @@ void ViewControllers::SongListController::ctor() {
     // Sub to events
     dataHolder.loadingFinished += {&ViewControllers::SongListController::SongDataDone, this};
     dataHolder.loadingFailed += {&ViewControllers::SongListController::SongDataError, this};
+    dataHolder.searchEnded += {&ViewControllers::SongListController::SearchDone, this};
 }
 
 void ViewControllers::SongListController::dtor() {
     // Unsub from events
     dataHolder.loadingFinished -= {&ViewControllers::SongListController::SongDataDone, this};
     dataHolder.loadingFailed -= {&ViewControllers::SongListController::SongDataError, this};
+    dataHolder.searchEnded -= {&ViewControllers::SongListController::SearchDone, this};
 }
 
 void ViewControllers::SongListController::SelectRandom() {
@@ -702,7 +705,7 @@ void ViewControllers::SongListController::FilterByUploader() {
 // BSML::CustomCellInfo
 HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView *tableView, int idx) {
     return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(
-            dataHolder.sortedSongList[idx]);
+            dataHolder.displayedSongList[idx]);
 }
 
 void ViewControllers::SongListController::UpdateSearch() {
@@ -750,6 +753,49 @@ void ViewControllers::SongListController::RetryDownloadSongList() {
     }
 }
 
+void ViewControllers::SongListController::SearchDone() {
+    auto isMainThread = BSML::MainThreadScheduler::CurrentThreadIsMainThread();
+    DEBUG("SearchDone, isMainThread: {}", isMainThread);
+    DEBUG("Search done in songlist at {}", fmt::ptr(&dataHolder));
+    
+    DEBUG("Displaying {} songs", dataHolder.displayedSongList.size());
+
+    long long before = 0;
+    before = CurrentTimeMs();
+    this->ResetTable();
+    INFO("table reset in {} ms", CurrentTimeMs() - before);
+
+    if (songSearchPlaceholder) {
+        if (dataHolder.filteredSongList.size() == dataHolder.songDetails->songs.size()) {
+            songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
+        } else {
+            songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.filteredSongList.size()));
+        }
+    }
+    if (!currentSong) {
+        SelectSong(songListTable(), 0);
+    } else {
+        // Always un-select in the list to prevent wrong-selections on resorting, etc.
+        songListTable()->ClearSelection();
+    }
+
+    this->searchInProgress->get_gameObject()->set_active(false);
+
+
+    // Run search again if something wants to
+    bool currentSortChanged = dataHolder.currentSort != dataHolder.sort;
+    bool currentSearchChanged = dataHolder.currentSearch != dataHolder.search;
+    bool currentFilterChanged = !dataHolder.filterOptionsCache.IsEqual(dataHolder.filterOptions);
+
+    IsSearching = false;
+
+    // Queue another search at the end of this one
+    if (currentSearchChanged || currentSortChanged || currentFilterChanged) {
+        DEBUG("Queueing another search");
+        DEBUG("Sort: {}, Search: {}, Filter: {}", currentSortChanged, currentSearchChanged, currentFilterChanged);
+        this->UpdateSearchedSongsList();
+    }
+}
 
 // Event receivers
 void ViewControllers::SongListController::SongDataDone() {
@@ -758,7 +804,7 @@ void ViewControllers::SongListController::SongDataDone() {
             dataHolder.needsRefresh = false;
 
             // Initial search
-            dataHolder.filterChanged = true;
+            dataHolder.forceReload = true;
             fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 
             std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();

@@ -42,6 +42,7 @@ namespace BetterSongSearch {
         VALUE_DEFAULT(std::string, mapGenreExcludeString, "");
 
         public:
+            bool IsEqual(const FilterProfile& other) const;
 
             // Because RapidJSON does not support enums... we have to make methods to convert them to/from int
             FilterTypes::DownloadFilter getDownloadType() { return (FilterTypes::DownloadFilter) downloadType; };

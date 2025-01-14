@@ -82,7 +82,7 @@ void Modals::Settings::set_preferredLeaderboard(StringW value) {
         dataHolder.preferredLeaderboard = LEADERBOARD_MAP.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
         auto controller = fcInstance->SongListController;
-        dataHolder.filterChanged = true;
+        dataHolder.forceReload = true;
         controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
     }
 }

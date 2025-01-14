@@ -31,8 +31,6 @@ void Modals::GenrePicker::PostParse()
 
 void Modals::GenrePicker::CloseModal()
 {
-    // Trigger genre change
-    SelectGenre();
     this->genrePickerModal->Hide();
 }
 
@@ -51,11 +49,13 @@ void Modals::GenrePicker::dtor()
 }
 
 void Modals::GenrePicker::RefreshGenreList() {
-    if (!this->genrePickerModal) return;
-    if (!initialized) return;
-
-    auto table = this->genrePickerModal->get_transform()->Find("TableView")->GetComponent<HMUI::TableView*>();
+    if (!genresTableData) return;   
+    auto table = genresTableData->tableView;
     if (!table) return;
+    
+    DEBUG("Refreshing genre list");
+
+    DEBUG("Genre list size: {}", dataHolder.tags.size());
 
     if (dataHolder.tags.size() == 0) return;
 
@@ -74,10 +74,15 @@ void Modals::GenrePicker::RefreshGenreList() {
         if (isExcluded) state = GenreCellStatus::Exclude;
         if (isIncluded) state = GenreCellStatus::Include;
 
-        genres.push_back({genre.tag, mask, state, genre.songCount});
+        tempGenres.push_back({genre.tag, mask, state, genre.songCount});
     }
 
+    DEBUG("Genre list size: {}", tempGenres.size());
+
+    // Swap the vectors
     tempGenres.swap(genres);
+
+    DEBUG("Genre list refreshed, {} genres", genres.size());
     
     table->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
     table->ReloadData();
@@ -90,7 +95,7 @@ void Modals::GenrePicker::OpenModal()
         initialized = true;
     }
 
-    RefreshGenreList();
+    
 
     INFO("Opening genre picker modal");
     this->genrePickerModal->Show();
@@ -101,6 +106,7 @@ void Modals::GenrePicker::OpenModal()
     if (!fv) return;
 
     dataHolder.PreprocessTags();
+    RefreshGenreList();
 }
 
 void Modals::GenrePicker::ClearGenre()
@@ -112,7 +118,6 @@ void Modals::GenrePicker::ClearGenre()
 
     // Trigger refresh of songs
     auto slController = fcInstance->SongListController;
-    dataHolder.filterChanged = true;
     slController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 
     // Update filter settings
@@ -130,7 +135,7 @@ HMUI::TableCell *Modals::GenrePicker::CellForIdx(HMUI::TableView *tableView, int
 
 float Modals::GenrePicker::CellSize()
 {
-    return 6.05f;
+    return 5.00f;
 }
 
 int Modals::GenrePicker::NumberOfCells()
@@ -160,7 +165,6 @@ void Modals::GenrePicker::SelectGenre() {
     getPluginConfig().MapGenreExcludeString.SetValue(excludeString);
     
     auto slController = fcInstance->SongListController;
-    dataHolder.filterChanged = true;
     slController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 
     // Update filter settings
