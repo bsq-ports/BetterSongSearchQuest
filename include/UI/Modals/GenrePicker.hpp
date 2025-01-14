@@ -54,6 +54,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, Unit
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, genrePickerModal);
 
+    public:
+        void SelectGenre();
+
     private:
         std::vector<BetterSongSearch::UI::Modals::GenreCellState> genres;
 

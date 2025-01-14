@@ -11,6 +11,7 @@
 #include "assets.hpp"
 #include "FilterOptions.hpp"
 #include "DataHolder.hpp"
+#include "Util/TextUtil.hpp"
 
 
 using namespace BetterSongSearch::UI;
@@ -30,6 +31,8 @@ void Modals::GenrePicker::PostParse()
 
 void Modals::GenrePicker::CloseModal()
 {
+    // Trigger genre change
+    SelectGenre();
     this->genrePickerModal->Hide();
 }
 
@@ -39,12 +42,12 @@ void Modals::GenrePicker::ctor()
     this->initialized = false;
 
     // Subscribe to events
-    dataHolder.loadingFinished += {&Modals::GenrePicker::PostParse, this};
+    dataHolder.loadingFinished += {&Modals::GenrePicker::RefreshGenreList, this};
 }
 void Modals::GenrePicker::dtor()
 {
     // Unsub from events
-    dataHolder.loadingFinished -= {&Modals::GenrePicker::PostParse, this};
+    dataHolder.loadingFinished -= {&Modals::GenrePicker::RefreshGenreList, this};
 }
 
 void Modals::GenrePicker::RefreshGenreList() {
@@ -133,4 +136,36 @@ float Modals::GenrePicker::CellSize()
 int Modals::GenrePicker::NumberOfCells()
 {
     return genres.size();
+}
+
+void Modals::GenrePicker::SelectGenre() {
+    std::vector<std::string> selectedGenres;
+    std::vector<std::string> excludedGenres;
+
+    for (auto& g : genres) {
+        if (g.status == GenreCellStatus::Include) {
+            selectedGenres.push_back(g.tag);
+        } else if (g.status == GenreCellStatus::Exclude) {
+            excludedGenres.push_back(g.tag);
+        }
+    }
+    
+    // Trigger refresh of songs
+    std::string includeString = join(selectedGenres, " ");
+    std::string excludeString = join(excludedGenres, " ");
+
+    dataHolder.filterOptions.mapGenreString = includeString;
+    dataHolder.filterOptions.mapGenreExcludeString = excludeString;
+    getPluginConfig().MapGenreString.SetValue(includeString);
+    getPluginConfig().MapGenreExcludeString.SetValue(excludeString);
+    
+    auto slController = fcInstance->SongListController;
+    dataHolder.filterChanged = true;
+    slController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
+
+    // Update filter settings
+    fcInstance->FilterViewController->UpdateLocalState();
+    fcInstance->FilterViewController->ForceRefreshUI();
+
+    this->genrePickerModal->Hide();
 }

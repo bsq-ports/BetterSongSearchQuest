@@ -441,6 +441,9 @@ void ViewControllers::FilterViewController::ClearFilters()
     getPluginConfig().OnlyVerifiedMappers.SetValue(getPluginConfig().OnlyVerifiedMappers.GetDefaultValue());
     getPluginConfig().OnlyCuratedMaps.SetValue(getPluginConfig().OnlyCuratedMaps.GetDefaultValue());
     getPluginConfig().OnlyV3Maps.SetValue(getPluginConfig().OnlyV3Maps.GetDefaultValue());
+    getPluginConfig().MapGenreString.SetValue(getPluginConfig().MapGenreString.GetDefaultValue());
+    getPluginConfig().MapStyleString.SetValue(getPluginConfig().MapStyleString.GetDefaultValue());
+    getPluginConfig().MapGenreExcludeString.SetValue(getPluginConfig().MapGenreExcludeString.GetDefaultValue());
 
     // Load to dataHolder
     dataHolder.filterOptions.LoadFromConfig();
