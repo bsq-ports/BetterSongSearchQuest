@@ -2,7 +2,6 @@
 #include "_config.h"
 #include "System/Action.hpp"
 #include "custom-types/shared/register.hpp"
-#include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"

@@ -1,13 +1,14 @@
 #include "UI/Modals/GenrePicker.hpp"
-#include "HMUI/TableView.hpp"
-#include "bsml/shared/BSML.hpp"
 #include "System/Tuple_2.hpp"
+#include "HMUI/TableView.hpp"
+
+#include "bsml/shared/BSML.hpp"
+
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+
 #include "logging.hpp"
 #include "assets.hpp"
-#include "UI/Modals/PresetsTable.hpp"
 #include "FilterOptions.hpp"
-#include "UI/ViewControllers/SongList.hpp"
 #include "DataHolder.hpp"
 
 using namespace BetterSongSearch::UI;

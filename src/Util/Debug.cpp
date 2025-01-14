@@ -1,8 +1,8 @@
 #include "Util/Debug.hpp"
 #include <string>
-#include "UI/ViewControllers/SongList.hpp"
 #include "logging.hpp"
 #include "DataHolder.hpp"
+#include "Util/SongUtil.hpp"
 
 std::string BetterSongSearch::Util::SortToString(int sortMode) {
     switch (sortMode)

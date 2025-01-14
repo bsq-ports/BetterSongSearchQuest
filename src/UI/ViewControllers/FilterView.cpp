@@ -12,7 +12,6 @@
 #include <UnityEngine/Resources.hpp>
 
 #include "DateUtils.hpp"
-#include "UI/ViewControllers/SongList.hpp"
 #include "Util/BSMLStuff.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"

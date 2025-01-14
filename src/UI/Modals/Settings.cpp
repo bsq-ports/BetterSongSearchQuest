@@ -1,13 +1,14 @@
 #include "UI/Modals/Settings.hpp"
 
-#include "PluginConfig.hpp"
-
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "DataHolder.hpp"
-#include "assets.hpp"
+
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+
+#include "PluginConfig.hpp"
+#include "DataHolder.hpp"
+#include "assets.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;

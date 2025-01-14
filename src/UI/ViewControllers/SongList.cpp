@@ -14,7 +14,6 @@
 #include "songcore/shared/SongCore.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
-#include "GlobalNamespace/PlayerLevelStatsData.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
@@ -32,7 +31,6 @@
 #include <iterator>
 #include <string>
 #include <algorithm>
-#include <functional>
 #include <regex>
 #include <future>
 
@@ -41,23 +39,17 @@
 #include "logging.hpp"
 #include "BeatSaverRegionManager.hpp"
 #include "Util/BSMLStuff.hpp"
-#include "Util/CurrentTimeMs.hpp"
 #include "Util/Random.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
 #include "UI/Manager.hpp"
 #include "Util/TextUtil.hpp"
 #include "Util/Debug.hpp"
-#include <cmath>
-#include "song-details/shared/SongDetails.hpp"
 #include <limits>
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/utilities.hpp"
-#include "song-details/shared/Data/RankedStates.hpp"
 #include "DataHolder.hpp"
-
-#include "System/Collections/Generic/Dictionary_2.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -76,11 +68,6 @@ SongPreviewPlayer *songPreviewPlayer = nullptr;
 LevelCollectionViewController *levelCollectionViewController = nullptr;
 
 DEFINE_TYPE(ViewControllers::SongListController, SongListController);
-
-
-//////////// Utils
-
-
 
 const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow",
                                                 "NintyDegree", "ThreeSixtyDegree", "Lawless"};
@@ -168,9 +155,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     // Retry if failed to dl
     this->RetryDownloadSongList();
 
-    // If needs a refresh, refresh when shown
-    if (dataHolder.loaded && dataHolder.needsRefresh) {
+    // If needs a refresh, start a new search when activated
+    if (dataHolder.needsRefresh) {
         // Initial search
+        dataHolder.needsRefresh = false; // Clear the flag
         dataHolder.filterChanged = true;
         fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
         fcInstance->FilterViewController->datasetInfoLabel->set_text(
@@ -192,6 +180,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (dataHolder.playerDataModel == nullptr) {
         dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel *>();
     };
+
     // Get coordinators
     soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator *>();
     multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator *>();
@@ -764,16 +753,10 @@ void ViewControllers::SongListController::RetryDownloadSongList() {
 
 // Event receivers
 void ViewControllers::SongListController::SongDataDone() {
-    DEBUG("SongDataDone");
-    // Set state flags
-    dataHolder.loading = false;
-    dataHolder.failed = false;
-    dataHolder.loaded = true;
-    dataHolder.needsRefresh = false;
-
     BSML::MainThreadScheduler::Schedule([this] {
-
         if (this->get_isActiveAndEnabled()) {
+            dataHolder.needsRefresh = false;
+
             // Initial search
             dataHolder.filterChanged = true;
             fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
@@ -789,21 +772,11 @@ void ViewControllers::SongListController::SongDataDone() {
             fcInstance->FilterViewController->datasetInfoLabel->set_text(
                     fmt::format("{} songs in dataset.  Last update: {}", dataHolder.songDetails->songs.size(),
                                 timeScrapedString));
-        } else {
-            dataHolder.needsRefresh = true;
         }
     });
 }
 
 void ViewControllers::SongListController::SongDataError(std::string message) {
-    DEBUG("SongDataError");
-
-    // Set state flags
-    dataHolder.loading = false;
-    dataHolder.failed = true;
-    dataHolder.loaded = false;
-    dataHolder.needsRefresh = false;
-
     BSML::MainThreadScheduler::Schedule([this, message] {
         if (fcInstance != nullptr) {
             fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{}, click to retry", message));

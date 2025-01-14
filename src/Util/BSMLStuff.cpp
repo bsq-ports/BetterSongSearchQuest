@@ -1,14 +1,12 @@
 #include "Util/BSMLStuff.hpp"
 #include "HMUI/CurvedTextMeshPro.hpp"
 #include "HMUI/ScrollView.hpp"
-#include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/CustomFormatRangeValuesSlider.hpp"
 #include "UnityEngine/RectTransform.hpp"
 #include "UnityEngine/UI/LayoutElement.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "UnityEngine/GameObject.hpp"
-#include "UnityEngine/UI/Button.hpp"
-#include "bsml/shared/Helpers/delegates.hpp"
+
 #include "custom-types/shared/coroutine.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))

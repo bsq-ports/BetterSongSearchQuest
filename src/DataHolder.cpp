@@ -1,14 +1,19 @@
 #include "DataHolder.hpp"
 
+#include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/PlayerData.hpp"
+#include "GlobalNamespace/PlayerLevelStatsData.hpp"
+#include "System/Collections/IEnumerator.hpp"
+#include "System/Collections/Generic/Dictionary_2.hpp"
+
 #include "song-details/shared/Data/Song.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/SongDetails.hpp"
-#include "GlobalNamespace/PlayerDataModel.hpp"
-#include "GlobalNamespace/PlayerData.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "Util/TextUtil.hpp"
 #include "Util/SongUtil.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
+
 #include "logging.hpp"
 #include <regex>
 
@@ -34,10 +39,24 @@ void BetterSongSearch::DataHolder::Init() {
 }
 
 void BetterSongSearch::DataHolder::SongDataDone() {
+    DEBUG("SongDataDone");
     PreprocessTags();
+
+    loading = false;
+    failed = false;
+    loaded = true;
+    needsRefresh = true;
+    
     loadingFinished.invoke();
 }
 void BetterSongSearch::DataHolder::SongDataError(std::string message) {
+    DEBUG("SongDataFailed");
+
+    loading = false;
+    failed = true;
+    loaded = false;
+    needsRefresh = false;
+    
     loadingFailed.invoke(message);
 }
 

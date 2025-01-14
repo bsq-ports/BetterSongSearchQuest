@@ -1,17 +1,15 @@
 #include "UI/Modals/UploadDetails.hpp"
 
-#include <bsml/shared/BSML/MainThreadScheduler.hpp>
-
-#include "PluginConfig.hpp"
-#include "HMUI/TableView.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "songcore/shared/SongCore.hpp"
-#include "beatsaverplusplus/shared/BeatSaver.hpp"
-#include "BeatSaverRegionManager.hpp"
-#include "assets.hpp"
+
 #include "Util/CurrentTimeMs.hpp"
-#include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+
+#include "BeatSaverRegionManager.hpp"
+#include "PluginConfig.hpp"
+#include "assets.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;

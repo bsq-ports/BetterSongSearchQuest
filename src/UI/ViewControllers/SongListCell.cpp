@@ -1,5 +1,4 @@
 #include "UI/ViewControllers/SongListCell.hpp"
-#include "UI/ViewControllers/SongList.hpp"
 
 #include "UnityEngine/Color.hpp"
 #include "sombrero/shared/FastColor.hpp"

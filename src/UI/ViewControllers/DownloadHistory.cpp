@@ -1,26 +1,23 @@
 #include "UI/ViewControllers/DownloadHistory.hpp"
 
-#include <bsml/shared/BSML/MainThreadScheduler.hpp>
-
-#include "logging.hpp"
-
 #include "HMUI/TableView.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "UnityEngine/Resources.hpp"
 
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "songcore/shared/SongCore.hpp"
 #include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "web-utils/shared/WebUtils.hpp"
 
-#include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
+#include "Util/TextUtil.hpp"
 #include "UI/ViewControllers/DownloadListTableData.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-#include "UnityEngine/Resources.hpp"
-#include "bsml/shared/BSML/MainThreadScheduler.hpp"
-#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
-#include "Util/TextUtil.hpp"
+#include "assets.hpp"
+#include "logging.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;

@@ -1,14 +1,18 @@
 #include "UI/Modals/Presets.hpp"
-#include "HMUI/TableView.hpp"
-#include "bsml/shared/BSML.hpp"
+
 #include "System/Tuple_2.hpp"
+#include "HMUI/TableView.hpp"
+
+#include "bsml/shared/BSML.hpp"
+
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/Modals/PresetsTable.hpp"
+
+#include "FilterOptions.hpp"
+#include "DataHolder.hpp"
 #include "logging.hpp"
 #include "assets.hpp"
-#include "UI/Modals/PresetsTable.hpp"
-#include "FilterOptions.hpp"
-#include "UI/ViewControllers/SongList.hpp"
-#include "DataHolder.hpp"
+
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
