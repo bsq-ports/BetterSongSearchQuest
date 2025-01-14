@@ -4,7 +4,7 @@
 
 #include "bsml/shared/BSML.hpp"
 #include "songcore/shared/SongCore.hpp"
-
+#include "DataHolder.hpp"
 #include "assets.hpp"
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
@@ -70,7 +70,7 @@ StringW Modals::Settings::get_preferredLeaderboard() {
     if (LEADERBOARD_MAP.contains(preferredLeaderboard)) {
         return preferredLeaderboard;
     } else {
-        DataHolder::preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
+        dataHolder.preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
         getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
         return "Scoresaber";
     }
@@ -78,10 +78,10 @@ StringW Modals::Settings::get_preferredLeaderboard() {
 
 void Modals::Settings::set_preferredLeaderboard(StringW value) {
     if (LEADERBOARD_MAP.contains(value)) {
-        DataHolder::preferredLeaderboard = LEADERBOARD_MAP.at(value);
+        dataHolder.preferredLeaderboard = LEADERBOARD_MAP.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
         auto controller = fcInstance->SongListController;
-        controller->filterChanged = true;
-        controller->SortAndFilterSongs(controller->sort, controller->search, true);
+        dataHolder.filterChanged = true;
+        controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
     }
 }

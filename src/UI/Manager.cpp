@@ -10,7 +10,7 @@
 #include "UnityEngine/Profiling/Profiler.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
-
+#include "DataHolder.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -39,7 +39,7 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
 
     // Wait for songs to load
-    while (!DataHolder::loaded) {
+    while (!dataHolder.loaded) {
         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2f));
     }
 

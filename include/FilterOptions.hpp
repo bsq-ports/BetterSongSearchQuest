@@ -37,6 +37,10 @@ namespace BetterSongSearch {
         VALUE_DEFAULT(bool, onlyVerifiedMappers, false);
         VALUE_DEFAULT(bool, onlyV3Maps, false);
 
+        VALUE_DEFAULT(std::string, mapStyleString, "All");
+        VALUE_DEFAULT(std::string, mapGenreString, "");
+        VALUE_DEFAULT(std::string, mapGenreExcludeString, "");
+
         public:
 
             // Because RapidJSON does not support enums... we have to make methods to convert them to/from int
@@ -58,6 +62,10 @@ namespace BetterSongSearch {
             SongDetailsCache::MapCharacteristic charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
             // This value is valid only if the related filter is not set to "All" and recalculated
             SongDetailsCache::MapDifficulty difficultyFilterPreprocessed = SongDetailsCache::MapDifficulty::Easy;
+
+            uint64_t _mapStyleBitfield = 0;
+            uint64_t _mapGenreBitfield = 0;
+            uint64_t _mapGenreExcludeBitfield = 0;
 
             bool isDefaultPreprocessed = true;
 

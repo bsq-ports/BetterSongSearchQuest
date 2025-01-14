@@ -17,7 +17,7 @@
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
-
+#include "DataHolder.hpp"
 
 using namespace BetterSongSearch::Util;
 using namespace BetterSongSearch::UI;
@@ -133,11 +133,11 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
         DEBUG("Filters changed");
 
         // Update filter options state
-        DataHolder::filterOptions.LoadFromConfig();
+        dataHolder.filterOptions.LoadFromConfig();
 
         auto controller = fcInstance->SongListController;
-        controller->filterChanged = true;
-        controller->SortAndFilterSongs(controller->sort, controller->search, true);
+        dataHolder.filterChanged = true;
+        controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
     } else {
         DEBUG("Filters did not change");
     }
@@ -296,6 +296,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     // Register modals
     presetsModal = this->get_gameObject()->AddComponent<UI::Modals::Presets *>();
+    genrePickerModal = this->get_gameObject()->AddComponent<UI::Modals::GenrePicker *>();
 
     // It needs to be registered
     limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine([this]()
@@ -352,28 +353,33 @@ void ViewControllers::FilterViewController::OpenSponsorsLink()
 {
     DEBUG("OpenSponsorsLink FIRED");
 }
+void ViewControllers::FilterViewController::ShowGenrePicker()
+{
+    DEBUG("ShowGenrePicker FIRED");
+    this->genrePickerModal->OpenModal();
+}
 
 
 
 void ViewControllers::FilterViewController::UpdateLocalState() {
     // Load from dataHolder
-    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) DataHolder::filterOptions.downloadType);
-    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) DataHolder::filterOptions.localScoreType);
-    this->characteristic = this->get_characteristics()->get_Item((int) DataHolder::filterOptions.charFilter);
-    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) DataHolder::filterOptions.rankedType);
-    this->difficulty = this->get_difficulties()->get_Item((int) DataHolder::filterOptions.difficultyFilter);
-    this->mods =  this->get_modOptions()->get_Item((int) DataHolder::filterOptions.modRequirement);
+    this->existingSongs=this->get_downloadedFilterOptions()->get_Item((int) dataHolder.filterOptions.downloadType);
+    this->existingScore=this->get_scoreFilterOptions()->get_Item((int) dataHolder.filterOptions.localScoreType);
+    this->characteristic = this->get_characteristics()->get_Item((int) dataHolder.filterOptions.charFilter);
+    this->rankedState = this->get_rankedFilterOptions()->get_Item((int) dataHolder.filterOptions.rankedType);
+    this->difficulty = this->get_difficulties()->get_Item((int) dataHolder.filterOptions.difficultyFilter);
+    this->mods =  this->get_modOptions()->get_Item((int) dataHolder.filterOptions.modRequirement);
 
-    this->minimumSongLength=DataHolder::filterOptions.minLength / 60.0f;
-    this->maximumSongLength=DataHolder::filterOptions.maxLength / 60.0f;
-    this->minimumNjs = DataHolder::filterOptions.minNJS;
-    this->maximumNjs = DataHolder::filterOptions.maxNJS;
-    this->minimumNps = DataHolder::filterOptions.minNPS;
-    this->maximumNps = DataHolder::filterOptions.maxNPS;
-    this->minimumStars = DataHolder::filterOptions.minStars;
-    this->maximumStars = DataHolder::filterOptions.maxStars;
-    this->minimumRating = DataHolder::filterOptions.minRating;
-    this->minimumVotes = DataHolder::filterOptions.minVotes;
+    this->minimumSongLength=dataHolder.filterOptions.minLength / 60.0f;
+    this->maximumSongLength=dataHolder.filterOptions.maxLength / 60.0f;
+    this->minimumNjs = dataHolder.filterOptions.minNJS;
+    this->maximumNjs = dataHolder.filterOptions.maxNJS;
+    this->minimumNps = dataHolder.filterOptions.minNPS;
+    this->maximumNps = dataHolder.filterOptions.maxNPS;
+    this->minimumStars = dataHolder.filterOptions.minStars;
+    this->maximumStars = dataHolder.filterOptions.maxStars;
+    this->minimumRating = dataHolder.filterOptions.minRating;
+    this->minimumVotes = dataHolder.filterOptions.minVotes;
 
     // TODO: Maybe save it to the preset too
     this->hideOlderThan = getPluginConfig().MinUploadDateInMonths.GetValue();
@@ -438,7 +444,7 @@ void ViewControllers::FilterViewController::ClearFilters()
     getPluginConfig().OnlyV3Maps.SetValue(getPluginConfig().OnlyV3Maps.GetDefaultValue());
 
     // Load to dataHolder
-    DataHolder::filterOptions.LoadFromConfig();
+    dataHolder.filterOptions.LoadFromConfig();
 
     // Refresh FilterView state from settings and DataHolder
     UpdateLocalState();
@@ -448,8 +454,8 @@ void ViewControllers::FilterViewController::ClearFilters()
 
     DEBUG("Filters changed");
     auto controller = fcInstance->SongListController;
-    controller->filterChanged = true;
-    controller->SortAndFilterSongs(controller->sort, controller->search, true);
+    dataHolder.filterChanged = true;
+    controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 }
 void ViewControllers::FilterViewController::ShowPresets()
 {

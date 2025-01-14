@@ -8,7 +8,7 @@
 #include "UI/Modals/PresetsTable.hpp"
 #include "FilterOptions.hpp"
 #include "UI/ViewControllers/SongList.hpp"
-
+#include "DataHolder.hpp"
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
@@ -84,7 +84,7 @@ void Modals::Presets::AddPreset()
         if (newPresetName == "") {
             return;
         }
-        DataHolder::filterOptions.SaveToPreset(newPresetName);
+        dataHolder.filterOptions.SaveToPreset(newPresetName);
 
         presets.push_back(newPresetName);
 
@@ -104,14 +104,14 @@ void Modals::Presets::LoadPreset()
         return;
     }
 
-    auto presetOptional = DataHolder::filterOptions.LoadFromPreset(selectedPreset);
+    auto presetOptional = dataHolder.filterOptions.LoadFromPreset(selectedPreset);
 
     if (!presetOptional.has_value()) {
         return;
     }
 
-    DataHolder::filterOptions = presetOptional.value();
-    DataHolder::filterOptions.SaveToConfig();
+    dataHolder.filterOptions = presetOptional.value();
+    dataHolder.filterOptions.SaveToConfig();
 
     // Update filter settings
     fcInstance->FilterViewController->UpdateLocalState();
@@ -121,8 +121,8 @@ void Modals::Presets::LoadPreset()
 
     // Update filter options state
     auto slController = fcInstance->SongListController;
-    slController->filterChanged = true;
-    slController->SortAndFilterSongs(slController->sort, slController->search, true);
+    dataHolder.filterChanged = true;
+    slController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
 
     CloseModal();
 }
@@ -132,7 +132,7 @@ void Modals::Presets::DeletePreset()
     if (selectedPreset == "") {
         return;
     }
-    DataHolder::filterOptions.DeletePreset(selectedPreset);
+    dataHolder.filterOptions.DeletePreset(selectedPreset);
     RefreshPresetsList();
     
     if (presetListTableData && presetListTableData->tableView) {

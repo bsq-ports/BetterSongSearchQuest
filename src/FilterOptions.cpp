@@ -3,6 +3,7 @@
 #include "Util/TextUtil.hpp"
 #include "main.hpp"
 #include "logging.hpp"
+#include "DataHolder.hpp"
 
 using namespace rapidjson;
 using namespace UnityEngine;
@@ -31,7 +32,10 @@ bool BetterSongSearch::FilterProfile::IsDefault(){
         modRequirement == (int)FilterTypes::Requirement::Any && 
         !onlyCuratedMaps &&
         !onlyVerifiedMappers &&
-        !onlyV3Maps
+        !onlyV3Maps && 
+        mapStyleString == "All" &&
+        mapGenreString == "" &&
+        mapGenreExcludeString == ""
     );
 }
 
@@ -57,6 +61,9 @@ void BetterSongSearch::FilterProfile::LoadFromConfig() {
     onlyCuratedMaps = getPluginConfig().OnlyCuratedMaps.GetValue();
     onlyVerifiedMappers = getPluginConfig().OnlyVerifiedMappers.GetValue();
     onlyV3Maps = getPluginConfig().OnlyV3Maps.GetValue();
+    mapStyleString = getPluginConfig().MapStyleString.GetValue();
+    mapGenreString = getPluginConfig().MapGenreString.GetValue();
+    mapGenreExcludeString = getPluginConfig().MapGenreExcludeString.GetValue();
 
     // Custom string loader
     auto uploadersString = getPluginConfig().Uploaders.GetValue();
@@ -95,6 +102,9 @@ void BetterSongSearch::FilterProfile::SaveToConfig() {
     getPluginConfig().OnlyCuratedMaps.SetValue(onlyCuratedMaps, false);
     getPluginConfig().OnlyVerifiedMappers.SetValue(onlyVerifiedMappers, false);
     getPluginConfig().OnlyV3Maps.SetValue(onlyV3Maps, false);
+    getPluginConfig().MapStyleString.SetValue(mapStyleString, false);
+    getPluginConfig().MapGenreString.SetValue(mapGenreString, false);
+    getPluginConfig().MapGenreExcludeString.SetValue(mapGenreExcludeString, false);
 
     getPluginConfig().Uploaders.SetValue((uploadersBlackList ? "!" : "") + join(uploaders, " "), false);
 
@@ -175,6 +185,30 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
     return presetNames;
 }
 
+
+static uint64_t CalculateTagsBitfield(std::string tags) {
+    if (tags == "" || BetterSongSearch::dataHolder.songDetails != nullptr) return 0;
+
+    std::vector<std::string> items = split(toLower(tags), " ");
+
+    // Remove empty strings
+    items.erase(std::remove_if(items.begin(), items.end(), [](std::string const& s) {
+        return s.empty();
+    }), items.end());
+
+    uint64_t res = 0;
+
+    for (auto& t : items) {
+        // If it doesnt exist, the default for numbers is 0, and when we add that to an int nothing changes lohl
+        uint64_t x = BetterSongSearch::dataHolder.songDetails->tags.at(t);
+        res |= x;
+    }
+
+    return res;
+}
+			
+
+
 void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
     if (charFilter == (int)FilterTypes::CharFilter::All) {
         charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
@@ -189,6 +223,11 @@ void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
     }
 
     isDefaultPreprocessed = IsDefault();
+
+    // Calculate bit fields
+    _mapStyleBitfield = CalculateTagsBitfield(mapStyleString);
+    _mapGenreBitfield = CalculateTagsBitfield(mapGenreString);
+    _mapGenreExcludeBitfield = CalculateTagsBitfield(mapGenreExcludeString);
 }
 
 

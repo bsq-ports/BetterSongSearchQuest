@@ -2,6 +2,7 @@
 #include <string>
 #include "UI/ViewControllers/SongList.hpp"
 #include "logging.hpp"
+#include "DataHolder.hpp"
 
 std::string BetterSongSearch::Util::SortToString(int sortMode) {
     switch (sortMode)
@@ -195,7 +196,7 @@ void BetterSongSearch::Util::LogSongInfo(const SongDetailsCache::Song* song) {
         );
 
     }
-    DEBUG("Sort score: {}", sortFunctionMap.at(UI::DataHolder::currentSort)(song));
+    DEBUG("Sort score: {}", sortFunctionMap.at(dataHolder.currentSort)(song));
 }
 
 // Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)

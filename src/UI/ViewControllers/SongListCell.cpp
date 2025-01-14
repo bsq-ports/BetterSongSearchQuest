@@ -11,7 +11,7 @@
 #include <fmt/chrono.h>
 #include <fmt/core.h>
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-
+#include "DataHolder.hpp"
 
 using namespace BetterSongSearch::Util;
 using namespace SongDetailsCache;
@@ -91,7 +91,7 @@ namespace BetterSongSearch::UI::ViewControllers
         });
 
         // If most stars
-        if (DataHolder::currentSort == FilterTypes::SortMode::Most_Stars) {
+        if (dataHolder.currentSort == FilterTypes::SortMode::Most_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
            
                 auto diff1 = - a.stars;
@@ -102,7 +102,7 @@ namespace BetterSongSearch::UI::ViewControllers
             });
         }
         // If least stars
-        if (DataHolder::currentSort == FilterTypes::SortMode::Least_Stars) {
+        if (dataHolder.currentSort == FilterTypes::SortMode::Least_Stars) {
             std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](const DiffIndex& a,  const DiffIndex& b) {
                 auto diff1 = a.stars > 0 ? a.stars: -420.0f;
                 auto diff2 = b.stars > 0 ? b.stars: -420.0f;

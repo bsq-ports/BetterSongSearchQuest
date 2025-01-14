@@ -7,6 +7,7 @@
 #include "Util/CurrentTimeMs.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "logging.hpp"
+#include "DataHolder.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -28,9 +29,9 @@ void Modals::MultiDL::StartMultiDownload()
     auto range = table->GetVisibleCellsIdRange();
 
     int downloaded = 0;
-    for (int i = range->get_Item1(); i < DataHolder::sortedSongList.size(); i++)
+    for (int i = range->get_Item1(); i < dataHolder.sortedSongList.size(); i++)
     {   
-        auto song = DataHolder::sortedSongList[i];
+        auto song = dataHolder.sortedSongList[i];
         // Skip if can't dl or already downloading
         if (dlController->CheckIsDownloaded(std::string(song->hash())) || !dlController->CheckIsDownloadable(std::string(song->hash()))) 
             continue;

@@ -25,6 +25,7 @@
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
+#include "DataHolder.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -45,18 +46,8 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
     std::thread([]{
         INFO("setting config values");
 
-        // Load configs
-        DataHolder::filterOptions.LoadFromConfig();
-        DataHolder::filterOptionsCache = DataHolder::filterOptions;
-
-        // Preferred Leaderboard
-        std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
-        if (LEADERBOARD_MAP.contains(preferredLeaderboard)) {
-           DataHolder::preferredLeaderboard = LEADERBOARD_MAP.at(preferredLeaderboard);
-        } else {
-           DataHolder::preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
-           getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
-        }
+        // Init the data holder (sub to events)
+        dataHolder.Init();
     }).detach();   
 }
 

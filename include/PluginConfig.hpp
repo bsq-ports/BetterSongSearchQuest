@@ -17,6 +17,10 @@ static inline const float NPS_FILTER_MAX = 12.0f;
 static inline const int64_t BEATSAVER_EPOCH = 1525136400;
 static inline const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(BEATSAVER_EPOCH)};
 
+static inline const std::vector<std::string> MAP_STYLES_OPTIONS = {
+    "Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech"
+};
+
 namespace FilterTypes {
     enum class DownloadFilter
     {
@@ -149,4 +153,7 @@ DECLARE_CONFIG(PluginConfig,
     CONFIG_VALUE(OnlyVerifiedMappers, bool, "Only Verified Mappers", false);
     CONFIG_VALUE(OnlyCuratedMaps, bool, "Only Curated Maps", false);
     CONFIG_VALUE(OnlyV3Maps, bool, "Only V3 Maps", false);
+    CONFIG_VALUE(MapStyleString, std::string, "Map Style", "All");
+    CONFIG_VALUE(MapGenreString, std::string, "Map Genres", "");
+    CONFIG_VALUE(MapGenreExcludeString, std::string, "Map Genre Exclude", "");
 )

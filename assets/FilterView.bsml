@@ -43,6 +43,10 @@
 							<slider-setting text='Minimum Votes' id='minimumVotesSlider' value="minimumVotes" bind-value="true" apply-on-change="true" increment='1' max='100' on-change="UpdateFilterSettings"/>
 							<string-setting text='Uploader(s)' id='uploadersStringControl' value='uploadersString' bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" hover-hint='You can enter multiple Uploader names, seperated by spaces. If you have an Exclamation mark at the beginning of your input it becomes a blacklist for the given uploaders'/>
 							<dropdown-list-setting text='Map Style' value="mapStyleString" apply-on-change="true" bind-value="true" choices='mapStyles' formatter='FormatBeatSaverTag' on-change="UpdateData"/>
+							<horizontal pad-right="-3">
+								<text text="Song Genre" align="MidlineLeft" italics="true"/>
+								<button id='genrePickButton' text="Any" preferred-width="29" on-click="ShowGenrePicker" all-uppercase="false"/>
+							</horizontal>
 							<checkbox-setting value="onlyCuratedMaps" text="Curated Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" />
 							<checkbox-setting value="onlyVerifiedMappers" text="Verified Mappers" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
 							<!-- <checkbox-setting value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/> -->

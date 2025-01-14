@@ -47,82 +47,7 @@
 namespace BetterSongSearch::UI {
     inline bool fromBSS = false;
     inline bool openToCustom = false;
-    bool MeetsFilter(const SongDetailsCache::Song* song);
-    bool DifficultyCheck(const SongDetailsCache::SongDifficulty* diff, const SongDetailsCache::Song* song);
-
-    // Global variables
-    struct DataHolder {
-        // Song details ref
-        inline static SongDetailsCache::SongDetails* songDetails;
-        // Filtered songs
-        inline static std::vector<const SongDetailsCache::Song*> filteredSongList;
-        // Searched songs
-        inline static std::vector<const SongDetailsCache::Song*> searchedSongList;
-        // Sorted songs (actually displayed)
-        inline static std::vector<const SongDetailsCache::Song*> sortedSongList;
-
-        // State variables to be globally accessible
-        inline static FilterTypes::SortMode currentSort = FilterTypes::SortMode::Newest;
-        inline static std::string currentSearch = "";
-
-        inline static std::unordered_set<std::string> songsWithScores;
-
-        inline static FilterProfile filterOptions;
-        inline static FilterProfile filterOptionsCache;
-        /// @brief Player data model to get the scores
-        inline static UnityW<GlobalNamespace::PlayerDataModel> playerDataModel = nullptr;
-
-        // Preferred Leaderboard
-        inline static FilterTypes::PreferredLeaderBoard preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
-
-        /// @brief Song data is loaded
-        inline static bool loaded = false;
-        /// @brief Song data failed to load
-        inline static bool failed = false;
-        // Song data is loading
-        inline static bool loading = false;
-        /// @brief Flag to say that the song list needs a refresh when the user opens the BSS because the data got updated
-        inline static bool needsRefresh = false;
-        // Song list is invalid (means that we should not touch anything in the song list rn)
-        inline static bool invalid = false;
-    };
-
-#define PROP_GET(jsonName, varName)                                \
-    static auto jsonNameHash_##varName = stringViewHash(jsonName); \
-    if (nameHash == (jsonNameHash_##varName))                      \
-        return &varName;
-
-
-    constexpr std::string_view ShortMapDiffNames(std::string_view input) {
-        // order variables from most likely to least likely to at least improve branch checks
-        // optimization switch idea stolen from Red's SDC wrapper. Good job red 👏
-        switch (input.front()) {
-            case 'E':
-                // ExpertPlus
-                if (input.back() == 's') {
-                    return "Ex+";
-                }
-                // Easy
-                if (input.size() == 4) {
-                    return "E";
-                }
-                // Expert
-                return "Ex";
-            case 'N':
-                return "N";
-            case 'H':
-                return "H";
-            default:
-                return "UNKNOWN";
-        }
-    }
-
-#undef PROP_GET
-
 }
-
-using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
-extern std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap;
 
 #ifdef HotReload
 DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
@@ -228,15 +153,6 @@ public:
     const SongDetailsCache::Song* currentSong = nullptr;
     void UpdateDetails();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
-
-    // Temp values
-    std::string search = "";
-    FilterTypes::SortMode sort = (FilterTypes::SortMode) 0;
-    // Prev values
-    std::string prevSearch = "";
-    FilterTypes::SortMode prevSort = (FilterTypes::SortMode) 0;
-    
-    bool filterChanged = true;
 
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
