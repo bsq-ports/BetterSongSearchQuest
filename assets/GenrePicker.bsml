@@ -6,14 +6,14 @@
 			</horizontal>
 			<horizontal horizontal-fit='PreferredSize'>
 				<vertical horizontal-fit='Unconstrained'>
-					<list visible-cells='10' cell-size='5' id='genreList' select-cell='GenreSelected' show-scrollbar='true'/>
+					<list id="genresTableData" visible-cells='12' cell-size='5' select-cell='GenreSelected' show-scrollbar='true'/>
 				</vertical>
 				<vertical id='scrollbarContainer' preferred-width='8'/>
 			</horizontal>
 			<horizontal>
 				<primary-button text='Select' on-click='SelectGenre'  pref-width="15"/>
-				<button text='Clear Selection' on-click='ClearGenre'  pref-width="20" />
-				<button text='Close' on-click='CloseGenreModal'  pref-width="15"/>
+				<button text='Clear Selection' on-click='ClearGenre'  pref-width="25" />
+				<button text='Close' on-click='CloseModal'  pref-width="15"/>
 			</horizontal>
 		</vertical>
 	</modal>
