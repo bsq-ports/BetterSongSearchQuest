@@ -47,7 +47,7 @@ namespace BetterSongSearch::UI::Modals
 
     BetterSongSearch::UI::Modals::GenrePickerCell* GenrePickerCell::PopulateWithGenre(BetterSongSearch::UI::Modals::GenreCellState* state){
         this->genre = state;
-        includeButton->set_text(state->tag);
+        includeButton->set_text(fmt::format("{} ({})", state->tag, state->songCount));
         Refresh();
 
         return this;
