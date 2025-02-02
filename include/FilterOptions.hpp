@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <limits>
+#include <tuple>
 
 #include "rapidjson-macros/shared/macros.hpp"
 #include "song-details/shared/Data/MapMods.hpp"
@@ -83,6 +84,11 @@ namespace BetterSongSearch {
             void SaveToConfig();
 
             void PrintToDebug();
+
+
+            // @brief Counts the included and excluded tags in the profile
+            // @return A tuple with the count of included and excluded tags
+            std::tuple<int, int> CountTags();
 
             // @brief Saves the profile to a preset
             // @param presetName The name of the preset to save

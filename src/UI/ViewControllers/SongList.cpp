@@ -89,13 +89,12 @@ void ViewControllers::SongListController::UpdateSearchedSongsList() {
 
 void ViewControllers::SongListController::PostParse() {
     // Steal search box from the base game
-    static UnityW<HMUI::InputFieldView> gameSearchBox;
-    if (!gameSearchBox) {
-        gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>()->First(
-                [](HMUI::InputFieldView *x) {
-                    return x->get_name() == "SearchInputField";
-                });
-    }
+    UnityW<HMUI::InputFieldView> gameSearchBox;
+    gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>()->First(
+        [](HMUI::InputFieldView *x) {
+            return x->get_name() == "SearchInputField";
+        }
+    );
 
     if (gameSearchBox) {
         DEBUG("Found search box");
@@ -151,6 +150,60 @@ void ViewControllers::SongListController::PostParse() {
 
 void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy,
                                                       bool screenSystemDisabling) {
+    // Init everything before we call events
+    if (firstActivation) {
+        DEBUG("SongListController first activation");
+        if (dataHolder.playerDataModel == nullptr) {
+            dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel *>();
+        };
+
+        // Get coordinators
+        soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator *>();
+        multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator *>();
+
+        // Get regional beat saver urls
+        BeatSaverRegionManager::RegionLookup();
+
+        limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]() {
+            DEBUG("UpdateSearchedSongsList limited called");
+            this->_UpdateSearchedSongsList();
+        }, 0.1f);
+
+        IsSearching = false;
+        INFO("Song list contoller activated");
+
+        // Get sort setting from config
+        auto sortMode = getPluginConfig().SortMode.GetValue();
+        if (sortMode < get_sortModeSelections()->get_Count()) {
+            selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
+            dataHolder.sort = (FilterTypes::SortMode) sortMode;
+        }
+
+        BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
+
+        multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL *>();
+        settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings *>();
+        uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails *>();
+
+        // If loaded, refresh
+        if (dataHolder.loaded) {
+            DEBUG("Loaded is true");
+            // Initial search
+            dataHolder.forceReload = true;
+            fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(
+                    fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
+        } else {
+            this->DownloadSongList();
+        }
+
+        #ifdef HotReload
+            fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/SongList.bsml";
+            fileWatcher->checkInterval = 0.5f;
+        #endif
+    }
+    // End first activation
+
     fromBSS = false;
 
     // Retry if failed to dl
@@ -174,58 +227,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
             songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         }
     }
-
-    if (!firstActivation)
-        return;
-
-    if (dataHolder.playerDataModel == nullptr) {
-        dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel *>();
-    };
-
-    // Get coordinators
-    soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator *>();
-    multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator *>();
-
-    // Get regional beat saver urls
-    BeatSaverRegionManager::RegionLookup();
-
-    limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]() {
-        DEBUG("UpdateSearchedSongsList limited called");
-        this->_UpdateSearchedSongsList();
-    }, 0.1f);
-
-    IsSearching = false;
-    INFO("Song list contoller activated");
-
-    // Get sort setting from config
-    auto sortMode = getPluginConfig().SortMode.GetValue();
-    if (sortMode < get_sortModeSelections()->get_Count()) {
-        selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
-        dataHolder.sort = (FilterTypes::SortMode) sortMode;
-    }
-
-    BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
-
-    multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL *>();
-    settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings *>();
-    uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails *>();
-
-    // If loaded, refresh
-    if (dataHolder.loaded) {
-        DEBUG("Loaded is true");
-        // Initial search
-        dataHolder.forceReload = true;
-        fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-        fcInstance->FilterViewController->datasetInfoLabel->set_text(
-                fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
-    } else {
-        this->DownloadSongList();
-    }
-
-#ifdef HotReload
-    fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/SongList.bsml";
-    fileWatcher->checkInterval = 0.5f;
-#endif
 }
 
 void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
@@ -280,6 +281,7 @@ int ViewControllers::SongListController::NumberOfCells() {
 }
 
 void ViewControllers::SongListController::ctor() {
+    DEBUG("SongListController ctor");
     INVOKE_CTOR();
     selectedSortMode = StringW("Newest");
 
@@ -289,7 +291,8 @@ void ViewControllers::SongListController::ctor() {
     dataHolder.searchEnded += {&ViewControllers::SongListController::SearchDone, this};
 }
 
-void ViewControllers::SongListController::dtor() {
+void ViewControllers::SongListController::OnDestroy() {
+    DEBUG("SongListController onDestroy");
     // Unsub from events
     dataHolder.loadingFinished -= {&ViewControllers::SongListController::SongDataDone, this};
     dataHolder.loadingFailed -= {&ViewControllers::SongListController::SongDataError, this};
@@ -757,8 +760,18 @@ void ViewControllers::SongListController::SearchDone() {
     auto isMainThread = BSML::MainThreadScheduler::CurrentThreadIsMainThread();
     DEBUG("SearchDone, isMainThread: {}", isMainThread);
     DEBUG("Search done in songlist at {}", fmt::ptr(&dataHolder));
+
+    if (!isMainThread) {
+        ERROR("Calling SearchDone not on the main thread is not allowed, returning");
+        return;
+    }
     
     DEBUG("Displaying {} songs", dataHolder.displayedSongList.size());
+    if (!songListTable()) {
+        // TODO: Actually understand why songListTable isn't available on soft refresh
+        WARNING("SongListTable is null, might be a soft refresh, returning as we don't need to reset anything on soft refresh");
+        return;
+    }
 
     long long before = 0;
     before = CurrentTimeMs();
@@ -772,9 +785,11 @@ void ViewControllers::SongListController::SearchDone() {
             songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.filteredSongList.size()));
         }
     }
+
+    // Reset song list table selection
     if (!currentSong) {
         SelectSong(songListTable(), 0);
-    } else {
+    } else {        
         // Always un-select in the list to prevent wrong-selections on resorting, etc.
         songListTable()->ClearSelection();
     }
@@ -802,30 +817,14 @@ void ViewControllers::SongListController::SongDataDone() {
     BSML::MainThreadScheduler::Schedule([this] {
         if (this->get_isActiveAndEnabled()) {
             dataHolder.needsRefresh = false;
-
+            // TODO: Move into dataholder
             // Initial search
             dataHolder.forceReload = true;
             fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-
-            std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
-
-            std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
-            std::tm local_tm = *std::localtime(&tt);
-
-            std::string timeScrapedString = fmt::format("{:%d %b %y - %H:%M}", local_tm);
-
-            // filterView.datasetInfoLabel?.SetText($"{songDetails.songs.Length} songs in dataset | Newest: {songDetails.songs.Last().uploadTime.ToLocalTime():d\\. MMM yy - HH:mm}");
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(
-                    fmt::format("{} songs in dataset.  Last update: {}", dataHolder.songDetails->songs.size(),
-                                timeScrapedString));
         }
     });
 }
 
 void ViewControllers::SongListController::SongDataError(std::string message) {
-    BSML::MainThreadScheduler::Schedule([this, message] {
-        if (fcInstance != nullptr) {
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{}, click to retry", message));
-        }
-    });
+
 }

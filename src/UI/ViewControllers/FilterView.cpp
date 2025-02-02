@@ -3,6 +3,8 @@
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/Backgroundable.hpp"
 #include "HMUI/ImageView.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 
 #include "logging.hpp"
 #include "PluginConfig.hpp"
@@ -15,7 +17,9 @@
 #include "Util/BSMLStuff.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/TextUtil.hpp"
+#include "Formatters.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "DataHolder.hpp"
 
 using namespace BetterSongSearch::Util;
@@ -77,6 +81,11 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
     SAVE_NUMBER_CONFIG(this->maximumStars, MaxStars);
     SAVE_NUMBER_CONFIG(this->minimumRating, MinRating);
     SAVE_INTEGER_CONFIG(this->minimumVotes, MinVotes);
+
+    if (this->mapStyleString != getPluginConfig().MapStyleString.GetValue()) {
+        filtersChanged = true;
+        getPluginConfig().MapStyleString.SetValue(this->mapStyleString);
+    }
 
     // Special case for saving date
     if (this->hideOlderThan != getPluginConfig().MinUploadDateInMonths.GetValue()) {
@@ -277,8 +286,8 @@ void ViewControllers::FilterViewController::PostParse() {
 
         return fmt::format("{} <color=#CCC>{}</color> uploader", (blacklist ? "Hiding": "Show only"), uploaders.size(), (uploaders.size() == 1 ? "" : "s") );
     };
-
     uploadersStringControl->formatter = uploadersStringFormat;
+    mapStyleDropdown->formatter = Formatters::FormatMapStyle;
 
     ForceFormatValues();
     
@@ -317,6 +326,21 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     #endif
 }
 
+void ViewControllers::FilterViewController::UpdateGenreFilterText() {
+    // Get the current filter
+    auto [included, excluded] = dataHolder.filterOptions.CountTags();
+
+    std::string genreFilter = "Any";
+
+    if (included > 0 || excluded > 0) {
+        genreFilter = fmt::format("{} Incl. {} Excl.", included, excluded);
+    }
+
+    if (genrePickButton) {
+        genrePickButton->GetComponentInChildren<HMUI::CurvedTextMeshPro*>()->set_text(genreFilter); 
+    }
+}   
+
 void ViewControllers::FilterViewController::ForceFormatValues() {
     // Force format values
     FormatSliderSettingValue(this->minStarsSetting);
@@ -330,6 +354,8 @@ void ViewControllers::FilterViewController::ForceFormatValues() {
     FormatSliderSettingValue(this->minimumRatingSlider);
     FormatSliderSettingValue(this->minimumVotesSlider);
     FormatStringSettingValue(this->uploadersStringControl);
+
+    UpdateGenreFilterText();
 }
 
 void ViewControllers::FilterViewController::UpdateFilterSettings()
@@ -386,6 +412,7 @@ void ViewControllers::FilterViewController::UpdateLocalState() {
     this->onlyCuratedMaps = getPluginConfig().OnlyCuratedMaps.GetValue();
     this->onlyVerifiedMappers = getPluginConfig().OnlyVerifiedMappers.GetValue();
     this->onlyV3Maps = getPluginConfig().OnlyV3Maps.GetValue();
+    this->mapStyleString = getPluginConfig().MapStyleString.GetValue();
 }
 
 void ViewControllers::FilterViewController::ForceRefreshUI() {
@@ -409,6 +436,9 @@ void ViewControllers::FilterViewController::ForceRefreshUI() {
     characteristicDropdown->set_Value(reinterpret_cast<System::String*> (this->characteristic.convert()));
     difficultyDropdown->set_Value(reinterpret_cast<System::String*> (this->difficulty.convert()));
     modsRequirementDropdown->set_Value(reinterpret_cast<System::String*> (this->mods.convert()));
+    mapStyleDropdown->set_Value(reinterpret_cast<System::String*> (this->mapStyleString.convert()));
+
+    UpdateGenreFilterText();
 }
 
 // Top buttons
@@ -473,4 +503,63 @@ void ViewControllers::FilterViewController::TryToDownloadDataset()
         }
     }
     DEBUG("TryToDownloadDataset");
+}
+
+
+
+void ViewControllers::FilterViewController::ctor() {
+    INVOKE_CTOR();
+    DEBUG("FilterViewController ctor");
+    // Sub to events
+    dataHolder.loadingFinished += {&ViewControllers::FilterViewController::OnLoaded, this};
+    dataHolder.loadingFailed += {&ViewControllers::FilterViewController::OnFailed, this};
+    dataHolder.searchEnded += {&ViewControllers::FilterViewController::OnSearchComplete, this};
+}
+
+void ViewControllers::FilterViewController::OnDestroy() {
+    // Unsub from events
+    DEBUG("FilterViewController onDestroy");
+    dataHolder.loadingFinished -= {&ViewControllers::FilterViewController::OnLoaded, this};
+    dataHolder.loadingFailed -= {&ViewControllers::FilterViewController::OnFailed, this};
+    dataHolder.searchEnded -= {&ViewControllers::FilterViewController::OnSearchComplete, this};
+}
+
+void ViewControllers::FilterViewController::OnLoaded() {
+    INFO("Loaded dataset");
+
+    if (!dataHolder.songDetails) {
+        ERROR("SongDetails is null");
+        return;
+    }
+
+    if (!dataHolder.songDetails->songs.get_isDataAvailable()) {
+        ERROR("Data is not available somehow, bailing out");
+        return;
+    }
+
+    BSML::MainThreadScheduler::Schedule([this] {
+        std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
+
+        std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
+        std::tm local_tm = *std::localtime(&tt);
+
+        std::string timeScrapedString = fmt::format("{:%d %b %y - %H:%M}", local_tm);
+
+        this->datasetInfoLabel->set_text(
+            fmt::format("{} songs in dataset.  Last update: {}", 
+            dataHolder.songDetails->songs.size(),
+            timeScrapedString
+        ));
+    });
+}
+
+void ViewControllers::FilterViewController::OnFailed(std::string message) {
+    DEBUG("Failed to load dataset: {}", message);
+    BSML::MainThreadScheduler::Schedule([this, message] {
+        this->datasetInfoLabel->set_text(fmt::format("{}, click to retry", message));
+    });
+}
+
+void ViewControllers::FilterViewController::OnSearchComplete() {
+    INFO("Search complete");
 }

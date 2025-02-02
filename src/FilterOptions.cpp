@@ -262,6 +262,20 @@ void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
     _mapGenreExcludeBitfield = CalculateTagsBitfield(mapGenreExcludeString);
 }
 
+std::tuple<int, int> BetterSongSearch::FilterProfile::CountTags() {
+    int included = 0;
+    int excluded = 0;
+
+    if (mapGenreString != "") {
+        included += split(mapGenreString, " ").size();
+    }
+
+    if (mapGenreExcludeString != "") {
+        excluded += split(mapGenreExcludeString, " ").size();
+    }
+
+    return {included, excluded};
+}
 
 
 bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {

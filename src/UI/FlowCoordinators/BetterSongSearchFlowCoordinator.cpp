@@ -7,6 +7,7 @@
 #include "System/Action.hpp"
 #include "HMUI/ViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "logging.hpp"
 
 
 using namespace GlobalNamespace;
@@ -26,6 +27,9 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Aw
     if (!DownloadHistoryViewController) {
         DownloadHistoryViewController = BSML::Helpers::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
     }
+
+    // Make sure the flow coordinator is not destroyed when changing scenes
+    UnityEngine::Object::DontDestroyOnLoad(this->get_gameObject());
 }
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling) {

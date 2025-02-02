@@ -14,6 +14,7 @@
 #include "GlobalNamespace/MultiplayerLevelScenesTransitionSetupDataSO.hpp"
 #include "GlobalNamespace/MultiplayerResultsViewController.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "GlobalNamespace/MenuTransitionsHelper.hpp"
 #include "UI/ViewControllers/SongList.hpp"
 #include "PluginConfig.hpp"
 #include "UI/Manager.hpp"
@@ -80,6 +81,15 @@ MAKE_HOOK_MATCH(ReturnToBSS, &HMUI::FlowCoordinator::DismissFlowCoordinator, voi
     }
     
 };
+
+// Soft restart in settings
+MAKE_HOOK_MATCH(MenuTransitionsHelper_RestartGame, &GlobalNamespace::MenuTransitionsHelper::RestartGame, void, GlobalNamespace::MenuTransitionsHelper* self, System::Action_1<Zenject::DiContainer*>* finishCallback)
+{
+    DEBUG("Destroying manager flow before restart");
+    manager.DestroyFlow();
+    fromBSS = false;
+    MenuTransitionsHelper_RestartGame(self, finishCallback);
+}
 
 MAKE_HOOK_MATCH(GameplaySetupViewController_RefreshContent, &GlobalNamespace::GameplaySetupViewController::RefreshContent, void, GlobalNamespace::GameplaySetupViewController* self)
 {
@@ -202,6 +212,7 @@ BSS_EXPORT_FUNC void late_load() {
     INSTALL_HOOK(Logger, GameplaySetupViewController_RefreshContent);
     INSTALL_HOOK(Logger, LevelFilteringNavigationController_Setup);
     INSTALL_HOOK(Logger, MultiplayerLevelScenesTransitionSetupDataSO_Init);
+    INSTALL_HOOK(Logger, MenuTransitionsHelper_RestartGame);
 
     // Automatic testing
     // INSTALL_HOOK(Logger, MainFlowCoordinator_DidActivate);

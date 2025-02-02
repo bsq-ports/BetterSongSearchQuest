@@ -39,6 +39,7 @@ jobs:
     - name: Get QPM
       uses: Fernthedev/qpm-action@v1
       with:
+        resolve_ndk: true
         #required
         workflow_token: ${{secrets.GITHUB_TOKEN}}
         restore: true # will run restore on download

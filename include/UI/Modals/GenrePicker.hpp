@@ -38,7 +38,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, Unit
 
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
-    DECLARE_DTOR(dtor);
+    DECLARE_INSTANCE_METHOD(void, OnDestroy);
 
     DECLARE_INSTANCE_METHOD(void, PostParse);
 

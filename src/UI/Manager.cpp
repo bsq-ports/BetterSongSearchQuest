@@ -144,6 +144,15 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     co_yield nullptr;
 }
 
+void BetterSongSearch::UI::Manager::DestroyFlow() {
+    if (flow) {
+        DEBUG("Destroying BSS flowController");
+        auto flowGO = flow->get_gameObject();
+        if (flowGO) UnityEngine::Object::DestroyImmediate(flowGO);
+    } else {
+        WARNING("Destroy flow called when the controller didn't exist");
+    }
+}
 
 void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
     if (!flow) {

@@ -56,7 +56,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 #endif
 
     DECLARE_CTOR(ctor);
-    DECLARE_DTOR(dtor);
+    DECLARE_INSTANCE_METHOD(void, OnDestroy);
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::CustomListTableData>, songList);
 

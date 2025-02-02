@@ -42,7 +42,7 @@ void Modals::GenrePicker::ctor()
     // Subscribe to events
     dataHolder.loadingFinished += {&Modals::GenrePicker::RefreshGenreList, this};
 }
-void Modals::GenrePicker::dtor()
+void Modals::GenrePicker::OnDestroy()
 {
     // Unsub from events
     dataHolder.loadingFinished -= {&Modals::GenrePicker::RefreshGenreList, this};

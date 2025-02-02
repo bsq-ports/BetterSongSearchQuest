@@ -254,9 +254,6 @@ void BetterSongSearch::DataHolder::Search() {
         DEBUG("Force reload");
         this->forceReload = false;
     }
-    
-
-
 
     // Take a snapshot of current filter options
     this->filterOptionsCache.CopyFrom(this->filterOptions);

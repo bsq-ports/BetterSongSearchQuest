@@ -42,7 +42,7 @@
 							<slider-setting id="minimumRatingSlider" text='Minimum Rating' value="minimumRating" bind-value="true" apply-on-change="true" max='0.9' increment='0.05' formatter='PercentFloat' on-change="UpdateFilterSettings"/>
 							<slider-setting text='Minimum Votes' id='minimumVotesSlider' value="minimumVotes" bind-value="true" apply-on-change="true" increment='1' max='100' on-change="UpdateFilterSettings"/>
 							<string-setting text='Uploader(s)' id='uploadersStringControl' value='uploadersString' bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" hover-hint='You can enter multiple Uploader names, seperated by spaces. If you have an Exclamation mark at the beginning of your input it becomes a blacklist for the given uploaders'/>
-							<dropdown-list-setting text='Map Style' value="mapStyleString" apply-on-change="true" bind-value="true" choices='mapStyles' formatter='FormatBeatSaverTag' on-change="UpdateData"/>
+							<dropdown-list-setting text='Map Style' id='mapStyleDropdown' value="mapStyleString" apply-on-change="true" bind-value="true" choices='mapStyles' formatter='FormatBeatSaverTag' on-change="UpdateFilterSettings"/>
 							<horizontal pad-right="-3">
 								<text text="Song Genre" align="MidlineLeft" italics="true"/>
 								<button id='genrePickButton' text="Any" preferred-width="29" on-click="ShowGenrePicker" all-uppercase="false"/>

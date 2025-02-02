@@ -1,5 +1,6 @@
 #pragma once
 
+#include "UnityEngine/UI/Button.hpp"
 #include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
 #include "HMUI/ViewController.hpp"
 #include "bsml/shared/macros.hpp"
@@ -23,7 +24,9 @@ DECLARE_CLASS_CUSTOM(BetterSongSearch::UI::ViewControllers, FilterViewController
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController,
 #endif
 
-    DECLARE_SIMPLE_DTOR();
+    DECLARE_CTOR(ctor);
+    DECLARE_INSTANCE_METHOD(void, OnDestroy);
+
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
     
     // Modals
@@ -68,6 +71,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(StringW, characteristic);
     DECLARE_INSTANCE_FIELD(StringW, difficulty);
     DECLARE_INSTANCE_FIELD(StringW, mods);
+    DECLARE_INSTANCE_FIELD(StringW, mapStyleString);
 
     // Values for sliders
     DECLARE_INSTANCE_FIELD(float, minimumSongLength);
@@ -91,39 +95,47 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
 
     DECLARE_INSTANCE_METHOD(void, UpdateFilterSettings);
 
+    // Used to refresh the filter text
+    DECLARE_INSTANCE_METHOD(void, UpdateGenreFilterText);
+
     // BG layout stuff
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalLayoutGroup*, filterbarContainer);
 
     // Sliders that need to be formatted
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, hideOlderThanSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumRatingSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minStarsSetting);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maxStarsSetting);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumNjsSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumNjsSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumNpsSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumNpsSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumSongLengthSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, maximumSongLengthSlider);
-    DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, minimumVotesSlider);
-    DECLARE_INSTANCE_FIELD(BSML::StringSetting*, uploadersStringControl);    
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, hideOlderThanSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minimumRatingSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minStarsSetting);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, maxStarsSetting);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minimumNjsSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, maximumNjsSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minimumNpsSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, maximumNpsSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minimumSongLengthSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, maximumSongLengthSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::SliderSetting>, minimumVotesSlider);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::StringSetting>, uploadersStringControl);
 
     // Values for string fields
     DECLARE_INSTANCE_FIELD(StringW, uploadersString);
 
     // Dropdowns and settings
-    DECLARE_INSTANCE_FIELD(BSML::ListSetting*, existingSongsSetting);
-    DECLARE_INSTANCE_FIELD(BSML::ListSetting*, existingScoreSetting);
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, rankedStateSetting);
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, characteristicDropdown);
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, difficultyDropdown);   
-    DECLARE_INSTANCE_FIELD(BSML::DropdownListSetting*, modsRequirementDropdown);  
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ListSetting>, existingSongsSetting);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ListSetting>, existingScoreSetting);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, rankedStateSetting);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, characteristicDropdown);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, difficultyDropdown);   
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, modsRequirementDropdown);  
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, mapStyleDropdown);
 
-    DECLARE_INSTANCE_FIELD(BSML::ClickableText*, datasetInfoLabel);
-
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, genrePickButton);
+    
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, datasetInfoLabel);
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:
         custom_types::Helpers::Coroutine _UpdateFilterSettings();
+        void OnLoaded();
+        void OnFailed(std::string error);
+        void OnSearchComplete();
         BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateFilterSettings = nullptr;
 )
