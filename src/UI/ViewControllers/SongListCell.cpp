@@ -53,19 +53,34 @@ namespace BetterSongSearch::UI::ViewControllers
 
     CustomSongListTableCell *CustomSongListTableCell::PopulateWithSongData(const SongDetailsCache::Song *entry)
     {
+        // Colors
+        static auto verifiedSongColor = Sombrero::FastColor(.7f, 1.0f, .7f, 1.0f);
+		static auto verifiedUploaderColor = Sombrero::FastColor(.46f, .27f, .68f, 1.0f);
+		static auto normalUploaderColor = Sombrero::FastColor(.8f, .8f, .8f, 1.0f);
+
+        bool isCurated = hasFlags(entry->uploadFlags, SongDetailsCache::UploadFlags::Curated);
+
         this->levelAuthorName->set_text(entry->levelAuthorName());
         this->songLengthAndRating->set_text(fmt::format("Length: {:%M:%S} Upvotes: {}, Downvotes: {}", std::chrono::seconds(entry->songDurationSeconds), entry->upvotes, entry->downvotes));
         this->uploadDateFormatted->set_text(fmt::format("{:%d. %b %Y}", fmt::localtime(entry->uploadTimeUnix)));
-        bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(entry->hash());
+        bool isDownloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(entry->hash());
 
+        // Song name color
         Sombrero::FastColor songColor = Sombrero::FastColor::white();
-        if (downloaded)
+        if (isDownloaded)
         {
             songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
+        } else {
+            if (isCurated) {
+                songColor = verifiedSongColor;
+            }
         }
-
         this->fullFormattedSongName->set_text(fmt::format("{} - {}",  entry->songAuthorName(), entry->songName()));
         this->fullFormattedSongName->set_color(songColor);
+
+        // Author color
+        bool isVerified = hasFlags(entry->uploadFlags, SongDetailsCache::UploadFlags::VerifiedUploader);
+        this->levelAuthorName->set_color(isVerified ? verifiedUploaderColor : normalUploaderColor);
 
         this->entry = entry;
 
