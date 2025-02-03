@@ -44,6 +44,7 @@ void BetterSongSearch::DataHolder::Init() {
 void BetterSongSearch::DataHolder::SongDataDone() {
     DEBUG("SongDataDone");
     PreprocessTags();
+    UpdatePlayerScores();
 
     loading = false;
     failed = false;
@@ -125,6 +126,9 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
     // Run in a separate thread
     il2cpp_utils::il2cpp_aware_thread([this] {
         try {
+            DEBUG("Updating player scores");
+            long long before = CurrentTimeMs();
+
             if (!playerDataModel) {
                 WARNING("No player data model, cannot update scores");
                 updating = false;
@@ -141,6 +145,12 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             auto statsData = playerData->get_levelsStatsData();
             if (!statsData) {
                 WARNING("No stats data, cannot update scores");
+                updating = false;
+                return;
+            }
+
+            if (!this->songDetails || !this->songDetails->songs.get_isDataAvailable()) {
+                WARNING("No song details, cannot update scores");
                 updating = false;
                 return;
             }
@@ -181,12 +191,31 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             INFO("local scores checked. found {}", songsWithScoresTemp.size());
 
             std::unique_lock<std::shared_mutex> lock(mutex_songsWithScores);
+            bool firstLoad = songsWithScores.empty() && songsWithScoresTemp.size() > 0;
+            bool isChanged = songsWithScores.size() != songsWithScoresTemp.size();
+            bool isEmpty = songsWithScoresTemp.empty() && songsWithScores.empty();
             songsWithScoresTemp.swap(songsWithScores);
             lock.unlock();
 
-            updating = false;   
+            updating = false;
 
-            playerDataLoaded.invoke();
+            INFO("Updated player scores in {} ms", CurrentTimeMs() - before);
+            
+            if (isChanged && !isEmpty) {
+                BSML::MainThreadScheduler::Schedule([this, firstLoad] {
+                    playerDataLoaded.invoke();
+                    // Make another search if we have the filter set and run the first time
+                    {
+                        if (
+                            firstLoad &&
+                            !this->searchInProgress &&
+                            this->filterOptions.getLocalScoreType() != FilterTypes::LocalScoreFilter::All
+                        ) {
+                            this->Search();                      
+                        }
+                    }
+                });
+            }
         } catch (...) {
             WARNING("Failed to update player scores");
             updating = false;

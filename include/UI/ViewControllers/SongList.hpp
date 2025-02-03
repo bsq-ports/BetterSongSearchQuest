@@ -38,6 +38,7 @@
 #include "song-details/shared/SongDetails.hpp"
 #include "song-details/shared/Data/Song.hpp"
 #include <fmt/chrono.h>
+#include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
 
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
@@ -168,5 +169,7 @@ public:
     void SearchDone();
     void SongDataDone();
     void SongDataError(std::string message);
+    void PlayerDataLoaded();
+    void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
 )
 

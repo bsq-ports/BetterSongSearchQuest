@@ -11,6 +11,8 @@
 #include <fmt/core.h>
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "DataHolder.hpp"
+#include "logging.hpp"
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
 using namespace BetterSongSearch::Util;
 using namespace SongDetailsCache;
@@ -49,6 +51,29 @@ namespace BetterSongSearch::UI::ViewControllers
         retVal += fmt::format("({})", customCharNames[diff->characteristic]);
 
         return retVal;
+    }
+
+    void CustomSongListTableCell::ctor()
+    {
+        // Subscribe to events
+        SongCore::SongLoader::RuntimeSongLoader::get_instance()->SongsLoaded += {&CustomSongListTableCell::OnSongsLoaded, this};
+    }
+
+    void CustomSongListTableCell::OnDestroy()
+    {
+        // Unsub from events
+        // The only way this can be destroyed is if the game is closing, 
+        // so no need to unsub, since songcore will be destroyed too
+    }
+
+    void CustomSongListTableCell::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs)
+    {
+        if (!this->get_isActiveAndEnabled()) return;
+        if (!dataHolder.songDetails->songs.get_isDataAvailable()) return;
+        if (!this->entry) return;
+
+        // Refresh the state
+        PopulateWithSongData(this->entry);
     }
 
     CustomSongListTableCell *CustomSongListTableCell::PopulateWithSongData(const SongDetailsCache::Song *entry)

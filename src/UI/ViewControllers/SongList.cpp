@@ -51,6 +51,7 @@
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/utilities.hpp"
 #include "DataHolder.hpp"
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -204,6 +205,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     }
     // End first activation
 
+    dataHolder.UpdatePlayerScores();
+
     fromBSS = false;
 
     // Retry if failed to dl
@@ -269,8 +272,6 @@ float ViewControllers::SongListController::CellSize() {
 void ViewControllers::SongListController::ResetTable() {
 
     if (songListTable() != nullptr) {
-        DEBUG("Songs size: {}", dataHolder.displayedSongList.size());
-        DEBUG("TABLE RESET");
         songListTable()->ReloadData();
         songListTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
     }
@@ -289,6 +290,9 @@ void ViewControllers::SongListController::ctor() {
     dataHolder.loadingFinished += {&ViewControllers::SongListController::SongDataDone, this};
     dataHolder.loadingFailed += {&ViewControllers::SongListController::SongDataError, this};
     dataHolder.searchEnded += {&ViewControllers::SongListController::SearchDone, this};
+    dataHolder.playerDataLoaded += {&ViewControllers::SongListController::PlayerDataLoaded, this};
+
+    SongCore::SongLoader::RuntimeSongLoader::get_instance()->SongsLoaded += {&SongListController::OnSongsLoaded, this};
 }
 
 void ViewControllers::SongListController::OnDestroy() {
@@ -297,6 +301,7 @@ void ViewControllers::SongListController::OnDestroy() {
     dataHolder.loadingFinished -= {&ViewControllers::SongListController::SongDataDone, this};
     dataHolder.loadingFailed -= {&ViewControllers::SongListController::SongDataError, this};
     dataHolder.searchEnded -= {&ViewControllers::SongListController::SearchDone, this};
+    dataHolder.playerDataLoaded -= {&ViewControllers::SongListController::PlayerDataLoaded, this};
 }
 
 void ViewControllers::SongListController::SelectRandom() {
@@ -827,4 +832,22 @@ void ViewControllers::SongListController::SongDataDone() {
 
 void ViewControllers::SongListController::SongDataError(std::string message) {
 
+}
+
+void ViewControllers::SongListController::PlayerDataLoaded() {
+    if (songListTable() == nullptr) return;
+    // If it's searching, don't reload, it will be done after search
+    if (dataHolder.searchInProgress) return;
+
+    // IDK why this is here, but it's here
+}
+
+void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs) {
+    if (currentSong == nullptr) return;
+
+    auto song = currentSong;
+    auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
+    bool loaded = beatmap != nullptr;
+
+    SetIsDownloaded(loaded);
 }
