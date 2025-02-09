@@ -22,6 +22,9 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::
     DECLARE_CTOR(ctor);
     
     DECLARE_INSTANCE_METHOD(void, CloseModal);
+    DECLARE_INSTANCE_METHOD(void, OpenBeatSaver);
+    DECLARE_INSTANCE_METHOD(void, CopyBSR);
+    DECLARE_INSTANCE_METHOD(void, OpenMapPreview);
 
 
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, selectedSongKey);

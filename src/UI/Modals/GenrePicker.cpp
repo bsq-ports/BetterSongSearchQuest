@@ -12,7 +12,8 @@
 #include "FilterOptions.hpp"
 #include "DataHolder.hpp"
 #include "Util/TextUtil.hpp"
-
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "UnityEngine/Resources.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -27,6 +28,15 @@ void Modals::GenrePicker::OnEnable()
 
 void Modals::GenrePicker::PostParse()
 {
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
+    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView *>()->First()->GetComponentInChildren<HMUI::ScrollView *>()->____platformHelper;
+    if (platformHelper == nullptr) {
+    } else {
+        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView *>()) {
+            x->____platformHelper = platformHelper;
+        }
+    }
+
 }
 
 void Modals::GenrePicker::CloseModal()

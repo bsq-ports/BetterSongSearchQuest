@@ -6,7 +6,7 @@
 			</horizontal>
 			<horizontal horizontal-fit='PreferredSize'>
 				<vertical horizontal-fit='Unconstrained'>
-					<list visible-cells='8' cell-size='7' id='presetListTableData' select-cell='PresetSelected' show-scrollbar='true' />
+					<list visible-cells='8' cell-size='8' id='presetListTableData' select-cell='PresetSelected' show-scrollbar='true' stick-scrolling="true" />
 				</vertical>
 			</horizontal>
 			<horizontal>

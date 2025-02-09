@@ -1,4 +1,5 @@
 #include "UI/Modals/PresetsTable.hpp"
+#include "sombrero/shared/FastColor.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, PresetsTableCell);
 
@@ -8,7 +9,9 @@ namespace BetterSongSearch::UI::Modals
 {
     void PresetsTableCell::RefreshBgState()
     {
-        bgContainer->set_color(UnityEngine::Color(0, 0, 0, selected || highlighted ? 0.8f : 0.45f));
+        static auto hovered = Sombrero::FastColor(1.0f, 1.0f, 1.0f, 1.0f);
+		static auto normal = Sombrero::FastColor(0.0f, 0.0f, 0.0f, 0.45f);
+        bgContainer->set_color((selected || highlighted) ? hovered : normal);
     }
 
     void PresetsTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)

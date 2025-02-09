@@ -32,6 +32,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::GenrePicker>, genrePickerModal);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, sponsorModal);
 
 
     DECLARE_INSTANCE_METHOD(void, PostParse);
@@ -130,6 +131,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, genrePickButton);
     
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, datasetInfoLabel);
+    DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, versionLabel);
+    
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:

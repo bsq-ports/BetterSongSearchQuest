@@ -12,6 +12,8 @@
 #include "DataHolder.hpp"
 #include "logging.hpp"
 #include "assets.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "UnityEngine/Resources.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -25,6 +27,15 @@ void Modals::Presets::OnEnable()
 
 void Modals::Presets::PostParse()
 {
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
+    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView *>()->First()->GetComponentInChildren<HMUI::ScrollView *>()->____platformHelper;
+    if (platformHelper == nullptr) {
+    } else {
+        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView *>()) {
+            x->____platformHelper = platformHelper;
+        }
+    }
+
     if (this->presetListTableData) {
         INFO("Table exists");
         this->presetListTableData->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
