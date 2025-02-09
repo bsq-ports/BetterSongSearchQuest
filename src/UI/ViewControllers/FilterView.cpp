@@ -299,7 +299,47 @@ void ViewControllers::FilterViewController::PostParse() {
         versionLabel->set_text(fmt::format("{}", VERSION));
     }
 
-    if (dataHolder.songDetails->songs.get_isDataAvailable()) {
+
+    if (mapStyleDropdown) {
+        auto c = std::min(9, this->get_mapStyles()->____size);
+        mapStyleDropdown->dropdown->____numberOfVisibleCells = c;
+        mapStyleDropdown->dropdown->ReloadData();
+        auto m = mapStyleDropdown->dropdown->____modalView;
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
+    }
+
+    if (difficultyDropdown) {
+        auto c = std::min(9, this->get_difficulties()->____size);
+        difficultyDropdown->dropdown->____numberOfVisibleCells = c;
+        difficultyDropdown->dropdown->ReloadData();
+    }
+
+    if (characteristicDropdown) {
+        auto c = std::min(9, this->get_characteristics()->____size);
+        characteristicDropdown->dropdown->____numberOfVisibleCells = c;
+        characteristicDropdown->dropdown->ReloadData();
+        auto m = characteristicDropdown->dropdown->____modalView;
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f - (c * 0.045f)));
+    }
+
+    if (modsRequirementDropdown) {
+        auto c = std::min(9, this->get_modOptions()->____size);
+        modsRequirementDropdown->dropdown->____numberOfVisibleCells = c;
+        modsRequirementDropdown->dropdown->ReloadData();
+        auto m = modsRequirementDropdown->dropdown->____modalView;
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.0f  + (c * 0.011f)));
+    }
+
+    if (rankedStateSetting) {
+        auto c = std::min(9, this->get_rankedFilterOptions()->____size);
+        rankedStateSetting->dropdown->____numberOfVisibleCells = c;
+        rankedStateSetting->dropdown->ReloadData();
+        auto m = rankedStateSetting->dropdown->____modalView;
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.0f + (c * 0.011f)));
+    }
+    
+
+    if (this->datasetInfoLabel && dataHolder.songDetails->songs.get_isDataAvailable()) {
         std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
 
         std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
