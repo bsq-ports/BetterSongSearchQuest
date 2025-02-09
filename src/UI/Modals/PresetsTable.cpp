@@ -10,8 +10,9 @@ namespace BetterSongSearch::UI::Modals
     void PresetsTableCell::RefreshBgState()
     {
         static auto hovered = Sombrero::FastColor(1.0f, 1.0f, 1.0f, 1.0f);
-		static auto normal = Sombrero::FastColor(0.0f, 0.0f, 0.0f, 0.45f);
+		static auto normal = Sombrero::FastColor(1.0f, 1.0f, 1.0f, 0.70f);
         bgContainer->set_color((selected || highlighted) ? hovered : normal);
+        presetNameLabel->set_color((selected || highlighted)? hovered : normal);
     }
 
     void PresetsTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType)

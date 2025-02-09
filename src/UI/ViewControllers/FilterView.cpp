@@ -305,7 +305,7 @@ void ViewControllers::FilterViewController::PostParse() {
         mapStyleDropdown->dropdown->____numberOfVisibleCells = c;
         mapStyleDropdown->dropdown->ReloadData();
         auto m = mapStyleDropdown->dropdown->____modalView;
-        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f - (c * 0.041f)));
     }
 
     if (difficultyDropdown) {

@@ -6,7 +6,7 @@
 			</horizontal>
 			<horizontal horizontal-fit='PreferredSize'>
 				<vertical horizontal-fit='Unconstrained'>
-					<list id="genresTableData" visible-cells='12' cell-size='5' select-cell='GenreSelected' show-scrollbar='true'/>
+					<list id="genresTableData" visible-cells='12' cell-size='5' select-cell='GenreSelected' show-scrollbar='true' stick-scrolling="true"/>
 				</vertical>
 				<vertical id='scrollbarContainer' preferred-width='8'/>
 			</horizontal>
