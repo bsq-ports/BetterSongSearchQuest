@@ -327,7 +327,7 @@ void ViewControllers::FilterViewController::PostParse() {
         modsRequirementDropdown->dropdown->____numberOfVisibleCells = c;
         modsRequirementDropdown->dropdown->ReloadData();
         auto m = modsRequirementDropdown->dropdown->____modalView;
-        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.0f  + (c * 0.011f)));
+        m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.0f  + (c * 0.021f)));
     }
 
     if (rankedStateSetting) {
@@ -337,7 +337,7 @@ void ViewControllers::FilterViewController::PostParse() {
         auto m = rankedStateSetting->dropdown->____modalView;
         m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.0f + (c * 0.011f)));
     }
-    
+
 
     if (this->datasetInfoLabel && dataHolder.songDetails->songs.get_isDataAvailable()) {
         std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
