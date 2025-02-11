@@ -50,6 +50,11 @@ void BetterSongSearch::DataHolder::SongDataDone() {
     failed = false;
     loaded = true;
     needsRefresh = true;
+
+    // Needed if songdetails is loaded in the background by other mods
+    if (this->songDetails == nullptr) {
+        this->songDetails = SongDetailsCache::SongDetails::Init().get();
+    }
     
     loadingFinished.invoke();
 }
@@ -72,10 +77,7 @@ void BetterSongSearch::DataHolder::DownloadSongList() {
 
     std::thread([this] {
         this->loading = true;
-        DEBUG("Getting songdetails");
         this->songDetails = SongDetailsCache::SongDetails::Init().get();
-        DEBUG("Got songdetails");
-
 
         if (!this->songDetails->songs.get_isDataAvailable()) {
             this->SongDataError("Failed to load song data");
