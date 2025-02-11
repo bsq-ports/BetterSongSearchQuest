@@ -14,10 +14,10 @@
 
 
 namespace BetterSongSearch::Util {
-    UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level);
+    UnityW<UnityEngine::Sprite> getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level);
 
 
-    UnityEngine::Sprite* getLocalCoverSync(StringW songHash);
+    UnityW<UnityEngine::Sprite> getLocalCoverSync(StringW songHash);
 
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(const SongDetailsCache::SongDifficulty* diff);
 

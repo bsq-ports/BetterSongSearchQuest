@@ -609,7 +609,7 @@ void ViewControllers::SongListController::UpdateDetails() {
         UnityW<UnityEngine::Sprite> oldSprite = this->coverImage->get_sprite();
 
         auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap);
-        if (cover != nullptr) {
+        if (cover) {
             this->coverImage->set_sprite(cover);
         } else {
             this->coverImage->set_sprite(defaultImage);

@@ -10,7 +10,7 @@
 using namespace SongDetailsCache;
 
 namespace BetterSongSearch::Util {
-    UnityEngine::Sprite* getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level) {
+    UnityW<UnityEngine::Sprite> getLocalCoverSync(SongCore::SongLoader::CustomBeatmapLevel* level) {
         if (level == nullptr) {
             return nullptr;
         }
@@ -51,7 +51,7 @@ namespace BetterSongSearch::Util {
     }
 
 
-    UnityEngine::Sprite* getLocalCoverSync(StringW songHash) {
+    UnityW<UnityEngine::Sprite> getLocalCoverSync(StringW songHash) {
         auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(songHash));
 
         if (beatmap) {
