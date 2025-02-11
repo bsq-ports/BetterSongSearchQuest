@@ -576,9 +576,6 @@ void ViewControllers::SongListController::ShowSongDetails() {
 void ViewControllers::SongListController::UpdateDetails() {
     if (currentSong == nullptr) return;
 
-    // Get old sprite if it exists
-    UnityEngine::Sprite *oldSprite = this->coverImage->get_sprite();
-
     auto song = currentSong;
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap != nullptr;
@@ -608,6 +605,9 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     // if beatmap is loaded 
     if (loaded) {
+        // Get old sprite if it exists
+        UnityW<UnityEngine::Sprite> oldSprite = this->coverImage->get_sprite();
+
         auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap);
         if (cover != nullptr) {
             this->coverImage->set_sprite(cover);
@@ -616,17 +616,11 @@ void ViewControllers::SongListController::UpdateDetails() {
 
             // Cleanup old sprite
             if (
-                // Don't delete defaultImage
-                    oldSprite != defaultImage.ptr() &&
-                    this->coverImage->get_sprite().unsafePtr() != oldSprite) {
-                if (oldSprite != nullptr) {
-                    DEBUG("REMOVING OLD SPRITE");
-                    auto texture = oldSprite->get_texture();
-                    if (texture != nullptr) {
-                        UnityEngine::Object::DestroyImmediate(texture);
-                    }
-                    UnityEngine::Object::DestroyImmediate(oldSprite);
-                }
+                oldSprite && oldSprite.ptr() != defaultImage.ptr()
+            ) {
+                UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
+                if (texture) UnityEngine::Object::DestroyImmediate(texture);
+                UnityEngine::Object::DestroyImmediate(oldSprite);
             }
         }
         coverLoading->set_enabled(false);
@@ -635,31 +629,39 @@ void ViewControllers::SongListController::UpdateDetails() {
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
-        GetByURLAsync(newUrl, [this, song, oldSprite](bool success, std::vector<uint8_t> bytes) {
-            BSML::MainThreadScheduler::Schedule([this, bytes, song, success, oldSprite] {
+        GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
+            BSML::MainThreadScheduler::Schedule([this, bytes, song, success] {
+                // Get old sprite if it exists
+                UnityW<UnityEngine::Sprite> oldSprite = this->coverImage->get_sprite();
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
                     if (song->hash() != this->currentSong->hash()) return;
                     Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
-                    this->coverImage->set_sprite(BSML::Lite::ArrayToSprite(spriteArray));
+                    UnityW<UnityEngine::Sprite> sprite = BSML::Lite::ArrayToSprite(spriteArray);
+                    if (sprite) {
+                        DEBUG("Setting sprite");
+                        this->coverImage->set_sprite(sprite);
+                    } else {
+                        WARNING("Setting default image, sprite was invalid");
+                        this->coverImage->set_sprite(defaultImage);
+                    }
                 } else {
                     this->coverImage->set_sprite(defaultImage);
                 }
+
+                // Disable loading animation
                 coverLoading->set_enabled(false);
 
                 // Cleanup old sprite
                 if (
-                    // Don't delete old image if it's a default image
-                        oldSprite != defaultImage.ptr() &&
-                        this->coverImage->get_sprite().unsafePtr() != oldSprite) {
-                    if (oldSprite != nullptr) {
-                        auto texture = oldSprite->get_texture();
-                        if (texture != nullptr) {
-                            UnityEngine::Object::DestroyImmediate(texture);
-                        }
-                        UnityEngine::Object::DestroyImmediate(oldSprite);
-                    }
+                    oldSprite && 
+                    oldSprite.ptr() != defaultImage.ptr() && // Old sprite is not default image
+                    this->coverImage->get_sprite().ptr() != oldSprite.ptr() // Old sprite is not the current sprite
+                ) {
+                    UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
+                    if (texture) UnityEngine::Object::DestroyImmediate(texture);
+                    UnityEngine::Object::DestroyImmediate(oldSprite);
                 }
             });
         });
