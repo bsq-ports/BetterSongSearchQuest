@@ -49,7 +49,7 @@
 							</horizontal>
 							<checkbox-setting value="onlyCuratedMaps" text="Curated Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" />
 							<checkbox-setting value="onlyVerifiedMappers" text="Verified Mappers" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
-							<!-- <checkbox-setting value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/> -->
+							<checkbox-setting value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
 						</vertical>
 					</scroll-view>
 					
