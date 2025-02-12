@@ -1,11 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <limits>
 #include <tuple>
 
 #include "rapidjson-macros/shared/macros.hpp"
-#include "song-details/shared/Data/MapMods.hpp"
 #include "PluginConfig.hpp"
 
 namespace BetterSongSearch {
@@ -23,14 +21,14 @@ namespace BetterSongSearch {
         VALUE_DEFAULT(float, maxNJS, NJS_FILTER_MAX);
         VALUE_DEFAULT(float, minNPS, 0);
         VALUE_DEFAULT(float, maxNPS, NPS_FILTER_MAX);
-        
+
         VALUE_DEFAULT(float, minStars, 0);
         VALUE_DEFAULT(float, maxStars, STAR_FILTER_MAX);
         VALUE_DEFAULT(int, minUploadDate, BEATSAVER_EPOCH);
         VALUE_DEFAULT(int, minUploadDateInMonths, 0);
         VALUE_DEFAULT(float, minRating, 0);
         VALUE_DEFAULT(int, minVotes, 0);
-        
+
         VECTOR_DEFAULT(std::string, uploaders, {});
         VALUE_DEFAULT(bool, uploadersBlackList, false);
 
@@ -112,4 +110,3 @@ namespace BetterSongSearch {
             void CopyFrom(const FilterProfile& other);
     )
 }
-

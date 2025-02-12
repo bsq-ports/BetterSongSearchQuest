@@ -1,25 +1,25 @@
 #include "FilterOptions.hpp"
 
-#include "Util/TextUtil.hpp"
-#include "main.hpp"
-#include "logging.hpp"
 #include "DataHolder.hpp"
+#include "logging.hpp"
+#include "main.hpp"
+#include "Util/TextUtil.hpp"
 
 using namespace rapidjson;
 using namespace UnityEngine;
 using namespace BetterSongSearch::Util;
 
-
-bool BetterSongSearch::FilterProfile::IsDefault(){
-    return ( 
+bool BetterSongSearch::FilterProfile::IsDefault() {
+    // clang-format off
+    return (
         downloadType == (int)FilterTypes::DownloadFilter::All &&
         localScoreType ==  (int)FilterTypes::LocalScoreFilter::All &&
-        (maxLength / 60 >= SONG_LENGTH_FILTER_MAX) && 
+        (maxLength / 60 >= SONG_LENGTH_FILTER_MAX) &&
         (minLength == 0) &&
-        minNJS == 0 && 
+        minNJS == 0 &&
         maxNJS >= NJS_FILTER_MAX &&
         minNPS == 0 &&
-        maxNPS >= NPS_FILTER_MAX && 
+        maxNPS >= NPS_FILTER_MAX &&
         rankedType == (int)FilterTypes::RankedFilter::ShowAll &&
         minStars == 0 &&
         maxStars >= STAR_FILTER_MAX &&
@@ -30,14 +30,15 @@ bool BetterSongSearch::FilterProfile::IsDefault(){
         uploaders.empty() &&
         difficultyFilter == (int)FilterTypes::DifficultyFilter::All &&
         charFilter == (int)FilterTypes::CharFilter::All &&
-        modRequirement == (int)FilterTypes::Requirement::Any && 
+        modRequirement == (int)FilterTypes::Requirement::Any &&
         !onlyCuratedMaps &&
         !onlyVerifiedMappers &&
-        !onlyV3Maps && 
+        !onlyV3Maps &&
         mapStyleString == "All" &&
         mapGenreString == "" &&
         mapGenreExcludeString == ""
     );
+    // clang-format on
 }
 
 void BetterSongSearch::FilterProfile::LoadFromConfig() {
@@ -70,7 +71,7 @@ void BetterSongSearch::FilterProfile::LoadFromConfig() {
     auto uploadersString = getPluginConfig().Uploaders.GetValue();
     if (!uploadersString.empty()) {
         if (uploadersString[0] == '!') {
-            uploadersString.erase(0,1);
+            uploadersString.erase(0, 1);
             uploadersBlackList = true;
         } else {
             uploadersBlackList = false;
@@ -112,7 +113,7 @@ void BetterSongSearch::FilterProfile::SaveToConfig() {
     getPluginConfig().Save();
 }
 
-void BetterSongSearch::FilterProfile::CopyFrom(const FilterProfile& other){
+void BetterSongSearch::FilterProfile::CopyFrom(FilterProfile const& other) {
     downloadType = other.downloadType;
     localScoreType = other.localScoreType;
     minLength = other.minLength;
@@ -141,7 +142,7 @@ void BetterSongSearch::FilterProfile::CopyFrom(const FilterProfile& other){
     uploadersBlackList = other.uploadersBlackList;
 }
 
-std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::LoadFromPreset(std::string presetName){
+std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::LoadFromPreset(std::string presetName) {
     std::string presetsDir = getDataDir(modInfo) + "/Presets/";
 
     // Ensure the directory exists
@@ -161,7 +162,7 @@ std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::
         preset.PrintToDebug();
         DEBUG("Loaded preset: {}", presetName);
         return preset;
-    } catch (const std::exception &e) {
+    } catch (std::exception const& e) {
         ERROR("Failed to load preset: {}", e.what());
         return std::nullopt;
     }
@@ -198,15 +199,21 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
         mkpath(presetsDir);
     }
 
-    if(!std::filesystem::is_directory(presetsDir)) return presetNames;
+    if (!std::filesystem::is_directory(presetsDir)) {
+        return presetNames;
+    }
 
     std::error_code ec;
     auto directory_iterator = std::filesystem::directory_iterator(presetsDir, std::filesystem::directory_options::none, ec);
     for (auto const& entry : directory_iterator) {
-        if(!entry.is_regular_file()) continue;
+        if (!entry.is_regular_file()) {
+            continue;
+        }
         std::string file_extension = entry.path().extension().string();
         std::string raw_file_name = entry.path().filename().replace_extension().string();
-        if (file_extension == ".json") presetNames.push_back(raw_file_name);
+        if (file_extension == ".json") {
+            presetNames.push_back(raw_file_name);
+        }
     }
     std::sort(presetNames.begin(), presetNames.end(), [](std::string& a, std::string& b) {
         return a < b;
@@ -215,18 +222,24 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
     return presetNames;
 }
 
-
 static uint64_t CalculateTagsBitfield(std::string tags) {
     if (tags == "" || BetterSongSearch::dataHolder.songDetails == nullptr) {
         return 0;
-    } 
+    }
 
     std::vector<std::string> items = split(toLower(tags), " ");
 
     // Remove empty strings
-    items.erase(std::remove_if(items.begin(), items.end(), [](std::string const& s) {
-        return s.empty();
-    }), items.end());
+    items.erase(
+        std::remove_if(
+            items.begin(),
+            items.end(),
+            [](std::string const& s) {
+                return s.empty();
+            }
+        ),
+        items.end()
+    );
 
     uint64_t res = 0;
 
@@ -238,17 +251,15 @@ static uint64_t CalculateTagsBitfield(std::string tags) {
 
     return res;
 }
-			
 
-
-void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues(){
-    if (charFilter == (int)FilterTypes::CharFilter::All) {
+void BetterSongSearch::FilterProfile::RecalculatePreprocessedValues() {
+    if (charFilter == (int) FilterTypes::CharFilter::All) {
         charFilterPreprocessed = SongDetailsCache::MapCharacteristic::Custom;
     } else {
         charFilterPreprocessed = CHARACTERISTIC_MAP.at((FilterTypes::CharFilter) charFilter);
     }
 
-    if (difficultyFilter == (int)FilterTypes::DifficultyFilter::All) {
+    if (difficultyFilter == (int) FilterTypes::DifficultyFilter::All) {
         difficultyFilterPreprocessed = SongDetailsCache::MapDifficulty::Easy;
     } else {
         difficultyFilterPreprocessed = DIFFICULTY_MAP.at((FilterTypes::DifficultyFilter) difficultyFilter);
@@ -277,7 +288,6 @@ std::tuple<int, int> BetterSongSearch::FilterProfile::CountTags() {
     return {included, excluded};
 }
 
-
 bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
     std::string presetsDir = getDataDir(modInfo) + "/Presets/";
 
@@ -295,13 +305,14 @@ bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
     try {
         std::filesystem::remove(path);
         return true;
-    } catch (const std::exception &e) {
+    } catch (std::exception const& e) {
         ERROR("Failed to delete preset: {}", e.what());
         return false;
     }
 }
 
- bool BetterSongSearch::FilterProfile::IsEqual(const BetterSongSearch::FilterProfile& other) const {
+bool BetterSongSearch::FilterProfile::IsEqual(BetterSongSearch::FilterProfile const& other) const {
+    // clang-format off
     return (
         downloadType == other.downloadType &&
         localScoreType == other.localScoreType &&
@@ -330,6 +341,7 @@ bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
         mapGenreString == other.mapGenreString &&
         mapGenreExcludeString == other.mapGenreExcludeString
     );
+    // clang-format on
 }
 
 void BetterSongSearch::FilterProfile::PrintToDebug() {

@@ -1,60 +1,52 @@
 #include "UI/ViewControllers/SongList.hpp"
 
-#include "UnityEngine/WaitForSeconds.hpp"
+#include <algorithm>
+#include <future>
+#include <string>
+
+#include "assets.hpp"
+#include "BeatSaverRegionManager.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "bsml/shared/BSML/MainThreadScheduler.hpp"
+#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
+#include "bsml/shared/Helpers/utilities.hpp"
+#include "DataHolder.hpp"
+#include "fmt/fmt/include/fmt/core.h"
+#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
+#include "GlobalNamespace/LevelCollectionTableView.hpp"
+#include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
+#include "GlobalNamespace/PlayerData.hpp"
+#include "GlobalNamespace/PlayerDataModel.hpp"
+#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/SongPreviewPlayer.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
+#include "HMUI/InputFieldViewChangeBinder.hpp"
+#include "HMUI/TableView.hpp"
+#include "logging.hpp"
+#include "PluginConfig.hpp"
+#include "songcore/shared/SongCore.hpp"
+#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
+#include "System/Nullable_1.hpp"
+#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UI/Manager.hpp"
 #include "UnityEngine/AudioClip.hpp"
 #include "UnityEngine/AudioType.hpp"
 #include "UnityEngine/Networking/DownloadHandlerAudioClip.hpp"
-#include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
 #include "UnityEngine/Networking/UnityWebRequest.hpp"
+#include "UnityEngine/Networking/UnityWebRequestMultimedia.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "HMUI/NoTransitionsButton.hpp"
-#include "HMUI/InputFieldViewChangeBinder.hpp"
-#include "HMUI/CurvedTextMeshPro.hpp"
-#include "HMUI/TableView.hpp"
-#include "songcore/shared/SongCore.hpp"
-#include "GlobalNamespace/PlayerDataModel.hpp"
-#include "GlobalNamespace/PlayerData.hpp"
-#include "GlobalNamespace/LevelCollectionTableView.hpp"
-#include "GlobalNamespace/LevelCollectionNavigationController.hpp"
-#include "GlobalNamespace/LevelCollectionViewController.hpp"
-#include "GlobalNamespace/SongPreviewPlayer.hpp"
-#include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
-#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
-#include "GlobalNamespace/LevelSelectionNavigationController.hpp"
-#include "System/StringComparison.hpp"
-#include "System/Nullable_1.hpp"
-#include "bsml/shared/Helpers/getters.hpp"
-#include "bsml/shared/Helpers/delegates.hpp"
-#include "bsml/shared/BSML.hpp"
-#include "fmt/fmt/include/fmt/core.h"
-#include "Util/SongUtil.hpp"
-#include <iterator>
-#include <string>
-#include <algorithm>
-#include <regex>
-#include <future>
-
-#include "PluginConfig.hpp"
-#include "assets.hpp"
-#include "logging.hpp"
-#include "BeatSaverRegionManager.hpp"
+#include "UnityEngine/WaitForSeconds.hpp"
 #include "Util/BSMLStuff.hpp"
-#include "Util/Random.hpp"
-#include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
-
-#include "UI/Manager.hpp"
-#include "Util/TextUtil.hpp"
-#include "Util/Debug.hpp"
 #include "Util/CurrentTimeMs.hpp"
-#include <limits>
-#include "bsml/shared/BSML/MainThreadScheduler.hpp"
-#include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
-#include "bsml/shared/Helpers/utilities.hpp"
-#include "DataHolder.hpp"
-#include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
+#include "Util/Debug.hpp"
+#include "Util/Random.hpp"
+#include "Util/SongUtil.hpp"
+#include "Util/TextUtil.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -65,37 +57,34 @@ using namespace UnityEngine;
 
 #define SONGDOWNLOADER
 
-
-SongPreviewPlayer *songPreviewPlayer = nullptr;
-LevelCollectionViewController *levelCollectionViewController = nullptr;
+SongPreviewPlayer* songPreviewPlayer = nullptr;
+LevelCollectionViewController* levelCollectionViewController = nullptr;
 
 DEFINE_TYPE(ViewControllers::SongListController, SongListController);
 
-const std::vector<std::string> CHAR_GROUPING = {"Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow",
-                                                "NintyDegree", "ThreeSixtyDegree", "Lawless"};
-const std::vector<std::string> CHAR_FILTER_OPTIONS = {"Any", "Custom", "Standard", "One Saber", "No Arrows",
-                                                      "90 Degrees", "360 Degrees", "Lightshow", "Lawless"};
-const std::vector<std::string> DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
-const std::vector<std::string> REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+std::vector<std::string> const CHAR_GROUPING = {
+    "Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"
+};
+std::vector<std::string> const CHAR_FILTER_OPTIONS = {
+    "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"
+};
+std::vector<std::string> const DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
+std::vector<std::string> const REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
 
 void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     dataHolder.Search();
 }
 
 void ViewControllers::SongListController::UpdateSearchedSongsList() {
-    this->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(
-        limitedUpdateSearchedSongsList->CallNextFrame()
-    ));
+    this->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(limitedUpdateSearchedSongsList->CallNextFrame()));
 }
 
 void ViewControllers::SongListController::PostParse() {
     // Steal search box from the base game
     UnityW<HMUI::InputFieldView> gameSearchBox;
-    gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView *>()->First(
-        [](HMUI::InputFieldView *x) {
-            return x->get_name() == "SearchInputField";
-        }
-    );
+    gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView*>()->First([](HMUI::InputFieldView* x) {
+        return x->get_name() == "SearchInputField";
+    });
 
     if (gameSearchBox) {
         DEBUG("Found search box");
@@ -104,14 +93,13 @@ void ViewControllers::SongListController::PostParse() {
             UnityEngine::Object::DestroyImmediate(searchBox);
         }
         searchBox = Instantiate(gameSearchBox->get_gameObject(), searchBoxContainer->get_transform(), false);
-        auto songSearchInput = searchBox->GetComponent<HMUI::InputFieldView *>();
-        songSearchPlaceholder = searchBox->get_transform()->Find(
-                "PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro *>();
+        UnityW<HMUI::InputFieldView> songSearchInput = searchBox->GetComponent<HMUI::InputFieldView*>();
+        songSearchPlaceholder = searchBox->get_transform()->Find("PlaceholderText")->GetComponent<HMUI::CurvedTextMeshPro*>();
         songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         songSearchInput->____keyboardPositionOffset = Vector3(-15, -36, 0);
+        songSearchInput->set_text("");  // Clear the text
 
-        std::function<void(UnityW<HMUI::InputFieldView> view)> onValueChanged = [this](
-                UnityW<HMUI::InputFieldView> view) {
+        std::function<void(UnityW<HMUI::InputFieldView> view)> onValueChanged = [this](UnityW<HMUI::InputFieldView> view) {
             DEBUG("Input is: {}", (std::string) view->get_text());
             this->SortAndFilterSongs(dataHolder.sort, (std::string) view->get_text(), true);
         };
@@ -124,15 +112,17 @@ void ViewControllers::SongListController::PostParse() {
     // Set default cover image
     coverImage->set_sprite(defaultImage);
 
-    // Get song preview player 
-    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer *>()->FirstOrDefault();
-    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController *>()->FirstOrDefault();
+    // Get song preview player
+    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
+    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>()->FirstOrDefault();
 
-    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't work
-    auto platformHelper = Resources::FindObjectsOfTypeAll<LevelCollectionTableView *>()->First()->GetComponentInChildren<HMUI::ScrollView *>()->____platformHelper;
+    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
+    // work
+    auto platformHelper =
+        Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->____platformHelper;
     if (platformHelper == nullptr) {
     } else {
-        for (auto x: this->GetComponentsInChildren<HMUI::ScrollView *>()) {
+        for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
             x->____platformHelper = platformHelper;
         }
     }
@@ -145,30 +135,32 @@ void ViewControllers::SongListController::PostParse() {
     m->get_transform().cast<RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.83f + (c * 0.011f)));
 
     if (this->songList) {
-        songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource *>(this), false);
+        songList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource*>(this), false);
     }
 }
 
-void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy,
-                                                      bool screenSystemDisabling) {
+void ViewControllers::SongListController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
     // Init everything before we call events
     if (firstActivation) {
         DEBUG("SongListController first activation");
         if (dataHolder.playerDataModel == nullptr) {
-            dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel *>();
+            dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
         };
 
         // Get coordinators
-        soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator *>();
-        multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator *>();
+        soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator*>();
+        multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator*>();
 
         // Get regional beat saver urls
         BeatSaverRegionManager::RegionLookup();
 
-        limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine([this]() {
-            DEBUG("UpdateSearchedSongsList limited called");
-            this->_UpdateSearchedSongsList();
-        }, 0.1f);
+        limitedUpdateSearchedSongsList = new BetterSongSearch::Util::RatelimitCoroutine(
+            [this]() {
+                DEBUG("UpdateSearchedSongsList limited called");
+                this->_UpdateSearchedSongsList();
+            },
+            0.1f
+        );
 
         IsSearching = false;
         INFO("Song list contoller activated");
@@ -182,9 +174,9 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
 
-        multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL *>();
-        settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings *>();
-        uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails *>();
+        multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
+        settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();
+        uploadDetailsModal = this->get_gameObject()->AddComponent<UI::Modals::UploadDetails*>();
 
         // If loaded, refresh
         if (dataHolder.loaded) {
@@ -192,16 +184,15 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
             // Initial search
             dataHolder.forceReload = true;
             fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(
-                    fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
+            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
         } else {
             this->DownloadSongList();
         }
 
-        #ifdef HotReload
-            fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/SongList.bsml";
-            fileWatcher->checkInterval = 0.5f;
-        #endif
+#ifdef HotReload
+        fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/SongList.bsml";
+        fileWatcher->checkInterval = 0.5f;
+#endif
     }
     // End first activation
 
@@ -215,11 +206,10 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     // If needs a refresh, start a new search when activated
     if (dataHolder.needsRefresh) {
         // Initial search
-        dataHolder.needsRefresh = false; // Clear the flag
+        dataHolder.needsRefresh = false;  // Clear the flag
         dataHolder.forceReload = true;
         fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-        fcInstance->FilterViewController->datasetInfoLabel->set_text(
-                fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
+        fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
     }
 
     // Restore search songs count
@@ -239,7 +229,7 @@ void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
     }
 
     DEBUG("Song hash: {}", hash);
-    auto &song = dataHolder.songDetails->songs.FindByHash(hash);
+    auto& song = dataHolder.songDetails->songs.FindByHash(hash);
     if (song == SongDetailsCache::Song::none) {
         DEBUG("Uh oh, you somehow downloaded a song that was only a figment of your imagination");
         return;
@@ -248,10 +238,10 @@ void ViewControllers::SongListController::SelectSongByHash(std::string hash) {
     SetSelectedSong(&song);
 }
 
-
 void ViewControllers::SongListController::SelectSong(UnityW<HMUI::TableView> table, int id) {
-    if (!table)
+    if (!table) {
         return;
+    }
     DEBUG("Cell clicked {}", id);
     if (dataHolder.displayedSongList.size() <= id) {
         // Return if the id is invalid
@@ -260,7 +250,6 @@ void ViewControllers::SongListController::SelectSong(UnityW<HMUI::TableView> tab
     auto song = dataHolder.displayedSongList[id];
     DEBUG("Selecting song {}", id);
     this->SetSelectedSong(song);
-
 }
 
 float ViewControllers::SongListController::CellSize() {
@@ -270,7 +259,6 @@ float ViewControllers::SongListController::CellSize() {
 }
 
 void ViewControllers::SongListController::ResetTable() {
-
     if (songListTable() != nullptr) {
         songListTable()->ReloadData();
         songListTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
@@ -342,17 +330,16 @@ void ViewControllers::SongListController::ForcedUICloseCancel() {
 
 custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateDataAndFiltersCoro() {
     // Wait
-    co_yield reinterpret_cast<System::Collections::IEnumerator *>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
 
     // WARNING: There is a bug with bsml update, it runs before the value is changed for some reason
     bool filtersChanged = false;
 
-
     FilterTypes::SortMode sort = dataHolder.sort;
     if (selectedSortMode != nullptr) {
-        int index = get_sortModeSelections()->IndexOf(reinterpret_cast<System::String *> (selectedSortMode.convert()));
-        if (index < 0) {}
-        else {
+        int index = get_sortModeSelections()->IndexOf(reinterpret_cast<System::String*>(selectedSortMode.convert()));
+        if (index < 0) {
+        } else {
             if (index != getPluginConfig().SortMode.GetValue()) {
                 filtersChanged = true;
                 getPluginConfig().SortMode.SetValue(index);
@@ -372,7 +359,6 @@ void ViewControllers::SongListController::UpdateDataAndFilters() {
     DEBUG("UpdateDataAndFilters");
 }
 
-
 void ViewControllers::SongListController::ShowPlaylistCreation() {
     // Hide modal cause bsml does not support automagic hiding of it
     this->moreModal->Hide(false, nullptr);
@@ -380,7 +366,6 @@ void ViewControllers::SongListController::ShowPlaylistCreation() {
 };
 
 void ViewControllers::SongListController::ShowSettings() {
-
     this->settingsModal->OpenModal();
     // Hide modal cause bsml does not support automagic hiding of it
     this->moreModal->Hide(false, nullptr);
@@ -404,12 +389,10 @@ void ViewControllers::SongListController::Download() {
 
 void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
     std::thread([url, finished] {
-        auto response = WebUtils::GetAsync<WebUtils::DataResponse>(
-            WebUtils::URLOptions(url)
-        );
+        auto response = WebUtils::GetAsync<WebUtils::DataResponse>(WebUtils::URLOptions(url));
 
         response.wait();
-        
+
         auto responseValue = response.get();
 
         bool success = responseValue.IsSuccessful();
@@ -430,25 +413,26 @@ void GetByURLAsync(std::string url, std::function<void(bool success, std::vector
     }).detach();
 }
 
-custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityEngine::AudioClip *)> finished) {
-    auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url,
-                                                                                       UnityEngine::AudioType::MPEG);
-    co_yield reinterpret_cast<System::Collections::IEnumerator *>(CRASH_UNLESS(webRequest->SendWebRequest()));
+custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(UnityW<UnityEngine::AudioClip>)> finished) {
+    auto webRequest = UnityEngine::Networking::UnityWebRequestMultimedia::GetAudioClip(url, UnityEngine::AudioType::MPEG);
+    co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
     if (webRequest->GetError() != UnityEngine::Networking::UnityWebRequest::UnityWebRequestError::OK) {
         INFO("Network error");
         finished(nullptr);
         co_return;
     } else {
-        while (!webRequest->get_isDone());
+        // Wait for download to finish (should probably never happen)
+        while (!webRequest->get_isDone()) {
+        };
         INFO("Download complete");
-        UnityEngine::AudioClip *clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+        UnityW<UnityEngine::AudioClip> clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
         DEBUG("Clip size: {}", pretty_bytes(webRequest->get_downloadedBytes()));
         finished(clip);
     }
     co_return;
 }
 
-void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLevel *level) {
+void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLevel* level) {
     if (level == nullptr) {
         ERROR("Level is null, refusing to continue");
         return;
@@ -465,18 +449,14 @@ void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLeve
         return;
     }
 
-    auto category = SelectLevelCategoryViewController::LevelCategory(
-            SelectLevelCategoryViewController::LevelCategory::All);
+    auto category = SelectLevelCategoryViewController::LevelCategory(SelectLevelCategoryViewController::LevelCategory::All);
 
     // static_assert(sizeof (System::Nullable_1<SelectLevelCategoryViewController::LevelCategory>) == 0x8)
     auto levelCategory = System::Nullable_1<SelectLevelCategoryViewController::LevelCategory>();
     levelCategory.value = category;
     levelCategory.hasValue = true;
 
-    auto state = LevelSelectionFlowCoordinator::State::New_ctor(
-            customLevelsPack,
-            static_cast<GlobalNamespace::BeatmapLevel *>(level)
-    );
+    auto state = LevelSelectionFlowCoordinator::State::New_ctor(customLevelsPack, static_cast<GlobalNamespace::BeatmapLevel*>(level));
 
     state->___levelCategory = levelCategory;
 
@@ -486,25 +466,21 @@ void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLeve
     manager.GoToSongSelect();
 
     // For some reason setup does not work for multiplayer so I have to use this method to workaround
-    if (
-            multiplayerLevelSelectionFlowCoordinator &&
-            multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController &&
-            multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController
-            ) {
+    if (multiplayerLevelSelectionFlowCoordinator && multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController &&
+        multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController) {
         DEBUG("Selecting level in multiplayer");
 
         multiplayerLevelSelectionFlowCoordinator->___levelSelectionNavigationController->____levelCollectionNavigationController->SelectLevel(
-                static_cast<GlobalNamespace::BeatmapLevel *>(level)
+            static_cast<GlobalNamespace::BeatmapLevel*>(level)
         );
     };
 }
-
 
 void ViewControllers::SongListController::Play() {
     this->PlaySong();
 }
 
-void ViewControllers::SongListController::PlaySong(const SongDetailsCache::Song *songToPlay) {
+void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const* songToPlay) {
     if (songToPlay == nullptr) {
         songToPlay = currentSong;
         if (currentSong == nullptr) {
@@ -513,8 +489,11 @@ void ViewControllers::SongListController::PlaySong(const SongDetailsCache::Song 
         }
     }
 
-    if (fcInstance->ConfirmCancelOfPending([this, songToPlay]() { PlaySong(songToPlay); }))
+    if (fcInstance->ConfirmCancelOfPending([this, songToPlay]() {
+            PlaySong(songToPlay);
+        })) {
         return;
+    }
 
     // Hopefully not leaking any memory
     auto fun = [this, songToPlay]() {
@@ -526,12 +505,10 @@ void ViewControllers::SongListController::PlaySong(const SongDetailsCache::Song 
             std::string songKey = fmt::format("{:X}", songToPlay->mapId());
             songKey = toLower(songKey);
             DEBUG("Looking for level by beatsaver id in path: {}", songKey);
-            level = SongCore::API::Loading::GetLevelByFunction(
-                    [mapId = songKey](auto level) {
-                        auto levelPath = level->get_customLevelPath();
-                        return levelPath.find(mapId) != std::string::npos;
-                    }
-            );
+            level = SongCore::API::Loading::GetLevelByFunction([mapId = songKey](auto level) {
+                auto levelPath = level->get_customLevelPath();
+                return levelPath.find(mapId) != std::string::npos;
+            });
         }
 
         // If all else fails, cancel
@@ -542,12 +519,11 @@ void ViewControllers::SongListController::PlaySong(const SongDetailsCache::Song 
         }
 
         // If we successfully found the level, we can continue
-        BSML::MainThreadScheduler::Schedule(
-                [this, level] {
-                    fromBSS = true;
-                    openToCustom = true;
-                    EnterSolo(level);
-                });
+        BSML::MainThreadScheduler::Schedule([this, level] {
+            fromBSS = true;
+            openToCustom = true;
+            EnterSolo(level);
+        });
     };
 
     if (fcInstance->DownloadHistoryViewController->hasUnloadedDownloads) {
@@ -561,7 +537,6 @@ void ViewControllers::SongListController::PlaySong(const SongDetailsCache::Song 
     }
 }
 
-
 void ViewControllers::SongListController::ShowBatchDownload() {
     this->multiDlModal->OpenModal();
     this->HideMoreModal();
@@ -574,7 +549,9 @@ void ViewControllers::SongListController::ShowSongDetails() {
 }
 
 void ViewControllers::SongListController::UpdateDetails() {
-    if (currentSong == nullptr) return;
+    if (currentSong == nullptr) {
+        return;
+    }
 
     auto song = currentSong;
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
@@ -583,7 +560,7 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
-    for (const auto &diff: *song) {
+    for (auto const& diff : *song) {
         float nps = (float) diff.notes / (float) song->songDurationSeconds;
         float njs = diff.njs;
         minNPS = std::min(nps, minNPS);
@@ -595,15 +572,14 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     // downloadButton.set.text = "Download";
     SetIsDownloaded(downloaded);
-    selectedSongDiffInfo->set_text(
-            fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
+    selectedSongDiffInfo->set_text(fmt::format("{:.2f} - {:.2f} NPS \n {:.2f} - {:.2f} NJS", minNPS, maxNPS, minNJS, maxNJS));
     selectedSongName->set_text(song->songName());
     selectedSongAuthor->set_text(song->songAuthorName());
 
     // This part below is here to not break anything on return
 #ifdef SONGDOWNLOADER
 
-    // if beatmap is loaded 
+    // if beatmap is loaded
     if (loaded) {
         // Get old sprite if it exists
         UnityW<UnityEngine::Sprite> oldSprite = this->coverImage->get_sprite();
@@ -615,17 +591,16 @@ void ViewControllers::SongListController::UpdateDetails() {
             this->coverImage->set_sprite(defaultImage);
 
             // Cleanup old sprite
-            if (
-                oldSprite && oldSprite.ptr() != defaultImage.ptr()
-            ) {
+            if (oldSprite && oldSprite.ptr() != defaultImage.ptr()) {
                 UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
-                if (texture) UnityEngine::Object::DestroyImmediate(texture);
+                if (texture) {
+                    UnityEngine::Object::DestroyImmediate(texture);
+                }
                 UnityEngine::Object::DestroyImmediate(oldSprite);
             }
         }
         coverLoading->set_enabled(false);
     } else {
-
         std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
@@ -636,8 +611,10 @@ void ViewControllers::SongListController::UpdateDetails() {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
-                    if (song->hash() != this->currentSong->hash()) return;
-                    Array<uint8_t> *spriteArray = il2cpp_utils::vectorToArray(data);
+                    if (song->hash() != this->currentSong->hash()) {
+                        return;
+                    }
+                    Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
                     UnityW<UnityEngine::Sprite> sprite = BSML::Lite::ArrayToSprite(spriteArray);
                     if (sprite) {
                         DEBUG("Setting sprite");
@@ -654,13 +631,13 @@ void ViewControllers::SongListController::UpdateDetails() {
                 coverLoading->set_enabled(false);
 
                 // Cleanup old sprite
-                if (
-                    oldSprite && 
-                    oldSprite.ptr() != defaultImage.ptr() && // Old sprite is not default image
-                    this->coverImage->get_sprite().ptr() != oldSprite.ptr() // Old sprite is not the current sprite
+                if (oldSprite && oldSprite.ptr() != defaultImage.ptr() &&  // Old sprite is not default image
+                    this->coverImage->get_sprite().ptr() != oldSprite.ptr()  // Old sprite is not the current sprite
                 ) {
                     UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
-                    if (texture) UnityEngine::Object::DestroyImmediate(texture);
+                    if (texture) {
+                        UnityEngine::Object::DestroyImmediate(texture);
+                    }
                     UnityEngine::Object::DestroyImmediate(oldSprite);
                 }
             });
@@ -669,31 +646,28 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     // If the song is loaded then get it from local sources
     if (loaded) {
-        if (!levelCollectionViewController)
+        if (!levelCollectionViewController) {
             return;
+        }
 
-        levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(beatmap,
-                                                                       System::Threading::CancellationToken::get_None());
+        levelCollectionViewController->SongPlayerCrossfadeToLevelAsync(beatmap, System::Threading::CancellationToken::get_None());
     } else {
         if (!getPluginConfig().LoadSongPreviews.GetValue()) {
         } else {
-            if (!songPreviewPlayer)
+            if (!songPreviewPlayer) {
                 return;
+            }
 
             auto ssp = songPreviewPlayer;
 
-            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl,
-                                             toLower(song->hash()));
+            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
 
-            coro(GetPreview(
-                    newUrl,
-                    [ssp](UnityEngine::AudioClip *clip) {
-                        if (clip == nullptr) {
-                            return;
-                        }
-                        ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
-                    }
-            ));
+            coro(GetPreview(newUrl, [ssp](UnityW<UnityEngine::AudioClip> clip) {
+                if (!clip) {
+                    return;
+                }
+                ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
+            }));
         }
     }
 
@@ -706,25 +680,24 @@ void ViewControllers::SongListController::FilterByUploader() {
     }
 
     fcInstance->FilterViewController->uploadersString = this->currentSong->uploaderName();
-    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl,
-                          (std::string) this->currentSong->uploaderName());
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->uploaderName());
     fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }
 
 // BSML::CustomCellInfo
-HMUI::TableCell *ViewControllers::SongListController::CellForIdx(HMUI::TableView *tableView, int idx) {
-    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(
-            dataHolder.displayedSongList[idx]);
+HMUI::TableCell* ViewControllers::SongListController::CellForIdx(HMUI::TableView* tableView, int idx) {
+    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(dataHolder.displayedSongList[idx]);
 }
 
 void ViewControllers::SongListController::UpdateSearch() {
-
 }
 
 void ViewControllers::SongListController::SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view const search, bool resetTable) {
-    // Skip if not active 
-    if (!get_isActiveAndEnabled()) return;
+    // Skip if not active
+    if (!get_isActiveAndEnabled()) {
+        return;
+    }
 
     dataHolder.sort = sort;
     dataHolder.search = search;
@@ -732,7 +705,7 @@ void ViewControllers::SongListController::SortAndFilterSongs(FilterTypes::SortMo
     this->UpdateSearchedSongsList();
 }
 
-void ViewControllers::SongListController::SetSelectedSong(const SongDetailsCache::Song *song) {
+void ViewControllers::SongListController::SetSelectedSong(SongDetailsCache::Song const* song) {
     // TODO: Fill all fields, download image, activate buttons
     if (currentSong != nullptr && currentSong->hash() == song->hash()) {
         return;
@@ -751,7 +724,6 @@ void ViewControllers::SongListController::SetIsDownloaded(bool isDownloaded, boo
     infoButton->set_interactable(true);
 }
 
-
 void ViewControllers::SongListController::DownloadSongList() {
     fcInstance->FilterViewController->datasetInfoLabel->set_text("Loading dataset...");
     dataHolder.DownloadSongList();
@@ -765,14 +737,11 @@ void ViewControllers::SongListController::RetryDownloadSongList() {
 
 void ViewControllers::SongListController::SearchDone() {
     auto isMainThread = BSML::MainThreadScheduler::CurrentThreadIsMainThread();
-    DEBUG("SearchDone, isMainThread: {}", isMainThread);
-    DEBUG("Search done in songlist at {}", fmt::ptr(&dataHolder));
-
     if (!isMainThread) {
         ERROR("Calling SearchDone not on the main thread is not allowed, returning");
         return;
     }
-    
+
     DEBUG("Displaying {} songs", dataHolder.displayedSongList.size());
     if (!songListTable()) {
         // TODO: Actually understand why songListTable isn't available on soft refresh
@@ -796,13 +765,12 @@ void ViewControllers::SongListController::SearchDone() {
     // Reset song list table selection
     if (!currentSong) {
         SelectSong(songListTable(), 0);
-    } else {        
+    } else {
         // Always un-select in the list to prevent wrong-selections on resorting, etc.
         songListTable()->ClearSelection();
     }
 
     this->searchInProgress->get_gameObject()->set_active(false);
-
 
     // Run search again if something wants to
     bool currentSortChanged = dataHolder.currentSort != dataHolder.sort;
@@ -833,19 +801,24 @@ void ViewControllers::SongListController::SongDataDone() {
 }
 
 void ViewControllers::SongListController::SongDataError(std::string message) {
-
 }
 
 void ViewControllers::SongListController::PlayerDataLoaded() {
-    if (songListTable() == nullptr) return;
+    if (songListTable() == nullptr) {
+        return;
+    }
     // If it's searching, don't reload, it will be done after search
-    if (dataHolder.searchInProgress) return;
+    if (dataHolder.searchInProgress) {
+        return;
+    }
 
     // IDK why this is here, but it's here
 }
 
 void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs) {
-    if (currentSong == nullptr) return;
+    if (currentSong == nullptr) {
+        return;
+    }
 
     auto song = currentSong;
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));

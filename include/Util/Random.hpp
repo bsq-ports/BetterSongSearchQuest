@@ -1,9 +1,7 @@
 #pragma once
 
-#include <random>
-
 namespace BetterSongSearch::Util {
-    // Generate random number 
-    // Stolen from https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
+
+    // Generate random number
     int random(int min, int max);
-}
+}  // namespace BetterSongSearch::Util

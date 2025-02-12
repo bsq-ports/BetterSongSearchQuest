@@ -1,48 +1,53 @@
 #include "Util/TextUtil.hpp"
 
-#include <vector>
-#include <string>
-#include <algorithm>
-#include <cctype> 
 #include <fmt/format.h>
-namespace BetterSongSearch::Util { 
+
+#include <algorithm>
+#include <cctype>
+#include <string>
+#include <vector>
+
+namespace BetterSongSearch::Util {
     // this hurts
-    std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter) {
+    std::vector<std::string> split(std::string_view buffer, std::string_view const delimeter) {
         std::vector<std::string> ret{};
         std::decay_t<decltype(std::string::npos)> pos{};
         while ((pos = buffer.find(delimeter)) != std::string::npos) {
-            const auto match = buffer.substr(0, pos);
-            if (!match.empty()) ret.emplace_back(match);
+            auto const match = buffer.substr(0, pos);
+            if (!match.empty()) {
+                ret.emplace_back(match);
+            }
             buffer = buffer.substr(pos + delimeter.size());
         }
-        if (!buffer.empty()) ret.emplace_back(buffer);
+        if (!buffer.empty()) {
+            ret.emplace_back(buffer);
+        }
         return ret;
     }
 
-    std::string join(std::vector<std::string> strings, const std::string_view delimeter) {
-        if (strings.empty()) return "";
+    std::string join(std::vector<std::string> strings, std::string_view const delimeter) {
+        if (strings.empty()) {
+            return "";
+        }
 
         std::string ret;
         for (size_t i = 0; i < strings.size(); i++) {
             ret += strings[i];
-            if (i != strings.size() - 1) ret += delimeter;
+            if (i != strings.size() - 1) {
+                ret += delimeter;
+            }
         }
         return ret;
     }
 
     /**
      * Removes special characters from a string
-    */
+     */
     std::string removeSpecialCharacter(std::string_view const s) {
         std::string stringy(s);
         for (int i = 0; i < stringy.size(); i++) {
-
-            if (
-                stringy[i] != ' ' && 
-                (stringy[i] < 'A' || stringy[i] > 'Z') &&
-                (stringy[i] < 'a' || stringy[i] > 'z') &&
-                (stringy[i] < '0' || stringy[i] > '9')
-            ) {
+            if (stringy[i] != ' ' && (stringy[i] < 'A' || stringy[i] > 'Z') && (stringy[i] < 'a' || stringy[i] > 'z') &&
+                (stringy[i] < '0' || stringy[i] > '9')) {
                 stringy.erase(i, 1);
                 i--;
             }
@@ -63,41 +68,39 @@ namespace BetterSongSearch::Util {
         return toLower(std::string(s));
     }
 
-    bool IsSpace(char x) { return x == ' ' || !isalnum(x); };
+    bool IsSpace(char x) {
+        return x == ' ' || !isalnum(x);
+    };
 
-    std::string httpErrorToString(int code)
-    {
-        switch (code)
-        {
-        case 400:
-            return "Bad Request";
-        case 401:
-            return "Unauthorized";
-        case 403:
-            return "Forbidden";
-        case 404:
-            return "Not Found";
-        case 405:
-            return "Method Not Allowed";
-        case 429:
-            return "Too Many Requests";
-        case 500:
-            return "Internal Server Error";
-        case 502:
-            return "Bad Gateway";
-        case 503:
-            return "Service Unavailable";
-        case 504:
-            return "Gateway Timeout";
-        default:
-            return fmt::format("HTTP Error {}", code);
+    std::string httpErrorToString(int code) {
+        switch (code) {
+            case 400:
+                return "Bad Request";
+            case 401:
+                return "Unauthorized";
+            case 403:
+                return "Forbidden";
+            case 404:
+                return "Not Found";
+            case 405:
+                return "Method Not Allowed";
+            case 429:
+                return "Too Many Requests";
+            case 500:
+                return "Internal Server Error";
+            case 502:
+                return "Bad Gateway";
+            case 503:
+                return "Service Unavailable";
+            case 504:
+                return "Gateway Timeout";
+            default:
+                return fmt::format("HTTP Error {}", code);
         }
     }
 
-    std::string curlErrorToString(int code)
-    {
-        switch (code)
-        {
+    std::string curlErrorToString(int code) {
+        switch (code) {
             case 0:  // CURLE_OK
                 return "No error";
             case 1:  // CURLE_UNSUPPORTED_PROTOCOL
@@ -110,19 +113,19 @@ namespace BetterSongSearch::Util {
                 return "Couldn't resolve host";
             case 7:  // CURLE_COULDNT_CONNECT
                 return "Couldn't connect to server";
-            case 16: // CURLE_HTTP2
+            case 16:  // CURLE_HTTP2
                 return "HTTP/2 framing layer error";
-            case 28: // CURLE_OPERATION_TIMEDOUT
+            case 28:  // CURLE_OPERATION_TIMEDOUT
                 return "Operation timed out";
-            case 35: // CURLE_SSL_CONNECT_ERROR
+            case 35:  // CURLE_SSL_CONNECT_ERROR
                 return "SSL connection error";
-            case 52: // CURLE_GOT_NOTHING
+            case 52:  // CURLE_GOT_NOTHING
                 return "Server returned nothing";
-            case 78: // CURLE_REMOTE_FILE_NOT_FOUND
+            case 78:  // CURLE_REMOTE_FILE_NOT_FOUND
                 return "Remote file not found";
 
             default:
                 return fmt::format("Code {}", code);
         }
     }
-}
+}  // namespace BetterSongSearch::Util

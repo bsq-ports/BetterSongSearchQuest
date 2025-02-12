@@ -1,4 +1,5 @@
 #include "Formatters.hpp"
+
 #include "logging.hpp"
 
 namespace BetterSongSearch::Formatters {
@@ -13,8 +14,8 @@ namespace BetterSongSearch::Formatters {
         DEBUG("Formatted map style: {}", result);
         return result;
     }
-    
+
     std::string FormatSongGenre(StringW value) {
         return (std::string) value;
     }
-}
+}  // namespace BetterSongSearch::Formatters

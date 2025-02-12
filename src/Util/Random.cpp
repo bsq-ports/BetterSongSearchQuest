@@ -1,16 +1,15 @@
 #include "Util/Random.hpp"
 
+#include <random>
+
 namespace BetterSongSearch::Util {
-    // Generate random number 
-    // Stolen from https://stackoverflow.com/questions/7560114/random-number-c-in-some-range
-    int random(int min, int max) //range : [min, max]
+    // Generate random number
+    int random(int min, int max)  // range : [min, max]
     {
-        static bool first = true;
-        if (first) 
-        {  
-            srand( time(NULL) ); //seeding for the first time only!
-            first = false;
-        }
-        return min + rand() % (( max + 1 ) - min);
+        static std::random_device rd;
+        static std::mt19937 generator(rd());
+
+        std::uniform_int_distribution<int> distribution(min, max);
+        return distribution(generator);
     }
-}
+}  // namespace BetterSongSearch::Util

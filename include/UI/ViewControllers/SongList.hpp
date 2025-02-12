@@ -1,44 +1,43 @@
 #pragma once
-#include "UI/ViewControllers/SongListCellTableData.hpp"
-#include "HMUI/CurvedTextMeshPro.hpp"
+#include <fmt/chrono.h>
 
-#include "HMUI/TableView.hpp"
-#include "HMUI/ViewController.hpp"
-#include "HMUI/TableCell.hpp"
-#include "HMUI/ImageView.hpp"
-#include "HMUI/TextPageScrollView.hpp"
-#include "System/Object.hpp"
-#include "TMPro/TextMeshProUGUI.hpp"
-#include "TMPro/TextAlignmentOptions.hpp"
-#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
-#include "GlobalNamespace/MultiplayerLevelSelectionFlowCoordinator.hpp"
-#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
-#include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
-#include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
 #include "bsml/shared/BSML/Components/ModalView.hpp"
-#include "songcore/shared/SongCore.hpp"
+#include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
+#include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
+#include "bsml/shared/macros.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
+#include "FilterOptions.hpp"
+#include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/MultiplayerLevelSelectionFlowCoordinator.hpp"
+#include "GlobalNamespace/SoloFreePlayFlowCoordinator.hpp"
+#include "HMUI/CurvedTextMeshPro.hpp"
+#include "HMUI/ImageView.hpp"
+#include "HMUI/TableCell.hpp"
+#include "HMUI/TableView.hpp"
+#include "HMUI/TextPageScrollView.hpp"
+#include "HMUI/ViewController.hpp"
+#include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/Song.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
-#include "song-details/shared/Data/MapCharacteristic.hpp"
-#include "UnityEngine/MonoBehaviour.hpp"
-#include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
-#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
+#include "song-details/shared/SongDetails.hpp"
+#include "songcore/shared/SongCore.hpp"
+#include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
+#include "System/Object.hpp"
 #include "System/Threading/CancellationToken.hpp"
 #include "System/Threading/CancellationTokenSource.hpp"
-#include "FilterOptions.hpp"
-#include "Util/RatelimitCoroutine.hpp"
+#include "TMPro/TextAlignmentOptions.hpp"
+#include "TMPro/TextMeshProUGUI.hpp"
 #include "UI/Modals/MultiDL.hpp"
 #include "UI/Modals/Settings.hpp"
 #include "UI/Modals/UploadDetails.hpp"
-#include "song-details/shared/SongDetails.hpp"
-#include "song-details/shared/Data/Song.hpp"
-#include <fmt/chrono.h>
-#include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
+#include "UI/ViewControllers/SongListCellTableData.hpp"
+#include "UnityEngine/MonoBehaviour.hpp"
+#include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
+#include "UnityEngine/UI/VerticalLayoutGroup.hpp"
+#include "Util/RatelimitCoroutine.hpp"
 
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
 #define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
@@ -48,33 +47,37 @@
 namespace BetterSongSearch::UI {
     inline bool fromBSS = false;
     inline bool openToCustom = false;
-}
+}  // namespace BetterSongSearch::UI
 
 #ifdef HotReload
-DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
+DECLARE_CLASS_CUSTOM_INTERFACES(
+    BetterSongSearch::UI::ViewControllers,
+    SongListController,
+    BSML::HotReloadViewController,
+    std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
 #else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
 
     DECLARE_CTOR(ctor);
     DECLARE_INSTANCE_METHOD(void, OnDestroy);
-    DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_OVERRIDE_METHOD_MATCH(
+        void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling
+    );
     DECLARE_INSTANCE_FIELD(UnityW<BSML::CustomListTableData>, songList);
 
     DECLARE_INSTANCE_METHOD(void, SelectSong, UnityW<HMUI::TableView> table, int id);
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     DECLARE_INSTANCE_FIELD(float, cellSize);
 
-
     DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
     DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
-    
+
     DECLARE_INSTANCE_METHOD(void, SelectRandom);
     DECLARE_INSTANCE_METHOD(void, ShowMoreModal);
     DECLARE_INSTANCE_METHOD(void, HideMoreModal);
     DECLARE_INSTANCE_METHOD(void, UpdateDataAndFilters);
-
 
     DECLARE_INSTANCE_METHOD(void, ShowBatchDownload);
     DECLARE_INSTANCE_METHOD(void, ShowPlaylistCreation);
@@ -82,21 +85,19 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_METHOD(void, ShowCloseConfirmation);
     DECLARE_INSTANCE_METHOD(void, ForcedUIClose);
     DECLARE_INSTANCE_METHOD(void, ForcedUICloseCancel);
-    
-    
 
     // Play/DL
     DECLARE_INSTANCE_METHOD(void, Download);
     DECLARE_INSTANCE_METHOD(void, PostParse);
     DECLARE_INSTANCE_METHOD(void, Play);
-    
+
     DECLARE_INSTANCE_METHOD(void, ShowSongDetails);
     DECLARE_INSTANCE_METHOD(void, FilterByUploader);
     DECLARE_INSTANCE_METHOD(void, UpdateSearchedSongsList);
     DECLARE_INSTANCE_METHOD(void, _UpdateSearchedSongsList);
 
     DECLARE_INSTANCE_FIELD(bool, IsSearching);
-    
+
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::HorizontalOrVerticalLayoutGroup>, searchBoxContainer);
     DECLARE_INSTANCE_FIELD(UnityW<HMUI::CurvedTextMeshPro>, songSearchPlaceholder);
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::HorizontalOrVerticalLayoutGroup>, detailActions);
@@ -112,7 +113,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongAuthor);
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongName);
 
-    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::GameObject >, searchBox);
+    DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::GameObject>, searchBox);
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::Sprite>, defaultImage);
     DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, coverImage);
     DECLARE_INSTANCE_FIELD(UnityW<HMUI::ImageView>, coverLoading);
@@ -121,7 +122,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityW<Modals::MultiDL>, multiDlModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Settings>, settingsModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::UploadDetails>, uploadDetailsModal);
-    
+
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, selectedSongDiffInfo);
 
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, downloadButton);
@@ -135,17 +136,17 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityW<GlobalNamespace::SoloFreePlayFlowCoordinator>, soloFreePlayFlowCoordinator);
     DECLARE_INSTANCE_FIELD(UnityW<GlobalNamespace::MultiplayerLevelSelectionFlowCoordinator>, multiplayerLevelSelectionFlowCoordinator);
 
-
     DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);
 
-public:
-    HMUI::TableView* songListTable() {
-        if(songList) {return songList->tableView;} else return nullptr;
+    public : HMUI::TableView *
+    songListTable() {
+        if (songList) {
+            return songList->tableView;
+        } else return nullptr;
     }
 
     void SelectSongByHash(std::string hash);
     void SetSelectedSong(const SongDetailsCache::Song* song);
-
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;
 
@@ -157,7 +158,6 @@ public:
 
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
-
 
     void PlaySong(const SongDetailsCache::Song* song = nullptr);
     void DownloadSongList();
@@ -172,4 +172,3 @@ public:
     void PlayerDataLoaded();
     void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
 )
-
