@@ -8,10 +8,16 @@ StringW const PresetsTableCellReuseIdentifier = "REUSEPresetsTableCell";
 
 namespace BetterSongSearch::UI::Modals {
     void PresetsTableCell::RefreshBgState() {
-        static auto hovered = Sombrero::FastColor(1.0f, 1.0f, 1.0f, 1.0f);
-        static auto normal = Sombrero::FastColor(1.0f, 1.0f, 1.0f, 0.70f);
-        bgContainer->set_color((selected || highlighted) ? hovered : normal);
-        presetNameLabel->set_color((selected || highlighted) ? hovered : normal);
+        // clang-format off
+        presetNameLabel->set_color(
+            Sombrero::FastColor(
+                selected? 0.0f : 1.0f,
+                selected? 0.5f : 1.0f,
+                selected? 0.5f : 1.0f,
+                highlighted? 0.9f : 0.6f
+            )
+        );
+        // clang-format on
     }
 
     void PresetsTableCell::SelectionDidChange(HMUI::SelectableCell::TransitionType transitionType) {

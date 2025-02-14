@@ -39,6 +39,9 @@ void Modals::Presets::PostParse() {
         INFO("Table exists");
         this->presetListTableData->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource*>(this), false);
     }
+
+    // BSML / HMUI my beloved (this currently doesn't work on quest since it was stripped from the build, bsml needs a fix)
+    newPresetNameSetting->modalKeyboard->modalView->_animateParentCanvas = false;
 }
 
 void Modals::Presets::CloseModal() {
@@ -86,6 +89,7 @@ int Modals::Presets::NumberOfCells() {
 
 void Modals::Presets::AddPreset() {
     try {
+        std::string newPresetName = newPresetNameSetting->get_text();
         if (newPresetName == "") {
             return;
         }
@@ -98,8 +102,6 @@ void Modals::Presets::AddPreset() {
     }
 
     RefreshPresetsList();
-    newPresetName = "";
-
     CloseSavePresetModal();
 }
 
@@ -147,7 +149,13 @@ void Modals::Presets::PresetSelected(UnityW<HMUI::TableView> table, int id) {
     if (id < 0 || id >= presets.size()) {
         return;
     }
+
+    loadButton->set_interactable(true);
+    deleteButton->set_interactable(true);
+
     selectedPreset = presets[id];
+
+    newPresetNameSetting->set_text(selectedPreset);
 }
 
 void Modals::Presets::RefreshPresetsList() {
@@ -161,4 +169,10 @@ void Modals::Presets::RefreshPresetsList() {
     if (presetListTableData && presetListTableData->tableView) {
         presetListTableData->tableView->ReloadData();
     }
+
+    loadButton->set_interactable(false);
+    deleteButton->set_interactable(false);
+
+    newPresetNameSetting->set_text("");
+    selectedPreset = "";
 }
