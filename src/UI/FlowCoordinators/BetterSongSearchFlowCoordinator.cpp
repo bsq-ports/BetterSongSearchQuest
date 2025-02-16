@@ -4,16 +4,14 @@
 #include <bsml/shared/Helpers/getters.hpp>
 #include <UnityEngine/Resources.hpp>
 
-#include "System/Action.hpp"
-#include "HMUI/ViewController.hpp"
 #include "GlobalNamespace/SongPreviewPlayer.hpp"
-
+#include "HMUI/ViewController.hpp"
+#include "logging.hpp"
+#include "System/Action.hpp"
 
 using namespace GlobalNamespace;
 
 DEFINE_TYPE(BetterSongSearch::UI::FlowCoordinators, BetterSongSearchFlowCoordinator);
-
-
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Awake() {
     fcInstance = this;
@@ -26,10 +24,17 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Aw
     if (!DownloadHistoryViewController) {
         DownloadHistoryViewController = BSML::Helpers::CreateViewController<ViewControllers::DownloadHistoryViewController*>();
     }
+
+    // Make sure the flow coordinator is not destroyed when changing scenes
+    UnityEngine::Object::DontDestroyOnLoad(this->get_gameObject());
 }
 
-void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling) {
-    if (!firstActivation) return;
+void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::DidActivate(
+    bool firstActivation, bool addedToHeirarchy, bool screenSystemEnabling
+) {
+    if (!firstActivation) {
+        return;
+    }
 
     SetTitle("Better Song Search", HMUI::ViewController::AnimationType::In);
     showBackButton = true;
@@ -38,15 +43,17 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Di
 
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::BackButtonWasPressed(HMUI::ViewController* topViewController) {
     this->Close();
-    
 }
 
-//  std::function<void(int)> cancelConfirmCallback; 
-void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Close(bool immediately, bool downloadAbortConfim){
+//  std::function<void(int)> cancelConfirmCallback;
+void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Close(bool immediately, bool downloadAbortConfim) {
     // Do nothing if there's no parent flow coordinator (in multiplayer if you never called it it crashed)
 
-    if(downloadAbortConfim && ConfirmCancelOfPending([this, immediately](){this->Close(immediately, false);}))
-		return;
+    if (downloadAbortConfim && ConfirmCancelOfPending([this, immediately]() {
+            this->Close(immediately, false);
+        })) {
+        return;
+    }
 
     cancelConfirmCallback = nullptr;
 
@@ -62,9 +69,8 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
         DownloadHistoryViewController->hasUnloadedDownloads = false;
     }
 
-
     // Hide all modals
-    for(auto modal: SongListController->GetComponentsInChildren<HMUI::ModalView*>()) {
+    for (auto modal : SongListController->GetComponentsInChildren<HMUI::ModalView*>()) {
         modal->Hide(false, nullptr);
     }
 
@@ -72,7 +78,8 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
         this->____parentFlowCoordinator->DismissFlowCoordinator(this, HMUI::ViewController::AnimationDirection::Horizontal, nullptr, immediately);
     }
 };
-bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback){
+
+bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelOfPending(std::function<void()> callback) {
     if (DownloadHistoryViewController->HasPendingDownloads()) {
         cancelConfirmCallback = callback;
         SongListController->ShowCloseConfirmation();
@@ -82,13 +89,13 @@ bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Co
     }
 };
 
-void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelCallback(bool doCancel){
-    if(doCancel) {
+void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelCallback(bool doCancel) {
+    if (doCancel) {
         // Fail all dls
-        for (auto entry : DownloadHistoryViewController->downloadEntryList)
-        {
-            if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued)))
-            {
+        for (auto entry : DownloadHistoryViewController->downloadEntryList) {
+            if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
+                    DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued
+                ))) {
                 entry->retries = 69;
                 entry->status = DownloadHistoryEntry::DownloadStatus::Failed;
             }

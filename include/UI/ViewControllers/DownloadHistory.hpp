@@ -20,7 +20,6 @@
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
 
-#include "main.hpp"
 #include "Util/RatelimitCoroutine.hpp"
 
 #ifndef DECLARE_OVERRIDE_METHOD_MATCH
@@ -28,11 +27,7 @@
     DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
 #endif
 
-
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
-
 inline static const int RETRY_COUNT = 3;
-
 
 class DownloadHistoryEntry {
 public:
@@ -111,7 +106,7 @@ public:
 };
 
 #ifdef HotReload
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, BSML::HotReloadViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
 #else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif

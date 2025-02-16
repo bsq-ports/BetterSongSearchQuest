@@ -1,15 +1,12 @@
 #include "UI/Modals/Settings.hpp"
-#include "main.hpp"
-#include "PluginConfig.hpp"
-#include "HMUI/TableView.hpp"
-#include "bsml/shared/BSML.hpp"
-#include "songcore/shared/SongCore.hpp"
-#include "beatsaverplusplus/shared/BeatSaver.hpp"
 
 #include "assets.hpp"
-#include "Util/CurrentTimeMs.hpp"
-#include "UI/ViewControllers/DownloadListTableData.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "DataHolder.hpp"
+#include "PluginConfig.hpp"
+#include "songcore/shared/SongCore.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "Util/CurrentTimeMs.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -17,24 +14,19 @@ using namespace BetterSongSearch::Util;
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, Settings);
 
-void Modals::Settings::OnEnable()
-{
+void Modals::Settings::OnEnable() {
 }
 
-
-void Modals::Settings::CloseModal()
-{
+void Modals::Settings::CloseModal() {
     this->settingsModal->Hide();
 }
 
-void Modals::Settings::ctor()
-{
+void Modals::Settings::ctor() {
     INVOKE_CTOR();
     this->initialized = false;
 }
 
-void Modals::Settings::OpenModal()
-{
+void Modals::Settings::OpenModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::Settings_bsml, this->get_transform(), this);
         initialized = true;
@@ -42,18 +34,18 @@ void Modals::Settings::OpenModal()
     this->settingsModal->Show();
 }
 
-
-bool Modals::Settings::get_returnToBssFromSolo() {    
+bool Modals::Settings::get_returnToBssFromSolo() {
     return getPluginConfig().ReturnToBSS.GetValue();
 }
+
 void Modals::Settings::set_returnToBssFromSolo(bool value) {
     getPluginConfig().ReturnToBSS.SetValue(value);
 }
 
-
 bool Modals::Settings::get_loadSongPreviews() {
-   return getPluginConfig().LoadSongPreviews.GetValue();
+    return getPluginConfig().LoadSongPreviews.GetValue();
 }
+
 void Modals::Settings::set_loadSongPreviews(bool value) {
     getPluginConfig().LoadSongPreviews.SetValue(value);
 }
@@ -61,6 +53,7 @@ void Modals::Settings::set_loadSongPreviews(bool value) {
 bool Modals::Settings::get_smallerFontSize() {
     return getPluginConfig().SmallerFontSize.GetValue();
 }
+
 void Modals::Settings::set_smallerFontSize(bool value) {
     getPluginConfig().SmallerFontSize.SetValue(value);
     fcInstance->SongListController->songListTable()->ReloadData();
@@ -69,21 +62,21 @@ void Modals::Settings::set_smallerFontSize(bool value) {
 StringW Modals::Settings::get_preferredLeaderboard() {
     // Preferred Leaderboard
     std::string preferredLeaderboard = getPluginConfig().PreferredLeaderboard.GetValue();
-    if (leaderBoardMap.contains(preferredLeaderboard)) {
+    if (LEADERBOARD_MAP.contains(preferredLeaderboard)) {
         return preferredLeaderboard;
     } else {
-        DataHolder::preferredLeaderboard = PreferredLeaderBoard::ScoreSaber;
+        dataHolder.preferredLeaderboard = FilterTypes::PreferredLeaderBoard::ScoreSaber;
         getPluginConfig().PreferredLeaderboard.SetValue("Scoresaber");
         return "Scoresaber";
     }
 }
 
 void Modals::Settings::set_preferredLeaderboard(StringW value) {
-    if (leaderBoardMap.contains(value)) {
-        DataHolder::preferredLeaderboard = leaderBoardMap.at(value);
+    if (LEADERBOARD_MAP.contains(value)) {
+        dataHolder.preferredLeaderboard = LEADERBOARD_MAP.at(value);
         getPluginConfig().PreferredLeaderboard.SetValue(value);
         auto controller = fcInstance->SongListController;
-        controller->filterChanged = true;
-        controller->SortAndFilterSongs(controller->sort, controller->search, true);
+        dataHolder.forceReload = true;
+        controller->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
     }
 }

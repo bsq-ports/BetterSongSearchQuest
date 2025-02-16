@@ -9,15 +9,11 @@
 #include "UnityEngine/UI/Button.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 
-using namespace BetterSongSearch::UI;
-using namespace BetterSongSearch::Util;
-using namespace GlobalNamespace;
-
 namespace BetterSongSearch::UI {
     class Manager
     {
         HMUI::FlowCoordinator* parentFlow;
-        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
+        UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
         BSML::MenuButton * menuButton;
         
 
@@ -35,6 +31,7 @@ namespace BetterSongSearch::UI {
             void Close(bool immediately = false, bool downloadAbortConfim = true);
 
             void GoToSongSelect();
+            void DestroyFlow();
     };
 
 

@@ -5,14 +5,6 @@ cmake_minimum_required(VERSION 3.21)
 project(${COMPILE_ID})
 include(${EXTERN_DIR}/includes/kaleb/shared/cmake/assets.cmake)
 
-# Enable link time optimization
-# In my experience, this can be highly unstable but it nets a huge size optimization and likely performance
-# However, the instability was seen using Android.mk/ndk-build builds. With Ninja + CMake, this problem seems to have been solved.
-# As always, test thoroughly
-# - Fern
-# Reduces linking speed, disable in development for faster builds
-set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-
 # Hot reload (DO NOT USE IN PRODUCTION)
 # add_compile_options(-DHotReload)
 
@@ -30,9 +22,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_link_options(-Wl,--exclude-libs,ALL)
 add_compile_options(-frtti -fPIE -fPIC -fexceptions -fvisibility=hidden)
 
-add_compile_options(-O3)
-# Uncomment for faster builds (DO NOT USE IN PRODUCTION, it slows down the search 6 times)
-# add_compile_options(-O0)
+if(${CMAKE_BUILD_TYPE} STREQUAL "RELEASE" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" OR ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
+    
+    # Better optimizations
+    add_compile_options(-O3)
+
+    # LTO
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    add_compile_options(-flto)
+else()
+    # Debug options
+    add_compile_options(-O0 -g)
+endif()
 
 # get git info
 execute_process(COMMAND git config user.name OUTPUT_VARIABLE GIT_USER)

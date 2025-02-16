@@ -8,6 +8,9 @@ namespace BetterSongSearch::Util {
     // this hurts
     std::vector<std::string> split(std::string_view buffer, const std::string_view delimeter = " ");
 
+    // @brief Joins a vector of strings into a single string, separated by a delimeter
+    std::string join(std::vector<std::string> strings, const std::string_view delimeter = " ");
+
     /**
      * Removes special characters from a string
     */

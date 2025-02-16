@@ -6,7 +6,7 @@
 		</horizontal>
 		<horizontal horizontal-fit='PreferredSize' spacing='2' pad-right='1'>
 			<button text='Clear' on-click='ClearFilters' pref-width="15" />
-			<!-- <button text='Presets' on-click='ShowPresets' pref-width="15" /> -->
+			<button text='Presets' on-click='ShowPresets' pref-width="15" />
 		</horizontal>
 	</horizontal>
 	<!-- <macro.as-host host='currentFilter'> -->
@@ -34,13 +34,25 @@
 				</vertical>
 			</vertical>
 			<vertical spacing='2'>
-				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
+				<vertical child-control-height='false' bg='panel-top' pad-top='1' preferred-width='64' pad-bottom='29' vertical-fit='PreferredSize'>
 					<text text='&lt;color=#DDD>BeatSaver' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
-						 <!-- formatter='DateTimeToStr'   formatter='FormatUploaderShortInfo' -->
-					<slider-setting text='Min upload date' id='hideOlderThanSlider' value="hideOlderThan"  bind-value="true" apply-on-change="true" min="0" max='2' increment='1' formatter='DateTimeToStr' on-change="UpdateFilterSettings"/>
-					<slider-setting id="minimumRatingSlider" text='Minimum Rating' value="minimumRating" bind-value="true" apply-on-change="true" max='0.9' increment='0.05' formatter='PercentFloat' on-change="UpdateFilterSettings"/>
-					<slider-setting text='Minimum Votes' id='minimumVotesSlider' value="minimumVotes" bind-value="true" apply-on-change="true" increment='1' max='100' on-change="UpdateFilterSettings"/>
-					<string-setting text='Uploader(s)' id='uploadersStringControl' value='uploadersString' bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" hover-hint='You can enter multiple Uploader names, seperated by spaces. If you have an Exclamation mark at the beginning of your input it becomes a blacklist for the given uploaders'/>
+					<scroll-view ignore-layout='true' size-delta-x='2' size-delta-y='-2' anchor-min-y='-0.2' anchor-max-y='0.8' anchor-max-x="1.09">
+						<vertical child-control-height='false' preferred-width='60' vertical-fit='PreferredSize' pad-left='1' pad-right='-2'>
+							<slider-setting text='Min upload date' id='hideOlderThanSlider' value="hideOlderThan"  bind-value="true" apply-on-change="true" min="0" max='2' increment='1' formatter='DateTimeToStr' on-change="UpdateFilterSettings"/>
+							<slider-setting id="minimumRatingSlider" text='Min Rating' value="minimumRating" bind-value="true" apply-on-change="true" max='0.9' increment='0.05' formatter='PercentFloat' on-change="UpdateFilterSettings"/>
+							<slider-setting text='Min Votes' id='minimumVotesSlider' value="minimumVotes" bind-value="true" apply-on-change="true" increment='1' max='100' on-change="UpdateFilterSettings"/>
+							<string-setting text='Uploader(s)' id='uploadersStringControl' value='uploadersString' bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" hover-hint='You can enter multiple Uploader names, seperated by spaces. If you have an Exclamation mark at the beginning of your input it becomes a blacklist for the given uploaders'/>
+							<dropdown-list-setting text='Map Style' id='mapStyleDropdown' value="mapStyleString" apply-on-change="true" bind-value="true" choices='mapStyles' formatter='FormatBeatSaverTag' on-change="UpdateFilterSettings"/>
+							<horizontal pad-right="-3">
+								<text text="Song Genre" align="MidlineLeft" italics="true"/>
+								<button id='genrePickButton' text="Any" preferred-width="29" on-click="ShowGenrePicker" all-uppercase="false"/>
+							</horizontal>
+							<checkbox-setting value="onlyCuratedMaps" text="Curated Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" />
+							<checkbox-setting value="onlyVerifiedMappers" text="Verified Mappers" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
+							<checkbox-setting value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
+						</vertical>
+					</scroll-view>
+					
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>Characteristic / Difficulty' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>
@@ -56,29 +68,27 @@
 	<!-- </macro.as-host> -->
 
 	<horizontal>
-		<!-- <horizontal preferred-width="65" child-expand-width="false" spacing='2' child-align='MiddleCenter'>
-			<text text="~version" font-size="3" font-color="#CC6E3B" align="Center"/>
-			<clickable-text text='♥ Donate' font-size="4" align="Center"  on-click="OpenSponsorsModal"/>
-		</horizontal> -->
+		<horizontal preferred-width="65" child-expand-width="false" spacing='2' child-align='MiddleCenter'>
+			<text id="versionLabel" text="~version" font-size="3" font-color="#CC6E3B" align="Center"/>
+			<!-- <clickable-text text='♥ Donate' font-size="4" align="Center"  on-click="OpenSponsorsModal"/> -->
+		</horizontal>
 		<horizontal preferred-width="65">
 			<clickable-text id="datasetInfoLabel" font-size="3" font-color="#CCC" text="Loading dataset..." align="Center"  on-click="TryToDownloadDataset"/>
 		</horizontal>
 	</horizontal>
 
-	<modal size-delta-x='80' size-delta-y='88'>
-		<vertical horizontal-fit='Unconstrained' pad='2' pad-top='9'>
-			<horizontal bg='panel-top-gradient' ignore-layout='true' anchor-max-x='.97' anchor-min-x='.03' anchor-min-y='1' anchor-pos-y='-5'>
-				<text text='BetterSongSearch - Sponsors' align='Center'/>
-			</horizontal>
-			<text text='Are you enjoying my stuff and want to support me?' align='Center'/>
-			<horizontal>
-				<primary-button text='Open Website on Desktop' on-click='OpenSponsorsLink'/>
-				<button text='Close' on-click='CloseSponsorModal'/>
-			</horizontal>
-			<text text='Current sponsors' align='Center' underlined='true'/>
-			<vertical horizontal-fit='Unconstrained' vertical-fit='Unconstrained' preferred-height='50'>
-				<text-page id='sponsorsText' text='Loading...'/>
+	<bg>
+		<modal size-delta-x='80' size-delta-y='88' move-to-center="true" id="sponsorModal">
+			<vertical horizontal-fit='Unconstrained' pad='2' pad-top='9'>
+				<horizontal bg='panel-top-gradient' ignore-layout='true' anchor-max-x='.97' anchor-min-x='.03' anchor-min-y='1' anchor-pos-y='-5'>
+					<text text='BetterSongSearch - Sponsors' align='Center'/>
+				</horizontal>
+				<text text='Are you enjoying my stuff and want to support me?' align='Center'/>
+				<horizontal>
+					<primary-button text='Open Website' on-click='OpenSponsorsLink'/>
+					<button text='Close' on-click='CloseSponsorModal'/>
+				</horizontal>
 			</vertical>
-		</vertical>
-	</modal>
+		</modal>
+	</bg>
 </vertical>

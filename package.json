@@ -1,0 +1,14 @@
+{
+  "name": "graphicstweaks",
+  "version": "1.0.0",
+  "description": "Mod to unlock pc graphics settings on quest beat saber",
+  "main": "index.js",
+  "scripts": {
+    "watch": "node watch-templates.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chokidar": "^3.6.0"
+  }
+}

@@ -1,26 +1,27 @@
 #include "UI/Manager.hpp"
 
 #include <bsml/shared/Helpers/getters.hpp>
-#include "logging.hpp"
-#include "Util/Debug.hpp"
-#include "sys/types.h"
-#include "sys/sysinfo.h"
+
+#include "DataHolder.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
+#include "HMUI/NoTransitionsButton.hpp"
+#include "logging.hpp"
+#include "sys/sysinfo.h"
+#include "sys/types.h"
 #include "System/GC.hpp"
 #include "UnityEngine/Profiling/Profiler.hpp"
 #include "UnityEngine/Resources.hpp"
-#include "HMUI/NoTransitionsButton.hpp"
-
+#include "Util/Debug.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
 using namespace GlobalNamespace;
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
-  
-void BetterSongSearch::UI::Manager::Init(){
+
+void BetterSongSearch::UI::Manager::Init() {
     // Register the menu button
-    BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this](){
+    BSML::Register::RegisterMenuButton("Better Song Search", "Search songs, but better", [this]() {
         DEBUG("MenuButtonClick");
         ShowFlow(false);
     });
@@ -39,39 +40,33 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
 
     // Wait for songs to load
-    while (!DataHolder::loaded) {
+    while (!dataHolder.loaded) {
         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.2f));
     }
 
     co_return;
 
-    while(true) {
-        
-       
+    while (true) {
         // Tests for the fcinstance
         if (fcInstance) {
-        //     // Select random song go into the play menu and go back
-        //     {
-        //         auto* songlist = fcInstance->SongListController;
-        //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.5f));
-        //         songlist->SelectRandom();
-        //         if (songlist->currentSong) {
-        //             co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
+            //     // Select random song go into the play menu and go back
+            //     {
+            //         auto* songlist = fcInstance->SongListController;
+            //         co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.5f));
+            //         songlist->SelectRandom();
+            //         if (songlist->currentSong) {
+            //             co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(1.0f));
 
-        //             if (songlist->playButton->get_gameObject()->get_active()) {
-        //                 songlist->PlaySong(songlist->currentSong);
-        //                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(2.5f));
-        //                 // Press back button
-        //                 UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
-        //             }
-                    
-                    
+            //             if (songlist->playButton->get_gameObject()->get_active()) {
+            //                 songlist->PlaySong(songlist->currentSong);
+            //                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(2.5f));
+            //                 // Press back button
+            //                 UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
+            //             }
 
-                   
-                    
-        //             ++iterations_count;
-        //         }
-        //     }
+            //             ++iterations_count;
+            //         }
+            //     }
 
             // Pick random song, show details, close details
             {
@@ -86,26 +81,17 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
                     ++iterations_count;
                 }
             }
-
-
-
-
         }
-        
-        
-        // Debug restart of the game
-        // {   
-        //     DEBUG("Open BSS");
-            
 
-            
+        // Debug restart of the game
+        // {
+        //     DEBUG("Open BSS");
 
         //     DEBUG("Press back button");
         //     // Press back button
         //     UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
 
         //     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(3.0f));
-
 
         //     DEBUG("Reload the game manually");
         //     // Reload the game manually
@@ -125,25 +111,38 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
         //         // Press back button
         //         UnityEngine::GameObject::Find("BackButton")->GetComponent<HMUI::NoTransitionsButton*>()->Press();
         //         // manager.ShowFlow(true);
-                
+
         //         ++iterations_count;
         //     }
         // }
-        
 
         // Collect garbage
         System::GC::Collect();
 
         int64_t mem = UnityEngine::Profiling::Profiler::GetMonoUsedSizeLong();
-        DEBUG("\nIter {}\nUsed {}\nChan {}\nInit: {}", iterations_count,  pretty_bytes(mem), pretty_bytes(mem - lastused), pretty_bytes(lastused - initialmemusage));
+        DEBUG(
+            "\nIter {}\nUsed {}\nChan {}\nInit: {}",
+            iterations_count,
+            pretty_bytes(mem),
+            pretty_bytes(mem - lastused),
+            pretty_bytes(lastused - initialmemusage)
+        );
         lastused = mem;
-
-
-        
     }
     co_yield nullptr;
 }
 
+void BetterSongSearch::UI::Manager::DestroyFlow() {
+    if (flow) {
+        DEBUG("Destroying BSS flowController");
+        auto flowGO = flow->get_gameObject();
+        if (flowGO) {
+            UnityEngine::Object::DestroyImmediate(flowGO);
+        }
+    } else {
+        WARNING("Destroy flow called when the controller didn't exist");
+    }
+}
 
 void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
     if (!flow) {
@@ -161,7 +160,7 @@ void BetterSongSearch::UI::Manager::GoToSongSelect() {
     if (!songSelectButton) {
         return;
     }
-    songSelectButton->GetComponent<HMUI::NoTransitionsButton *>()->Press();
+    songSelectButton->GetComponent<HMUI::NoTransitionsButton*>()->Press();
 }
 
 void BetterSongSearch::UI::Manager::Close(bool immediately, bool downloadAbortConfim) {

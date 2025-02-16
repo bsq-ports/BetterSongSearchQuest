@@ -3,6 +3,7 @@
 #include "UnityEngine/RectTransform.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell)
+
 namespace BetterSongSearch::UI::ViewControllers {
     CustomDownloadListTableCell* CustomDownloadListTableCell::PopulateWithSongData(DownloadHistoryEntry* entry) {
         songName->set_text(entry->songName);
@@ -21,17 +22,23 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     void CustomDownloadListTableCell::RefreshBar() {
-        if(!entry)
+        if (!entry) {
             return;
-        auto clr = entry->status == DownloadHistoryEntry::Failed ? UnityEngine::Color::get_red() : entry->status != DownloadHistoryEntry::DownloadStatus::Queued ? UnityEngine::Color::get_green() : UnityEngine::Color::get_gray();
+        }
+        auto clr = entry->status == DownloadHistoryEntry::Failed                 ? UnityEngine::Color::get_red()
+                 : entry->status != DownloadHistoryEntry::DownloadStatus::Queued ? UnityEngine::Color::get_green()
+                                                                                 : UnityEngine::Color::get_gray();
         clr.a = 0.5f + (entry->downloadProgress * 0.4f);
         bgProgress->set_color(clr);
 
         auto x = bgProgress->get_gameObject()->get_transform().cast<UnityEngine::RectTransform>();
-        if(!x)
+        if (!x) {
             return;
+        }
         x->set_anchorMax(UnityEngine::Vector2(entry->downloadProgress, 1));
-        static auto forceUpdate = reinterpret_cast<function_ptr_t<void, UnityEngine::RectTransform*>>(il2cpp_functions::resolve_icall("UnityEngine.RectTransform::ForceUpdateRectTransforms"));
+        static auto forceUpdate = reinterpret_cast<function_ptr_t<void, UnityEngine::RectTransform*>>(
+            il2cpp_functions::resolve_icall("UnityEngine.RectTransform::ForceUpdateRectTransforms")
+        );
         forceUpdate(x);
     }
 
@@ -51,5 +58,4 @@ namespace BetterSongSearch::UI::ViewControllers {
     void CustomDownloadListTableCell::WasPreparedForReuse() {
         entry->UpdateProgressHandler = nullptr;
     }
-}
-
+}  // namespace BetterSongSearch::UI::ViewControllers

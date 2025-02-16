@@ -54,3 +54,4 @@ mod.json
 extern.cmake
 qpm_defines.cmake
 node_modules
+.cache/

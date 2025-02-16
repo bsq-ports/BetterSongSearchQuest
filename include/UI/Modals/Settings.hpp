@@ -1,5 +1,5 @@
 #pragma once
-#include "main.hpp"
+
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "HMUI/ModalView.hpp"
@@ -26,6 +26,5 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoB
 
     DECLARE_BSML_PROPERTY(StringW, preferredLeaderboard);
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, settingsModal);
-    // DECLARE_INSTANCE_FIELD(BSML::ModalView*, chinaModal);
     BSML_OPTIONS_LIST_OBJECT(preferredLeaderboardOptions, "Scoresaber", "Beatleader");
 )

@@ -16,8 +16,8 @@
 #include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
+#include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
 
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell, HMUI::TableCell,
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
@@ -31,6 +31,8 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTable
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalOrVerticalLayoutGroup*, diffsContainer);
     DECLARE_INSTANCE_FIELD(HMUI::ImageView *, bgContainer);
 
+    DECLARE_CTOR(ctor);
+    DECLARE_INSTANCE_METHOD(void, OnDestroy);
 
 public:
     CustomSongListTableCell* PopulateWithSongData(const SongDetailsCache::Song* entry);
@@ -39,4 +41,5 @@ public:
     
     void SetFontSizes();
     void RefreshBgState();
+    void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
 )
