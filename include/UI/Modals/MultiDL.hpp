@@ -13,10 +13,10 @@
 
 #define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, MultiDL, UnityEngine::MonoBehaviour,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, MultiDL, UnityEngine::MonoBehaviour) {
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
-    
+
     DECLARE_INSTANCE_METHOD(void, StartMultiDownload);
     DECLARE_INSTANCE_METHOD(void, CloseModal);
     DECLARE_INSTANCE_METHOD(void, OpenModal);
@@ -28,4 +28,4 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, MultiDL, UnityEngine::MonoBe
 
     // Sliders that need to be formatted
     DECLARE_INSTANCE_FIELD(BSML::SliderSetting*, multiDlCountSlider);
-)
+};

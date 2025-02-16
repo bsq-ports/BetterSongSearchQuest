@@ -15,7 +15,7 @@
 #include "bsml/shared/BSML/Components/CustomListTableData.hpp"
 
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell, HMUI::TableCell,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell, HMUI::TableCell) {
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
@@ -32,4 +32,4 @@ public:
     void UpdateProgress();
     void RefreshBar();
     void RefreshBgState();
-)
+};

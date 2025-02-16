@@ -23,7 +23,7 @@ add_link_options(-Wl,--exclude-libs,ALL)
 add_compile_options(-frtti -fPIE -fPIC -fexceptions -fvisibility=hidden)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "RELEASE" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo" OR ${CMAKE_BUILD_TYPE} STREQUAL "MinSizeRel")
-    
+
     # Better optimizations
     add_compile_options(-O3)
 
@@ -67,6 +67,9 @@ RECURSE_FILES(cpp_file_list ${SOURCE_DIR}/*.cpp)
 RECURSE_FILES(cpp_file_test_list ./test/src/*.cpp)
 RECURSE_FILES(c_file_list ${SOURCE_DIR}/*.c)
 
+RECURSE_FILES(inline_hook_c ${EXTERN_DIR}/includes/beatsaber-hook/shared/inline-hook/*.c)
+RECURSE_FILES(inline_hook_cpp ${EXTERN_DIR}/includes/beatsaber-hook/shared/inline-hook/*.cpp)
+
 # add all src files to compile
 add_library(
         ${COMPILE_ID}
@@ -74,6 +77,8 @@ add_library(
         ${cpp_file_list}
         ${cpp_file_test_list}
         ${c_file_list}
+        ${inline_hook_c}
+        ${inline_hook_cpp}
 )
 
 target_include_directories(${COMPILE_ID} PRIVATE .)

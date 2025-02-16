@@ -11,10 +11,10 @@
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "Util/RatelimitCoroutine.hpp"
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoBehaviour,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoBehaviour) {
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
-    
+
     DECLARE_INSTANCE_METHOD(void, CloseModal);
     DECLARE_INSTANCE_METHOD(void, OpenModal);
 
@@ -27,4 +27,4 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, Settings, UnityEngine::MonoB
     DECLARE_BSML_PROPERTY(StringW, preferredLeaderboard);
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, settingsModal);
     BSML_OPTIONS_LIST_OBJECT(preferredLeaderboardOptions, "Scoresaber", "Beatleader");
-)
+};

@@ -51,7 +51,7 @@ public:
     std::string levelAuthorName;
     std::string key;
     std::string hash;
-    
+
     // Last update used to limit progress updates cause I can't code in c++
     long long lastUpdate;
 
@@ -106,9 +106,9 @@ public:
 };
 
 #ifdef HotReload
-DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
+DECLARE_CLASS_CUSTOM_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, BSML::HotReloadViewController, std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)})) {
 #else
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController, HMUI::ViewController, HMUI::TableView::IDataSource*) {
 #endif
     DECLARE_CTOR(ctor);
     DECLARE_SIMPLE_DTOR();
@@ -120,9 +120,9 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
     DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
     DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
-    
 
-    
+
+
 public:
     UnityW<HMUI::TableView> downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
     std::vector<DownloadHistoryEntry*> downloadEntryList;
@@ -138,4 +138,4 @@ public:
     const int MAX_PARALLEL_DOWNLOADS = 3;
     bool hasUnloadedDownloads = false;
     bool HasPendingDownloads();
-)
+};

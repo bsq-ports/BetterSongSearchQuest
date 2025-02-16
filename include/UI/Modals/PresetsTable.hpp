@@ -16,12 +16,12 @@
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 #include "assets.hpp"
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, PresetsTableCell, HMUI::TableCell,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, PresetsTableCell, HMUI::TableCell) {
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
     DECLARE_INSTANCE_FIELD(TMPro::TextMeshProUGUI*, presetNameLabel);
-    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, bgContainer);   
+    DECLARE_INSTANCE_FIELD(HMUI::ImageView*, bgContainer);
 
 public:
     PresetsTableCell* PopulateWithPresetName(StringW presetName);
@@ -29,4 +29,4 @@ public:
 
     private:
         void RefreshBgState();
-)
+};

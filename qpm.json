@@ -5,7 +5,7 @@
   "info": {
     "name": "BetterSongSearch",
     "id": "BetterSongSearch",
-    "version": "2.1.3",
+    "version": "2.2.0",
     "url": "https://github.com/bsq-ports/BetterSongSearchQuest",
     "additionalData": {
       "overrideSoName": "libBetterSongSearch.so",
@@ -22,7 +22,7 @@
   "dependencies": [
     {
       "id": "scotland2",
-      "versionRange": "^0.1.4",
+      "versionRange": "^0.1.6",
       "additionalData": {
         "includeQmod": false,
         "private": true
@@ -30,52 +30,52 @@
     },
     {
       "id": "beatsaber-hook",
-      "versionRange": "^5.1.9",
+      "versionRange": "^6.4.0",
       "additionalData": {}
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^3700.0.0",
+      "versionRange": "^4020.0.0",
       "additionalData": {}
     },
     {
       "id": "sombrero",
-      "versionRange": "^0.1.42",
+      "versionRange": "^0.1.43",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.17.10",
+      "versionRange": "^0.18.2",
       "additionalData": {}
     },
     {
       "id": "song-details",
-      "versionRange": "^1.0.1",
+      "versionRange": "^1.0.2",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^1.4.2",
+      "versionRange": "^2.0.2",
       "additionalData": {}
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.14",
+      "versionRange": "1.1.12",
       "additionalData": {}
     },
     {
       "id": "fmt",
-      "versionRange": "^10.0.0",
+      "versionRange": "^11.0.2",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.43",
+      "versionRange": "^0.4.49",
       "additionalData": {}
     },
     {
       "id": "beatsaverplusplus",
-      "versionRange": "^0.1.6",
+      "versionRange": "^0.2.1",
       "additionalData": {}
     },
     {
@@ -84,8 +84,8 @@
       "additionalData": {}
     },
     {
-      "id": "paper",
-      "versionRange": "^3.6.4",
+      "id": "paper2_scotland2",
+      "versionRange": "^4.5.0",
       "additionalData": {}
     },
     {

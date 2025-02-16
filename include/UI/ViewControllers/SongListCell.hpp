@@ -19,7 +19,7 @@
 #include "songcore/shared/SongLoader/CustomBeatmapLevel.hpp"
 
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell, HMUI::TableCell,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, CustomSongListTableCell, HMUI::TableCell) {
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
@@ -38,8 +38,8 @@ public:
     CustomSongListTableCell* PopulateWithSongData(const SongDetailsCache::Song* entry);
     const SongDetailsCache::Song* entry;
 
-    
+
     void SetFontSizes();
     void RefreshBgState();
     void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
-)
+};

@@ -1,34 +1,32 @@
 #pragma once
 
-#include "UnityEngine/UI/Button.hpp"
-#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
-#include "HMUI/ViewController.hpp"
-#include "bsml/shared/macros.hpp"
 #include "bsml/shared/BSML.hpp"
-#include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
+#include "bsml/shared/BSML/Components/ClickableText.hpp"
 #include "bsml/shared/BSML/Components/Settings/DropdownListSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/ListSetting.hpp"
+#include "bsml/shared/BSML/Components/Settings/SliderSetting.hpp"
 #include "bsml/shared/BSML/Components/Settings/StringSetting.hpp"
 #include "bsml/shared/BSML/ViewControllers/HotReloadViewController.hpp"
-#include "bsml/shared/BSML/Components/ClickableText.hpp"
+#include "bsml/shared/macros.hpp"
 #include "custom-types/shared/coroutine.hpp"
 #include "custom-types/shared/macros.hpp"
-#include "UI/Modals/Presets.hpp"
+#include "HMUI/ViewController.hpp"
 #include "UI/Modals/GenrePicker.hpp"
-
+#include "UI/Modals/Presets.hpp"
+#include "UnityEngine/UI/Button.hpp"
+#include "UnityEngine/UI/HorizontalLayoutGroup.hpp"
 #include "Util/RatelimitCoroutine.hpp"
 
 #ifdef HotReload
-DECLARE_CLASS_CUSTOM(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController,
+DECLARE_CLASS_CUSTOM(BetterSongSearch::UI::ViewControllers, FilterViewController, BSML::HotReloadViewController) {
 #else
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewController, HMUI::ViewController) {
 #endif
-
     DECLARE_CTOR(ctor);
     DECLARE_INSTANCE_METHOD(void, OnDestroy);
 
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
-    
+
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::GenrePicker>, genrePickerModal);
@@ -56,7 +54,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, ShowPresets);
 
 
-    // Options for dropdowns 
+    // Options for dropdowns
     BSML_OPTIONS_LIST_OBJECT(downloadedFilterOptions, "Show All", "Only Downloaded", "Hide Downloaded");
     BSML_OPTIONS_LIST_OBJECT(scoreFilterOptions, "Show All", "Hide Passed", "Only Passed");
     BSML_OPTIONS_LIST_OBJECT(rankedFilterOptions, "Show All", "ScoreSaber Ranked", "BeatLeader Ranked", "Scoresaber Qualified", "BeatLeader Qualified");
@@ -90,7 +88,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(bool, onlyVerifiedMappers);
     DECLARE_INSTANCE_FIELD(bool, onlyV3Maps);
 
-    // These are float because there is some bug in 
+    // These are float because there is some bug in
     DECLARE_INSTANCE_FIELD(float, minimumVotes);
     DECLARE_INSTANCE_FIELD(float, hideOlderThan);
 
@@ -124,15 +122,15 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ListSetting>, existingScoreSetting);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, rankedStateSetting);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, characteristicDropdown);
-    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, difficultyDropdown);   
-    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, modsRequirementDropdown);  
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, difficultyDropdown);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, modsRequirementDropdown);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, mapStyleDropdown);
 
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, genrePickButton);
-    
+
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, datasetInfoLabel);
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, versionLabel);
-    
+
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:
@@ -141,4 +139,5 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
         void OnFailed(std::string error);
         void OnSearchComplete();
         BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateFilterSettings = nullptr;
-)
+}
+;

@@ -60,7 +60,7 @@ using namespace UnityEngine;
 SongPreviewPlayer* songPreviewPlayer = nullptr;
 LevelCollectionViewController* levelCollectionViewController = nullptr;
 
-DEFINE_TYPE(ViewControllers::SongListController, SongListController);
+DEFINE_TYPE(ViewControllers, SongListController);
 
 std::vector<std::string> const CHAR_GROUPING = {
     "Unknown", "Standard", "OneSaber", "NoArrows", "Lightshow", "NintyDegree", "ThreeSixtyDegree", "Lawless"
@@ -444,7 +444,7 @@ void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLeve
         ERROR("CustomLevelsPack is null, refusing to continue");
         return;
     }
-    if (customLevelsPack->___beatmapLevels->get_Length() == 0) {
+    if (customLevelsPack->____beatmapLevels->get_Length() == 0) {
         ERROR("CustomLevelsPack has no levels, refusing to continue");
         return;
     }
@@ -614,7 +614,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                     if (song->hash() != this->currentSong->hash()) {
                         return;
                     }
-                    Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
+                    auto spriteArray = ArrayW(data);
                     UnityW<UnityEngine::Sprite> sprite = BSML::Lite::ArrayToSprite(spriteArray);
                     if (sprite) {
                         DEBUG("Setting sprite");

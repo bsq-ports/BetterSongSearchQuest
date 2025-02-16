@@ -19,7 +19,7 @@ namespace BetterSongSearch::UI::Modals {
         None,
         Include,
         Exclude
-    };  
+    };
 
     struct GenreCellState {
         std::string tag;
@@ -30,8 +30,7 @@ namespace BetterSongSearch::UI::Modals {
 }
 
 
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, UnityEngine::MonoBehaviour, classof(HMUI::TableView::IDataSource*),
-    
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, UnityEngine::MonoBehaviour, HMUI::TableView::IDataSource*) {
     DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
     DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
@@ -50,13 +49,12 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, GenrePicker, Unit
     DECLARE_INSTANCE_METHOD(void, ClearGenre);
     DECLARE_INSTANCE_METHOD(void, SelectGenre);
     DECLARE_INSTANCE_METHOD(void, RefreshGenreList);
-    
+
     DECLARE_INSTANCE_FIELD(bool, initialized);
-    
+
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, genrePickerModal);
 
     private:
         std::vector<BetterSongSearch::UI::Modals::GenreCellState> genres;
-
-)
+};

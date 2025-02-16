@@ -3,56 +3,27 @@
 #include <string>
 #include <unordered_map>
 
+#include "config-utils/shared/config-utils.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "song-details/shared/Data/MapDifficulty.hpp"
 #include "song-details/shared/Data/RankedStates.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 
-#include "config-utils/shared/config-utils.hpp"
+static inline float const SONG_LENGTH_FILTER_MAX = 15.0f;
+static inline float const STAR_FILTER_MAX = 18.0f;
+static inline float const NJS_FILTER_MAX = 25.0f;
+static inline float const NPS_FILTER_MAX = 12.0f;
+static inline int64_t const BEATSAVER_EPOCH = 1525136400;
+static inline std::chrono::system_clock::time_point const BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(BEATSAVER_EPOCH)};
 
-static inline const float SONG_LENGTH_FILTER_MAX = 15.0f;
-static inline const float STAR_FILTER_MAX = 18.0f;
-static inline const float NJS_FILTER_MAX = 25.0f;
-static inline const float NPS_FILTER_MAX = 12.0f;
-static inline const int64_t BEATSAVER_EPOCH = 1525136400;
-static inline const std::chrono::system_clock::time_point BEATSAVER_EPOCH_TIME_POINT{std::chrono::seconds(BEATSAVER_EPOCH)};
-
-static inline const std::vector<std::string> MAP_STYLES_OPTIONS = {
-    "Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech"
-};
+static inline std::vector<std::string> const MAP_STYLES_OPTIONS = {"Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech"};
 
 namespace FilterTypes {
-    enum class DownloadFilter
-    {
-        All,
-        OnlyDownloaded,
-        HideDownloaded
-    };
-    enum class LocalScoreFilter
-    {
-        All,
-        HidePassed,
-        OnlyPassed
-    };
-    enum class RankedFilter
-    {
-        ShowAll,
-        ScoreSaberRanked,
-        BeatLeaderRanked,
-        ScoreSaberQualified,
-        BeatLeaderQualified
-    };
-    enum class DifficultyFilter
-    {
-        All,
-        Easy,
-        Normal,
-        Hard,
-        Expert,
-        ExpertPlus
-    };
-    enum class CharFilter
-    {
+    enum class DownloadFilter { All, OnlyDownloaded, HideDownloaded };
+    enum class LocalScoreFilter { All, HidePassed, OnlyPassed };
+    enum class RankedFilter { ShowAll, ScoreSaberRanked, BeatLeaderRanked, ScoreSaberQualified, BeatLeaderQualified };
+    enum class DifficultyFilter { All, Easy, Normal, Hard, Expert, ExpertPlus };
+    enum class CharFilter {
         All,
         Custom,
         Standard,
@@ -64,34 +35,16 @@ namespace FilterTypes {
         Lawless,
     };
 
-    enum class Requirement {
-        Any,
-        NoodleExtensions,
-        MappingExtensions,
-        Chroma,
-        Cinema,
-        None
-    };
+    enum class Requirement { Any, NoodleExtensions, MappingExtensions, Chroma, Cinema, None };
 
-    enum class SortMode {
-        Newest,
-        Oldest,
-        Latest_Ranked,
-        Most_Stars,
-        Least_Stars,
-        Best_rated,
-        Worst_rated
-    };
+    enum class SortMode { Newest, Oldest, Latest_Ranked, Most_Stars, Least_Stars, Best_rated, Worst_rated };
 
-    enum class PreferredLeaderBoard {
-        ScoreSaber = 0,
-        BeatLeader = 1
-    };
+    enum class PreferredLeaderBoard { ScoreSaber = 0, BeatLeader = 1 };
 
-}
+}  // namespace FilterTypes
 
 // Map for characteristics
-static const std::unordered_map<FilterTypes::CharFilter, SongDetailsCache::MapCharacteristic> CHARACTERISTIC_MAP = {
+static std::unordered_map<FilterTypes::CharFilter, SongDetailsCache::MapCharacteristic> const CHARACTERISTIC_MAP = {
     {FilterTypes::CharFilter::Custom, SongDetailsCache::MapCharacteristic::Custom},
     {FilterTypes::CharFilter::Standard, SongDetailsCache::MapCharacteristic::Standard},
     {FilterTypes::CharFilter::OneSaber, SongDetailsCache::MapCharacteristic::OneSaber},
@@ -103,7 +56,7 @@ static const std::unordered_map<FilterTypes::CharFilter, SongDetailsCache::MapCh
 };
 
 // Map for difficulties
-static const std::unordered_map<FilterTypes::DifficultyFilter, SongDetailsCache::MapDifficulty> DIFFICULTY_MAP = {
+static std::unordered_map<FilterTypes::DifficultyFilter, SongDetailsCache::MapDifficulty> const DIFFICULTY_MAP = {
     {FilterTypes::DifficultyFilter::Easy, SongDetailsCache::MapDifficulty::Easy},
     {FilterTypes::DifficultyFilter::Normal, SongDetailsCache::MapDifficulty::Normal},
     {FilterTypes::DifficultyFilter::Hard, SongDetailsCache::MapDifficulty::Hard},
@@ -112,7 +65,7 @@ static const std::unordered_map<FilterTypes::DifficultyFilter, SongDetailsCache:
 };
 
 // Map for ranked states
-static const std::unordered_map<FilterTypes::RankedFilter, SongDetailsCache::RankedStates> RANK_MAP = {
+static std::unordered_map<FilterTypes::RankedFilter, SongDetailsCache::RankedStates> const RANK_MAP = {
     {FilterTypes::RankedFilter::ScoreSaberRanked, SongDetailsCache::RankedStates::ScoresaberRanked},
     {FilterTypes::RankedFilter::BeatLeaderRanked, SongDetailsCache::RankedStates::BeatleaderRanked},
     {FilterTypes::RankedFilter::ScoreSaberQualified, SongDetailsCache::RankedStates::ScoresaberQualified},
@@ -120,12 +73,11 @@ static const std::unordered_map<FilterTypes::RankedFilter, SongDetailsCache::Ran
 };
 
 // Map for preferred leaderboard
-static const std::unordered_map<std::string, FilterTypes::PreferredLeaderBoard> LEADERBOARD_MAP = {
-    {"Scoresaber", FilterTypes::PreferredLeaderBoard::ScoreSaber},
-    {"Beatleader", FilterTypes::PreferredLeaderBoard::BeatLeader}
+static std::unordered_map<std::string, FilterTypes::PreferredLeaderBoard> const LEADERBOARD_MAP = {
+    {"Scoresaber", FilterTypes::PreferredLeaderBoard::ScoreSaber}, {"Beatleader", FilterTypes::PreferredLeaderBoard::BeatLeader}
 };
 
-DECLARE_CONFIG(PluginConfig,
+DECLARE_CONFIG(PluginConfig) {
     CONFIG_VALUE(ReturnToBSS, bool, "Return to BSS from Solo", true);
     CONFIG_VALUE(LoadSongPreviews, bool, "Load song previews", true);
     CONFIG_VALUE(SmallerFontSize, bool, "Smaller font size", true);
@@ -141,7 +93,7 @@ DECLARE_CONFIG(PluginConfig,
     CONFIG_VALUE(RankedType, int, "Ranked Type", 0);
     CONFIG_VALUE(MinStars, float, "Minimum Ranked Stars", 0);
     CONFIG_VALUE(MaxStars, float, "Maximum Ranked Stars", STAR_FILTER_MAX);
-    CONFIG_VALUE(MinUploadDateInMonths, int, "Minimum Upload Date In Months", 0); //TEMPORARY UNTIL I FIX CONVERTING UNIX -> MONTHS SINCE BEAT SAVER
+    CONFIG_VALUE(MinUploadDateInMonths, int, "Minimum Upload Date In Months", 0);  // TEMPORARY UNTIL I FIX CONVERTING UNIX -> MONTHS SINCE BEAT SAVER
     CONFIG_VALUE(MinUploadDate, int, "Minimum Upload Date", BEATSAVER_EPOCH);
     CONFIG_VALUE(MinRating, float, "Minimum Rating", 0);
     CONFIG_VALUE(MinVotes, int, "Minimum Votes", 0);
@@ -156,4 +108,4 @@ DECLARE_CONFIG(PluginConfig,
     CONFIG_VALUE(MapStyleString, std::string, "Map Style", "All");
     CONFIG_VALUE(MapGenreString, std::string, "Map Genres", "");
     CONFIG_VALUE(MapGenreExcludeString, std::string, "Map Genre Exclude", "");
-)
+};

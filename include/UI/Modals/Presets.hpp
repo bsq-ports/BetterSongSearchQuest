@@ -16,7 +16,7 @@
 
 
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::Modals, Presets, UnityEngine::
-MonoBehaviour, classof(HMUI::TableView::IDataSource*),
+MonoBehaviour, HMUI::TableView::IDataSource*) {
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
 
@@ -58,4 +58,4 @@ MonoBehaviour, classof(HMUI::TableView::IDataSource*),
 
         std::vector<std::string> presets;
         std::string selectedPreset;
-)
+};

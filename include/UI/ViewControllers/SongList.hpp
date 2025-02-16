@@ -54,9 +54,11 @@ DECLARE_CLASS_CUSTOM_INTERFACES(
     BetterSongSearch::UI::ViewControllers,
     SongListController,
     BSML::HotReloadViewController,
-    std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
+    std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)})
+) {
 #else
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, HMUI::TableView::IDataSource*)
+{
 #endif
 
     DECLARE_CTOR(ctor);
@@ -70,7 +72,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::VerticalLayoutGroup*, scrollBarContainer);
     DECLARE_INSTANCE_FIELD(float, cellSize);
 
-    DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView* tableView, int idx);
+    DECLARE_OVERRIDE_METHOD_MATCH(HMUI::TableCell*, CellForIdx, &HMUI::TableView::IDataSource::CellForIdx, HMUI::TableView * tableView, int idx);
     DECLARE_OVERRIDE_METHOD_MATCH(float, CellSize, &HMUI::TableView::IDataSource::CellSize);
     DECLARE_OVERRIDE_METHOD_MATCH(int, NumberOfCells, &HMUI::TableView::IDataSource::NumberOfCells);
 
@@ -138,32 +140,34 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
     DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);
 
-    public : HMUI::TableView *
-    songListTable() {
+   public:
+    HMUI::TableView* songListTable() {
         if (songList) {
             return songList->tableView;
-        } else return nullptr;
+        } else {
+            return nullptr;
+        }
     }
 
     void SelectSongByHash(std::string hash);
-    void SetSelectedSong(const SongDetailsCache::Song* song);
+    void SetSelectedSong(SongDetailsCache::Song const* song);
 
     BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateSearchedSongsList = nullptr;
 
     void SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
-    const SongDetailsCache::Song* currentSong = nullptr;
+    SongDetailsCache::Song const* currentSong = nullptr;
     void UpdateDetails();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
     void UpdateSearch();
     custom_types::Helpers::Coroutine UpdateDataAndFiltersCoro();
 
-    void PlaySong(const SongDetailsCache::Song* song = nullptr);
+    void PlaySong(SongDetailsCache::Song const* song = nullptr);
     void DownloadSongList();
     void RetryDownloadSongList();
 
-    void EnterSolo(GlobalNamespace::BeatmapLevel* level);
+    void EnterSolo(GlobalNamespace::BeatmapLevel * level);
 
     // Event receivers
     void SearchDone();
@@ -171,4 +175,4 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     void SongDataError(std::string message);
     void PlayerDataLoaded();
     void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
-)
+};

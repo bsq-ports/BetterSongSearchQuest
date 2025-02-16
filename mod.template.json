@@ -6,12 +6,10 @@
   "author": "FrozenAlex, FernTheDev, FutureMapper, and Christoffyw",
   "version": "${version}",
   "description": "Search and download songs with a lot of filtering and sorting options and without frustration!",
-  "packageVersion": "1.37.0_9064817954",
+  "packageVersion": "1.40.2_4113",
   "dependencies": [],
   "modFiles": [],
-  "lateModFiles": [
-    "${binary}"
-  ],
+  "lateModFiles": ["${binary}"],
   "libraryFiles": [],
   "fileCopies": [],
   "copyExtensions": [],

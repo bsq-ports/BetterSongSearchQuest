@@ -17,10 +17,10 @@
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 
-DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::MonoBehaviour,
+DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::MonoBehaviour) {
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);
-    
+
     DECLARE_INSTANCE_METHOD(void, CloseModal);
     DECLARE_INSTANCE_METHOD(void, OpenBeatSaver);
     DECLARE_INSTANCE_METHOD(void, CopyBSR);
@@ -36,6 +36,6 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, UploadDetails, UnityEngine::
     DECLARE_INSTANCE_FIELD(bool, initialized);
 
     DECLARE_INSTANCE_FIELD(BSML::ModalView*, rootModal);
-    public: 
+    public:
         void OpenModal(const SongDetailsCache::Song* song);
-)
+};

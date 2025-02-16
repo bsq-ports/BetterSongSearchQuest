@@ -16,6 +16,7 @@
 #include "GlobalNamespace/MultiplayerResultsViewController.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
+#include "GlobalNamespace/SettingsManager.hpp"
 #include "GlobalNamespace/SongPackMask.hpp"
 #include "HMUI/TextSegmentedControlCell.hpp"
 #include "logging.hpp"
@@ -183,7 +184,7 @@ MAKE_HOOK_MATCH(
     GlobalNamespace::LevelFilteringNavigationController* self,
     GlobalNamespace::SongPackMask songPackMask,
     GlobalNamespace::BeatmapLevelPack* levelPackToBeSelectedAfterPresent,
-    GlobalNamespace::__SelectLevelCategoryViewController__LevelCategory startLevelCategory,
+    GlobalNamespace::SelectLevelCategoryViewController_LevelCategory startLevelCategory,
     bool hidePacksIfOneOrNone,
     bool enableCustomLevels
 ) {
@@ -212,7 +213,7 @@ MAKE_HOOK_MATCH(
     ::GlobalNamespace::PlayerSpecificSettings* playerSpecificSettings,
     ::GlobalNamespace::PracticeSettings* practiceSettings,
     ::GlobalNamespace::AudioClipAsyncLoader* audioClipAsyncLoader,
-    ::BeatSaber::PerformancePresets::PerformancePreset* performancePreset,
+    ::GlobalNamespace::SettingsManager* settingsManager,
     ::GlobalNamespace::BeatmapDataLoader* beatmapDataLoader,
     bool useTestNoteCutSoundEffects
 ) {
@@ -229,7 +230,7 @@ MAKE_HOOK_MATCH(
         playerSpecificSettings,
         practiceSettings,
         audioClipAsyncLoader,
-        performancePreset,
+        settingsManager,
         beatmapDataLoader,
         useTestNoteCutSoundEffects
     );
