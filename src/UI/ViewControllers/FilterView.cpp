@@ -355,15 +355,6 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
     presetsModal = this->get_gameObject()->AddComponent<UI::Modals::Presets*>();
     genrePickerModal = this->get_gameObject()->AddComponent<UI::Modals::GenrePicker*>();
 
-    // It needs to be registered
-    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine(
-        [this]() {
-            DEBUG("RUNNING update");
-            coro(this->_UpdateFilterSettings());
-        },
-        0.2f
-    );
-
     INFO("Filter View controller activated");
 
     // Load the values from the config
@@ -562,6 +553,14 @@ void ViewControllers::FilterViewController::ctor() {
     dataHolder.loadingFinished += {&ViewControllers::FilterViewController::OnLoaded, this};
     dataHolder.loadingFailed += {&ViewControllers::FilterViewController::OnFailed, this};
     dataHolder.searchEnded += {&ViewControllers::FilterViewController::OnSearchComplete, this};
+
+    limitedUpdateFilterSettings = new BetterSongSearch::Util::RatelimitCoroutine(
+        [this]() {
+            DEBUG("RUNNING limitedUpdateFilterSettings");
+            coro(this->_UpdateFilterSettings());
+        },
+        0.2f
+    );
 }
 
 void ViewControllers::FilterViewController::OnDestroy() {
@@ -570,6 +569,10 @@ void ViewControllers::FilterViewController::OnDestroy() {
     dataHolder.loadingFinished -= {&ViewControllers::FilterViewController::OnLoaded, this};
     dataHolder.loadingFailed -= {&ViewControllers::FilterViewController::OnFailed, this};
     dataHolder.searchEnded -= {&ViewControllers::FilterViewController::OnSearchComplete, this};
+
+    if (limitedUpdateFilterSettings) {
+        delete limitedUpdateFilterSettings;
+    }
 }
 
 void ViewControllers::FilterViewController::OnLoaded() {

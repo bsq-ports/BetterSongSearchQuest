@@ -85,6 +85,10 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 }
 
 void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView* table, int id) {
+    if (!fcInstance || !fcInstance->SongListController) {
+        return;
+    }
+
     DEBUG("Cell is clicked");
     if (id >= NumberOfCells()) {
         WARNING("Non existent song id");
@@ -323,7 +327,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                     hasUnloadedDownloads = false;
                 }
             }
-            if (fcInstance->SongListController->currentSong != nullptr) {
+            if (fcInstance && fcInstance->SongListController && fcInstance->SongListController->currentSong != nullptr) {
                 if (currentEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
                     // NESTING HELLLL
                     if (fcInstance->SongListController->currentSong->hash() == currentEntry->hash) {
