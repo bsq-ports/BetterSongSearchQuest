@@ -60,7 +60,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "1.1.12",
+      "versionRange": "^1.1.18",
       "additionalData": {}
     },
     {
@@ -85,7 +85,7 @@
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.5.0",
+      "versionRange": "^4.6.1",
       "additionalData": {}
     },
     {

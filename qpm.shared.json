@@ -61,7 +61,7 @@
       },
       {
         "id": "songcore",
-        "versionRange": "=1.1.12",
+        "versionRange": "^1.1.18",
         "additionalData": {}
       },
       {
@@ -86,7 +86,7 @@
       },
       {
         "id": "paper2_scotland2",
-        "versionRange": "^4.5.0",
+        "versionRange": "^4.6.1",
         "additionalData": {}
       },
       {
@@ -148,14 +148,14 @@
     {
       "dependency": {
         "id": "rapidjson-macros",
-        "versionRange": "=2.0.2",
+        "versionRange": "=2.1.0",
         "additionalData": {
           "headersOnly": true,
-          "branchName": "version/v2_0_2",
+          "branchName": "version/v2_1_0",
           "cmake": false
         }
       },
-      "version": "2.0.2"
+      "version": "2.1.0"
     },
     {
       "dependency": {
@@ -171,13 +171,17 @@
     {
       "dependency": {
         "id": "songcore",
-        "versionRange": "=1.1.12",
+        "versionRange": "=1.1.18",
         "additionalData": {
+          "soLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.18/libsongcore.so",
+          "debugSoLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.18/debug_libsongcore.so",
           "overrideSoName": "libsongcore.so",
+          "modLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.18/SongCore.qmod",
+          "branchName": "version/v1_1_18",
           "cmake": true
         }
       },
-      "version": "1.1.12"
+      "version": "1.1.18"
     },
     {
       "dependency": {
@@ -229,12 +233,12 @@
     {
       "dependency": {
         "id": "paper2_scotland2",
-        "versionRange": "=4.5.0",
+        "versionRange": "=4.6.1",
         "additionalData": {
-          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.5.0/libpaper2_scotland2.so",
+          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.6.1/libpaper2_scotland2.so",
           "overrideSoName": "libpaper2_scotland2.so",
-          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.5.0/paper2_scotland2.qmod",
-          "branchName": "version/v4_5_0",
+          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.6.1/paper2_scotland2.qmod",
+          "branchName": "version/v4_6_1",
           "compileOptions": {
             "systemIncludes": [
               "shared/utfcpp/source"
@@ -243,7 +247,7 @@
           "cmake": false
         }
       },
-      "version": "4.5.0"
+      "version": "4.6.1"
     },
     {
       "dependency": {
