@@ -223,11 +223,13 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         currentEntry->lastUpdate = now;
 
         currentEntry->downloadProgress = downloadProgress;
-        if (currentEntry->UpdateProgressHandler != nullptr) {
-            BSML::MainThreadScheduler::Schedule([currentEntry] {
+
+        BSML::MainThreadScheduler::Schedule([currentEntry] {
+            if (currentEntry->UpdateProgressHandler != nullptr) {
                 currentEntry->UpdateProgressHandler();
-            });
-        }
+            }
+        });
+
         DEBUG("DownloadProgress: {}", downloadProgress);
     };
     DEBUG("Hash {}", currentEntry->hash);

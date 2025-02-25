@@ -56,6 +56,9 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     void CustomDownloadListTableCell::WasPreparedForReuse() {
+        if (!entry) {
+            return;
+        }
         entry->UpdateProgressHandler = nullptr;
     }
 }  // namespace BetterSongSearch::UI::ViewControllers

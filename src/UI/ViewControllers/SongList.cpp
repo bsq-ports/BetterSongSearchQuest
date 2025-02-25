@@ -243,7 +243,7 @@ void ViewControllers::SongListController::SelectSong(UnityW<HMUI::TableView> tab
         return;
     }
     DEBUG("Cell clicked {}", id);
-    if (dataHolder.displayedSongList.size() <= id) {
+    if (dataHolder.displayedSongList.size() <= id || id < 0) {
         // Return if the id is invalid
         return;
     }
