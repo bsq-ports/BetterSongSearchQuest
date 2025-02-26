@@ -73,7 +73,8 @@ custom_types::Helpers::Coroutine BetterSongSearch::UI::Manager::Debug() {
                 auto songlist = fcInstance->SongListController;
                 co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
                 songlist->SelectRandom();
-                if (songlist->currentSong) {
+                auto currentSong = songlist->GetCurrentSong();
+                if (currentSong) {
                     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));
                     songlist->ShowSongDetails();
                     co_yield reinterpret_cast<System::Collections::IEnumerator*>(UnityEngine::WaitForSeconds::New_ctor(0.1f));

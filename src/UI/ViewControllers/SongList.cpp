@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <future>
+#include <shared_mutex>
 #include <string>
 
 #include "assets.hpp"
@@ -375,8 +376,8 @@ void ViewControllers::SongListController::ShowSettings() {
 // Song buttons
 void ViewControllers::SongListController::Download() {
 #ifdef SONGDOWNLOADER
-
-    auto songData = this->currentSong;
+    auto currentSong = GetCurrentSong();
+    auto songData = currentSong;
 
     if (songData != nullptr) {
         fcInstance->DownloadHistoryViewController->TryAddDownload(songData);
@@ -481,6 +482,7 @@ void ViewControllers::SongListController::Play() {
 }
 
 void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const* songToPlay) {
+    auto currentSong = GetCurrentSong();
     if (songToPlay == nullptr) {
         songToPlay = currentSong;
         if (currentSong == nullptr) {
@@ -543,12 +545,14 @@ void ViewControllers::SongListController::ShowBatchDownload() {
 }
 
 void ViewControllers::SongListController::ShowSongDetails() {
-    if (this->currentSong) {
-        uploadDetailsModal->OpenModal(this->currentSong);
+    auto currentSong = GetCurrentSong();
+    if (currentSong) {
+        uploadDetailsModal->OpenModal(currentSong);
     }
 }
 
 void ViewControllers::SongListController::UpdateDetails() {
+    auto currentSong = GetCurrentSong();
     if (currentSong == nullptr) {
         return;
     }
@@ -611,7 +615,12 @@ void ViewControllers::SongListController::UpdateDetails() {
                 if (success) {
                     std::vector<uint8_t> data = bytes;
                     DEBUG("Image size: {}", pretty_bytes(bytes.size()));
-                    if (song->hash() != this->currentSong->hash()) {
+                    auto currentSong = GetCurrentSong();
+                    // Return if the song has changed somehow
+                    if (currentSong == nullptr) {
+                        return;
+                    }
+                    if (song->hash() != currentSong->hash()) {
                         return;
                     }
                     Array<uint8_t>* spriteArray = il2cpp_utils::vectorToArray(data);
@@ -675,12 +684,13 @@ void ViewControllers::SongListController::UpdateDetails() {
 }
 
 void ViewControllers::SongListController::FilterByUploader() {
-    if (!this->currentSong) {
+    auto currentSong = GetCurrentSong();
+    if (!currentSong) {
         return;
     }
 
-    fcInstance->FilterViewController->uploadersString = this->currentSong->uploaderName();
-    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) this->currentSong->uploaderName());
+    fcInstance->FilterViewController->uploadersString = currentSong->uploaderName();
+    SetStringSettingValue(fcInstance->FilterViewController->uploadersStringControl, (std::string) currentSong->uploaderName());
     fcInstance->FilterViewController->UpdateFilterSettings();
     DEBUG("FilterByUploader");
 }
@@ -707,10 +717,12 @@ void ViewControllers::SongListController::SortAndFilterSongs(FilterTypes::SortMo
 
 void ViewControllers::SongListController::SetSelectedSong(SongDetailsCache::Song const* song) {
     // TODO: Fill all fields, download image, activate buttons
-    if (currentSong != nullptr && currentSong->hash() == song->hash()) {
+    auto prevSong = GetCurrentSong();
+    if (prevSong != nullptr && song != nullptr && prevSong->hash() == song->hash()) {
         return;
     }
-    currentSong = song;
+
+    SetCurrentSong(song);
 
     DEBUG("Updating details");
     this->UpdateDetails();
@@ -762,6 +774,7 @@ void ViewControllers::SongListController::SearchDone() {
         }
     }
 
+    auto currentSong = GetCurrentSong();
     // Reset song list table selection
     if (!currentSong) {
         SelectSong(songListTable(), 0);
@@ -816,7 +829,18 @@ void ViewControllers::SongListController::PlayerDataLoaded() {
 }
 
 void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs) {
+    auto currentSong = GetCurrentSong();
     if (currentSong == nullptr) {
+        return;
+    }
+
+    // Ensure it runs on the main thread
+    bool isMainThread = BSML::MainThreadScheduler::CurrentThreadIsMainThread();
+    if (!isMainThread) {
+        ERROR("Calling OnSongsLoaded not on the main thread, sending to main thread");
+        BSML::MainThreadScheduler::Schedule([this, songs] {
+            this->OnSongsLoaded(songs);
+        });
         return;
     }
 
@@ -825,4 +849,14 @@ void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::Song
     bool loaded = beatmap != nullptr;
 
     SetIsDownloaded(loaded);
+}
+
+SongDetailsCache::Song const* ViewControllers::SongListController::GetCurrentSong() {
+    std::shared_lock<std::shared_mutex> lock(_currentSongMutex);
+    return _currentSong;
+}
+
+void ViewControllers::SongListController::SetCurrentSong(SongDetailsCache::Song const* song) {
+    std::unique_lock<std::shared_mutex> lock(_currentSongMutex);
+    _currentSong = song;
 }

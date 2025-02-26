@@ -56,7 +56,8 @@ DECLARE_CLASS_CUSTOM_INTERFACES(
     BSML::HotReloadViewController,
     std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)}),
 #else
-DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
+DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers,
+SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*),
 #endif
 
     DECLARE_CTOR(ctor);
@@ -152,7 +153,6 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
     void SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
-    const SongDetailsCache::Song* currentSong = nullptr;
     void UpdateDetails();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
@@ -171,4 +171,10 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     void SongDataError(std::string message);
     void PlayerDataLoaded();
     void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
-)
+
+    SongDetailsCache::Song const* GetCurrentSong();
+    void SetCurrentSong(SongDetailsCache::Song const* song);
+
+    private : std::shared_mutex _currentSongMutex;
+    SongDetailsCache::Song const* _currentSong = nullptr;
+);
