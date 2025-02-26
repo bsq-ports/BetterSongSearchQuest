@@ -156,7 +156,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
     void SortAndFilterSongs(FilterTypes::SortMode sort, std::string_view search, bool resetTable);
     void ResetTable();
-    SongDetailsCache::Song const* currentSong = nullptr;
+
     void UpdateDetails();
     void SetIsDownloaded(bool isDownloaded, bool downloadable = true);
 
@@ -175,4 +175,11 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     void SongDataError(std::string message);
     void PlayerDataLoaded();
     void OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs);
+
+    SongDetailsCache::Song const* GetCurrentSong();
+    void SetCurrentSong(SongDetailsCache::Song const* song);
+
+   private:
+    std::shared_mutex _currentSongMutex;
+    SongDetailsCache::Song const* _currentSong = nullptr;
 };

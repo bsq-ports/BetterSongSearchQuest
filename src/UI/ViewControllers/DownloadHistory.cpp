@@ -327,16 +327,20 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                     hasUnloadedDownloads = false;
                 }
             }
-            if (fcInstance && fcInstance->SongListController && fcInstance->SongListController->currentSong != nullptr) {
-                if (currentEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
-                    // NESTING HELLLL
-                    if (fcInstance->SongListController->currentSong->hash() == currentEntry->hash) {
-                        fcInstance->SongListController->SetIsDownloaded(true);
-                    }
-                    fcInstance->SongListController->songListTable()->RefreshCells(false, true);
-                } else {
-                    if (fcInstance->SongListController->currentSong->hash() == currentEntry->hash) {
-                        fcInstance->SongListController->SetIsDownloaded(false);
+
+            if (fcInstance && fcInstance->SongListController) {
+                auto currentSong = fcInstance->SongListController->GetCurrentSong();
+                if (currentSong != nullptr) {
+                    if (currentEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+                        // NESTING HELLLL
+                        if (currentSong->hash() == currentEntry->hash) {
+                            fcInstance->SongListController->SetIsDownloaded(true);
+                        }
+                        fcInstance->SongListController->songListTable()->RefreshCells(false, true);
+                    } else {
+                        if (currentSong->hash() == currentEntry->hash) {
+                            fcInstance->SongListController->SetIsDownloaded(false);
+                        }
                     }
                 }
             }
