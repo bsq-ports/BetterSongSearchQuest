@@ -454,7 +454,7 @@ void BetterSongSearch::DataHolder::Search() {
                                         if (!matchedAuthor && songAuthorName == words[i]) {
                                             matchedAuthor = true;
                                             // 3*length of the word divided by 2? wtf
-                                            resultWeight += 3 * (words[i].length() / 2);
+                                            resultWeight += 3.0f * ((float) words[i].length() / 2.0f);
 
                                             // Go to next word
                                             continue;
