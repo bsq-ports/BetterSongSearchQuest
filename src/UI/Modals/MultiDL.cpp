@@ -27,8 +27,9 @@ void Modals::MultiDL::StartMultiDownload() {
     auto range = table->GetVisibleCellsIdRange();
 
     int downloaded = 0;
-    for (int i = range->get_Item1(); i < dataHolder.displayedSongList.size(); i++) {
-        auto song = dataHolder.displayedSongList[i];
+    auto songList = dataHolder.GetDisplayedSongList();  // Get the displayed song list copy
+    for (int i = range->get_Item1(); i < songList.size(); i++) {
+        auto song = songList[i];
         // Skip if can't dl or already downloading
         if (dlController->CheckIsDownloaded(std::string(song->hash())) || !dlController->CheckIsDownloadable(std::string(song->hash()))) {
             continue;
