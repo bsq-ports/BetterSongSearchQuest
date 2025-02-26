@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <shared_mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -42,10 +44,6 @@ namespace BetterSongSearch {
         // Allow to force reload the song list
         bool forceReload = false;
 
-        std::vector<SongDetailsCache::Song const*> filteredSongList;  // Filtered songs
-        std::vector<SongDetailsCache::Song const*> searchedSongList;  // Searched songs
-        std::vector<SongDetailsCache::Song const*> displayedSongList;  // Sorted songs (actually displayed)
-
         FilterTypes::SortMode sort = (FilterTypes::SortMode) 0;  // UI sort state
         FilterTypes::SortMode currentSort = FilterTypes::SortMode::Newest;  // Current search sort state
         std::string search;  // UI search string
@@ -75,11 +73,19 @@ namespace BetterSongSearch {
         void Search();
         /// @brief Called when the song list UI is done updating the song list
         void SongListUIDone();
+        /// @brief Get the displayed song list (thread safe)
+        std::vector<SongDetailsCache::Song const*> GetDisplayedSongList();
+        std::size_t GetDisplayedSongListLength();
+        SongDetailsCache::Song const* GetDisplayedSongByIndex(std::size_t index);
 
        private:
+        std::vector<SongDetailsCache::Song const*> _filteredSongList;  // Filtered songs
+        std::vector<SongDetailsCache::Song const*> _searchedSongList;  // Searched songs
+        std::vector<SongDetailsCache::Song const*> _displayedSongList;  // Sorted songs (actually displayed)
+
         std::shared_mutex mutex_songsWithScores;
         std::unordered_set<std::string> songsWithScores;  // Songs with scores (hashes) for played songs filtering
-
+        std::shared_mutex _displayedSongListMutex;
         void SongDataDone();
         void SongDataError(std::string message);
     };

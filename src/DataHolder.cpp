@@ -1,6 +1,8 @@
 #include "DataHolder.hpp"
 
+#include <mutex>
 #include <regex>
+#include <shared_mutex>
 
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
@@ -322,12 +324,12 @@ void BetterSongSearch::DataHolder::Search() {
         if (currentFilterChanged || currentForceReload) {
             DEBUG("Filtering");
             int totalSongs = this->songDetails->songs.size();
-            this->filteredSongList.clear();
+            this->_filteredSongList.clear();
             if (this->filterOptionsCache.IsDefault()) {
                 DEBUG("Filtering skipped");
-                this->filteredSongList.reserve(totalSongs);
+                this->_filteredSongList.reserve(totalSongs);
                 for (auto& song : this->songDetails->songs) {
-                    this->filteredSongList.push_back(&song);
+                    this->_filteredSongList.push_back(&song);
                 }
             } else {
                 // Set up variables for threads
@@ -343,7 +345,7 @@ void BetterSongSearch::DataHolder::Search() {
                             bool meetsFilter = MeetsFilter(&item);
                             if (meetsFilter) {
                                 std::lock_guard<std::mutex> lock(valuesMutex);
-                                filteredSongList.push_back(&item);
+                                _filteredSongList.push_back(&item);
                             }
                             i = index++;
                         }
@@ -382,9 +384,9 @@ void BetterSongSearch::DataHolder::Search() {
 
                 DEBUG("Searching");
                 long long before = CurrentTimeMs();
-                this->searchedSongList.clear();
+                this->_searchedSongList.clear();
                 // Set up variables for threads
-                int totalSongs = this->filteredSongList.size();
+                int totalSongs = this->_filteredSongList.size();
 
                 std::mutex valuesMutex;
                 std::atomic_int index = 0;
@@ -408,7 +410,7 @@ void BetterSongSearch::DataHolder::Search() {
                          possibleSongKey](std::vector<std::string> searchQuery) {
                             int j = index++;
                             while (j < totalSongs) {
-                                auto songe = this->filteredSongList[j];
+                                auto songe = this->_filteredSongList[j];
 
                                 float resultWeight = 0;
                                 bool matchedAuthor = false;
@@ -565,7 +567,7 @@ void BetterSongSearch::DataHolder::Search() {
 
                 INFO("Calculated search indexes in {} ms", CurrentTimeMs() - before);
                 if (prefiltered.size() == 0) {
-                    this->searchedSongList.clear();
+                    this->_searchedSongList.clear();
                 } else {
                     long long before = CurrentTimeMs();
                     float maxSearchWeightInverse = 1.0f / maxSearchWeight;
@@ -581,9 +583,9 @@ void BetterSongSearch::DataHolder::Search() {
                         return s1.searchWeight > s2.searchWeight;
                     });
 
-                    this->searchedSongList.reserve(prefiltered.size());
+                    this->_searchedSongList.reserve(prefiltered.size());
                     for (auto& x : prefiltered) {
-                        this->searchedSongList.push_back(x.song);
+                        this->_searchedSongList.push_back(x.song);
                     }
                     INFO("sorted search results in {} ms", CurrentTimeMs() - before);
                 }
@@ -592,7 +594,7 @@ void BetterSongSearch::DataHolder::Search() {
 
                 std::vector<xd> prefiltered;
                 auto sortFunction = sortFunctionMap.at(currentSort);
-                for (auto item : filteredSongList) {
+                for (auto item : _filteredSongList) {
                     auto score = sortFunction(item);
                     prefiltered.push_back({item, 0, score});
                 }
@@ -601,12 +603,12 @@ void BetterSongSearch::DataHolder::Search() {
                     return s1.sortWeight > s2.sortWeight;
                 });
 
-                this->searchedSongList.clear();
-                this->searchedSongList.reserve(this->filteredSongList.size());
+                this->_searchedSongList.clear();
+                this->_searchedSongList.reserve(this->_filteredSongList.size());
 
                 // Push to searched
                 for (auto& x : prefiltered) {
-                    this->searchedSongList.push_back(x.song);
+                    this->_searchedSongList.push_back(x.song);
                 }
 
                 INFO("Sort without search in {} ms", CurrentTimeMs() - before);
@@ -614,20 +616,38 @@ void BetterSongSearch::DataHolder::Search() {
         }
 
         DEBUG("Search time: {}ms", CurrentTimeMs() - before);
-        DEBUG("Found {} songs", searchedSongList.size());
+        DEBUG("Found {} songs", _searchedSongList.size());
+
+        // Copy the list to the displayed one
+        DEBUG("Clearing displayedSongList");
+        std::unique_lock<std::shared_mutex> lock(_displayedSongListMutex);
+        this->_displayedSongList.clear();
+        this->_displayedSongList = this->_searchedSongList;
+        lock.unlock();
+
+        this->searchInProgress = false;
 
         // Replace the list with the searched one in the main thread to prevent unsafe stuff
         BSML::MainThreadScheduler::Schedule([this] {
-            DEBUG("Clearing displayedSongList");
-            // Copy the list to the displayed one
-            this->displayedSongList.clear();
-            this->displayedSongList = this->searchedSongList;
-
-            DEBUG("Found {} songs", this->displayedSongList.size());
-
-            this->searchInProgress = false;
-
             this->searchEnded.invoke();
         });
     }).detach();
+}
+
+std::vector<SongDetailsCache::Song const*> BetterSongSearch::DataHolder::GetDisplayedSongList() {
+    std::shared_lock<std::shared_mutex> lock(_displayedSongListMutex);
+    return this->_displayedSongList;
+}
+
+SongDetailsCache::Song const* BetterSongSearch::DataHolder::GetDisplayedSongByIndex(std::size_t index) {
+    std::shared_lock<std::shared_mutex> lock(_displayedSongListMutex);
+    if (index >= this->_displayedSongList.size()) {
+        return nullptr;
+    }
+    return this->_displayedSongList[index];
+}
+
+std::size_t BetterSongSearch::DataHolder::GetDisplayedSongListLength() {
+    std::shared_lock<std::shared_mutex> lock(_displayedSongListMutex);
+    return this->_displayedSongList.size();
 }

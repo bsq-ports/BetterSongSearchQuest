@@ -80,6 +80,11 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     CustomSongListTableCell* CustomSongListTableCell::PopulateWithSongData(SongDetailsCache::Song const* entry) {
+        if (!entry) {
+            WARNING("Tried to populate with null entry");
+            return this;
+        }
+
         // Colors
         static auto verifiedSongColor = Sombrero::FastColor(.7f, 1.0f, .7f, 1.0f);
         static auto verifiedUploaderColor = Sombrero::FastColor(.46f, .27f, .68f, 1.0f);

@@ -215,8 +215,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
     // Restore search songs count
     if (dataHolder.loaded && !dataHolder.failed && songSearchPlaceholder) {
-        if (dataHolder.filteredSongList.size() < dataHolder.songDetails->songs.size()) {
-            songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.filteredSongList.size()));
+        if (dataHolder.GetDisplayedSongListLength() < dataHolder.songDetails->songs.size()) {
+            songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.GetDisplayedSongListLength()));
         } else {
             songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         }
@@ -244,11 +244,11 @@ void ViewControllers::SongListController::SelectSong(UnityW<HMUI::TableView> tab
         return;
     }
     DEBUG("Cell clicked {}", id);
-    if (dataHolder.displayedSongList.size() <= id || id < 0) {
-        // Return if the id is invalid
+    auto song = dataHolder.GetDisplayedSongByIndex(id);
+    if (song == nullptr) {
+        WARNING("Song is null, requested id: {}", id);
         return;
     }
-    auto song = dataHolder.displayedSongList[id];
     DEBUG("Selecting song {}", id);
     this->SetSelectedSong(song);
 }
@@ -267,7 +267,7 @@ void ViewControllers::SongListController::ResetTable() {
 }
 
 int ViewControllers::SongListController::NumberOfCells() {
-    return dataHolder.displayedSongList.size();
+    return dataHolder.GetDisplayedSongListLength();
 }
 
 void ViewControllers::SongListController::ctor() {
@@ -697,7 +697,8 @@ void ViewControllers::SongListController::FilterByUploader() {
 
 // BSML::CustomCellInfo
 HMUI::TableCell* ViewControllers::SongListController::CellForIdx(HMUI::TableView* tableView, int idx) {
-    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(dataHolder.displayedSongList[idx]);
+    auto song = dataHolder.GetDisplayedSongByIndex(idx);
+    return ViewControllers::SongListTableData::GetCell(tableView)->PopulateWithSongData(song);
 }
 
 void ViewControllers::SongListController::UpdateSearch() {
@@ -754,7 +755,7 @@ void ViewControllers::SongListController::SearchDone() {
         return;
     }
 
-    DEBUG("Displaying {} songs", dataHolder.displayedSongList.size());
+    DEBUG("Displaying {} songs", dataHolder.GetDisplayedSongListLength());
     if (!songListTable()) {
         // TODO: Actually understand why songListTable isn't available on soft refresh
         WARNING("SongListTable is null, might be a soft refresh, returning as we don't need to reset anything on soft refresh");
@@ -767,10 +768,10 @@ void ViewControllers::SongListController::SearchDone() {
     INFO("table reset in {} ms", CurrentTimeMs() - before);
 
     if (songSearchPlaceholder) {
-        if (dataHolder.filteredSongList.size() == dataHolder.songDetails->songs.size()) {
+        if (dataHolder.GetDisplayedSongListLength() == dataHolder.songDetails->songs.size()) {
             songSearchPlaceholder->set_text("Search by Song, Key, Mapper..");
         } else {
-            songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.filteredSongList.size()));
+            songSearchPlaceholder->set_text(fmt::format("Search {} songs", dataHolder.GetDisplayedSongListLength()));
         }
     }
 
