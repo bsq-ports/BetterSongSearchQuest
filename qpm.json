@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/QuestPackageManager/QPM.Package/refs/heads/main/qpm.schema.json",
   "version": "0.4.0",
   "sharedDir": "shared",
   "dependenciesDir": "extern",
@@ -35,7 +36,7 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4020.0.0",
+      "versionRange": "^4030.0.0",
       "additionalData": {}
     },
     {
@@ -60,7 +61,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.18",
+      "versionRange": "^1.1.19",
       "additionalData": {}
     },
     {
@@ -70,7 +71,7 @@
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.49",
+      "versionRange": "^0.4.50",
       "additionalData": {}
     },
     {
