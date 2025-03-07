@@ -22,7 +22,8 @@ using namespace BetterSongSearch::Util;
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController);
 
-void errored(std::string message, SafePtr<DownloadHistoryEntry> entry) {
+// TODO: Make entry access thread safe
+void errored(std::string message, DownloadHistoryEntry* entry) {
     entry->status = DownloadHistoryEntry::DownloadStatus::Failed;
     entry->statusDetails = fmt::format(": {}", message);
     entry->retries = 69;
