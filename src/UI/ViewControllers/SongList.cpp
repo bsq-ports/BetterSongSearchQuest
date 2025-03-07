@@ -831,6 +831,12 @@ void ViewControllers::SongListController::PlayerDataLoaded() {
 
 void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs) {
     auto currentSong = GetCurrentSong();
+    if (dataHolder.songDetails == nullptr) {
+        return;
+    }
+    if (!dataHolder.songDetails->songs.get_isDataAvailable()) {
+        return;
+    }
     if (currentSong == nullptr) {
         return;
     }
