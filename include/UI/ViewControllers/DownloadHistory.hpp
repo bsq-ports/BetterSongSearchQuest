@@ -29,6 +29,8 @@
 
 inline static const int RETRY_COUNT = 3;
 
+
+// Make sure to access it only from the main thread (not thread safe)
 class DownloadHistoryEntry {
 public:
     enum DownloadStatus {
