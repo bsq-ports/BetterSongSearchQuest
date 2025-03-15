@@ -501,6 +501,7 @@ void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const*
 
     // Hopefully not leaking any memory
     auto fun = [this, songToPlay]() {
+        DEBUG("Song index is: {}", songToPlay->index);
         auto level = SongCore::API::Loading::GetLevelByHash(songToPlay->hash());
 
         // Fallback for rare cases when the hash is different from the hash in our database (e.g. song got updated)
@@ -560,6 +561,7 @@ void ViewControllers::SongListController::UpdateDetails() {
     }
 
     auto song = currentSong;
+    DEBUG("Song index is: {}", song->index);
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap != nullptr;
     bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->hash()));
@@ -854,6 +856,7 @@ void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::Song
     }
 
     auto song = currentSong;
+    DEBUG("Song index is: {}", song->index);
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap != nullptr;
 
