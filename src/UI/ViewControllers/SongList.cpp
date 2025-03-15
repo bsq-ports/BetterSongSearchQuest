@@ -419,17 +419,19 @@ custom_types::Helpers::Coroutine GetPreview(std::string url, std::function<void(
     co_yield reinterpret_cast<System::Collections::IEnumerator*>(CRASH_UNLESS(webRequest->SendWebRequest()));
     if (webRequest->GetError() != UnityEngine::Networking::UnityWebRequest::UnityWebRequestError::OK) {
         INFO("Network error");
+        webRequest->Dispose();  // Cleanup is required for all Unity web requests to prevent weirdness
         finished(nullptr);
         co_return;
-    } else {
-        // Wait for download to finish (should probably never happen)
-        while (!webRequest->get_isDone()) {
-        };
-        INFO("Download complete");
-        UnityW<UnityEngine::AudioClip> clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
-        DEBUG("Clip size: {}", pretty_bytes(webRequest->get_downloadedBytes()));
-        finished(clip);
     }
+
+    // Wait for download to finish (should probably never happen)
+    while (!webRequest->get_isDone()) {
+    };
+
+    INFO("Download complete");
+    UnityW<UnityEngine::AudioClip> clip = UnityEngine::Networking::DownloadHandlerAudioClip::GetContent(webRequest);
+    webRequest->Dispose();  // Cleanup is required for all Unity web requests to prevent weirdness
+    finished(clip);
     co_return;
 }
 
