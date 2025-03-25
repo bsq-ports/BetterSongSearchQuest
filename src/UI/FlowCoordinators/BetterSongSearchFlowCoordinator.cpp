@@ -58,7 +58,7 @@ void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Cl
     cancelConfirmCallback = nullptr;
 
     // Stop song preview on exit
-    UnityW<SongPreviewPlayer> songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
+    UnityW<SongPreviewPlayer> songPreviewPlayer = BSML::Helpers::GetDiContainer()->Resolve<SongPreviewPlayer*>();
     if (songPreviewPlayer) {
         songPreviewPlayer->CrossfadeToDefault();
     }

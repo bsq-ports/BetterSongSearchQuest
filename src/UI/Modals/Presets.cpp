@@ -2,6 +2,7 @@
 
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
 #include "DataHolder.hpp"
 #include "FilterOptions.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
@@ -24,10 +25,7 @@ void Modals::Presets::OnEnable() {
 void Modals::Presets::PostParse() {
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
     // work
-    auto platformHelper = UnityEngine::Resources::FindObjectsOfTypeAll<GlobalNamespace::LevelCollectionTableView*>()
-                              ->First()
-                              ->GetComponentInChildren<HMUI::ScrollView*>()
-                              ->____platformHelper;
+    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
     if (platformHelper == nullptr) {
     } else {
         for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
