@@ -39,6 +39,7 @@ using namespace BetterSongSearch::UI;
 BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.id = MOD_ID;
     info.version = VERSION;
+    info.version_long = GIT_COMMIT;
     modInfo.assign(info);
 
     getPluginConfig().Init(modInfo);
