@@ -11,12 +11,14 @@
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
+#include "bsml/shared/Helpers/getters.hpp"
 #include "bsml/shared/Helpers/utilities.hpp"
 #include "DataHolder.hpp"
 #include "fmt/fmt/include/fmt/core.h"
 #include "GlobalNamespace/LevelCollectionNavigationController.hpp"
 #include "GlobalNamespace/LevelCollectionTableView.hpp"
 #include "GlobalNamespace/LevelCollectionViewController.hpp"
+#include "GlobalNamespace/LevelSearchViewController.hpp"
 #include "GlobalNamespace/LevelSelectionFlowCoordinator.hpp"
 #include "GlobalNamespace/LevelSelectionNavigationController.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
@@ -83,9 +85,7 @@ void ViewControllers::SongListController::UpdateSearchedSongsList() {
 void ViewControllers::SongListController::PostParse() {
     // Steal search box from the base game
     UnityW<HMUI::InputFieldView> gameSearchBox;
-    gameSearchBox = Resources::FindObjectsOfTypeAll<HMUI::InputFieldView*>()->First([](HMUI::InputFieldView* x) {
-        return x->get_name() == "SearchInputField";
-    });
+    gameSearchBox = BSML::Helpers::GetDiContainer()->Resolve<LevelSearchViewController*>()->_searchTextInputFieldView;
 
     if (gameSearchBox) {
         DEBUG("Found search box");
@@ -106,6 +106,8 @@ void ViewControllers::SongListController::PostParse() {
         };
 
         songSearchInput->get_onValueChanged()->AddListener(BSML::MakeUnityAction(onValueChanged));
+    } else {
+        ERROR("Search box not found");
     }
 
     // Get the default cover image
@@ -114,13 +116,12 @@ void ViewControllers::SongListController::PostParse() {
     coverImage->set_sprite(defaultImage);
 
     // Get song preview player
-    songPreviewPlayer = UnityEngine::Resources::FindObjectsOfTypeAll<SongPreviewPlayer*>()->FirstOrDefault();
-    levelCollectionViewController = UnityEngine::Resources::FindObjectsOfTypeAll<LevelCollectionViewController*>()->FirstOrDefault();
+    songPreviewPlayer = BSML::Helpers::GetDiContainer()->Resolve<SongPreviewPlayer*>();
+    levelCollectionViewController = BSML::Helpers::GetDiContainer()->Resolve<LevelCollectionViewController*>();
 
     // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
     // work
-    auto platformHelper =
-        Resources::FindObjectsOfTypeAll<LevelCollectionTableView*>()->First()->GetComponentInChildren<HMUI::ScrollView*>()->____platformHelper;
+    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
     if (platformHelper == nullptr) {
     } else {
         for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
@@ -145,12 +146,12 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
     if (firstActivation) {
         DEBUG("SongListController first activation");
         if (dataHolder.playerDataModel == nullptr) {
-            dataHolder.playerDataModel = UnityEngine::GameObject::FindObjectOfType<GlobalNamespace::PlayerDataModel*>();
+            dataHolder.playerDataModel = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::PlayerDataModel*>();
         };
 
         // Get coordinators
-        soloFreePlayFlowCoordinator = UnityEngine::Object::FindObjectOfType<SoloFreePlayFlowCoordinator*>();
-        multiplayerLevelSelectionFlowCoordinator = UnityEngine::Object::FindObjectOfType<MultiplayerLevelSelectionFlowCoordinator*>();
+        soloFreePlayFlowCoordinator = BSML::Helpers::GetDiContainer()->Resolve<SoloFreePlayFlowCoordinator*>();
+        multiplayerLevelSelectionFlowCoordinator = BSML::Helpers::GetDiContainer()->Resolve<MultiplayerLevelSelectionFlowCoordinator*>();
 
         // Get regional beat saver urls
         BeatSaverRegionManager::RegionLookup();
