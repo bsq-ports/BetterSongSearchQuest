@@ -16,7 +16,10 @@
   "workspace": {
     "scripts": {},
     "ndk": "^27.2.12479018",
-    "qmodIncludeDirs": [],
+    "qmodIncludeDirs": [
+      "./build",
+      "./extern/libs"
+    ],
     "qmodIncludeFiles": [],
     "qmodOutput": null
   },
@@ -33,12 +36,12 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4030.0.0",
+      "versionRange": "^4004.0.0",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.50",
+      "versionRange": "^0.4.51",
       "additionalData": {}
     },
     {
@@ -88,12 +91,12 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.19",
+      "versionRange": "^1.1.20",
       "additionalData": {}
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.6",
+      "versionRange": "^0.6.7",
       "additionalData": {}
     }
   ]
