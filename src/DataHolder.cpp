@@ -125,12 +125,10 @@ void BetterSongSearch::DataHolder::PreprocessTags() {
 
 void BetterSongSearch::DataHolder::UpdatePlayerScores() {
     static std::atomic_bool updating = false;  // Prevent multiple checks at once
-    if (updating) {
+    if (updating.exchange(true)) {
         return;
     }
-    updating = true;
 
-    // Run in a separate thread
     il2cpp_utils::il2cpp_aware_thread([this] {
         try {
             DEBUG("Updating player scores");
@@ -138,27 +136,27 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
 
             if (!playerDataModel) {
                 WARNING("No player data model, cannot update scores");
-                updating = false;
+                updating.store(false);
                 return;
             }
 
             auto playerData = playerDataModel->get_playerData();
             if (!playerData) {
                 WARNING("No player data, cannot update scores");
-                updating = false;
+                updating.store(false);
                 return;
             }
 
             auto statsData = playerData->get_levelsStatsData();
             if (!statsData) {
                 WARNING("No stats data, cannot update scores");
-                updating = false;
+                updating.store(false);
                 return;
             }
 
             if (!this->songDetails || !this->songDetails->songs.get_isDataAvailable()) {
                 WARNING("No song details, cannot update scores");
-                updating = false;
+                updating.store(false);
                 return;
             }
 
@@ -208,7 +206,7 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             songsWithScoresTemp.swap(songsWithScores);
             lock.unlock();
 
-            updating = false;
+            updating.store(false);
 
             INFO("Updated player scores in {} ms", CurrentTimeMs() - before);
 
@@ -225,9 +223,9 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             }
         } catch (...) {
             WARNING("Failed to update player scores");
-            updating = false;
+            updating.store(false);
         }
-    });
+    }).detach();
 }
 
 bool BetterSongSearch::DataHolder::SongHasScore(std::string_view songhash) {

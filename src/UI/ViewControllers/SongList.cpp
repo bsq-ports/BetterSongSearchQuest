@@ -1,6 +1,7 @@
 #include "UI/ViewControllers/SongList.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <shared_mutex>
 #include <string>
@@ -500,15 +501,18 @@ void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const*
         return;
     }
 
-    // Hopefully not leaking any memory
-    auto fun = [this, songToPlay]() {
-        DEBUG("Song index is: {}", songToPlay->index);
-        auto level = SongCore::API::Loading::GetLevelByHash(songToPlay->hash());
+    // Grab the song hash and map id, to prevent any issues with threads..
+    DEBUG("Song index is: {}", songToPlay->index);
+    std::string songHash = songToPlay->hash();
+    uint32_t mapId = songToPlay->mapId();
+
+    auto fun = [this, songHash, mapId]() {
+        auto level = SongCore::API::Loading::GetLevelByHash(songHash);
 
         // Fallback for rare cases when the hash is different from the hash in our database (e.g. song got updated)
         if (level == nullptr) {
             // Get song beatsaver id
-            std::string songKey = fmt::format("{:X}", songToPlay->mapId());
+            std::string songKey = fmt::format("{:X}", mapId);
             songKey = toLower(songKey);
             DEBUG("Looking for level by beatsaver id in path: {}", songKey);
             level = SongCore::API::Loading::GetLevelByFunction([mapId = songKey](auto level) {
@@ -519,7 +523,7 @@ void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const*
 
         // If all else fails, cancel
         if (level == nullptr) {
-            DEBUG("Hash: {}", songToPlay->hash());
+            DEBUG("Hash: {}", songHash);
             ERROR("Song somehow is not downloaded and could not find it in our database, pls fix");
             return;
         }
@@ -534,10 +538,15 @@ void ViewControllers::SongListController::PlaySong(SongDetailsCache::Song const*
 
     if (fcInstance->DownloadHistoryViewController->hasUnloadedDownloads) {
         auto future = SongCore::API::Loading::RefreshSongs(false);
-        il2cpp_utils::il2cpp_aware_thread([future, fun] {
-            future.wait();
-            fun();
-        });
+        std::thread(
+            [](std::shared_future<void> future, std::function<void()> fun) {
+                future.wait();
+                fun();
+            },
+            std::move(future),
+            std::move(fun)
+        )
+            .detach();
     } else {
         fun();
     }
