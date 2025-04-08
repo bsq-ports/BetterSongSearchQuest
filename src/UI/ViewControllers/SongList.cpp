@@ -33,6 +33,7 @@
 #include "PluginConfig.hpp"
 #include "songcore/shared/SongCore.hpp"
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
+#include "System/Action.hpp"
 #include "System/Nullable_1.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "UI/Manager.hpp"
@@ -691,36 +692,43 @@ void ViewControllers::SongListController::UpdateDetails() {
                 return;
             }
 
-            auto ssp = songPreviewPlayer;
-
             std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
 
-            coro(GetPreview(newUrl, [ssp](UnityW<UnityEngine::AudioClip> clip) {
-                if (!clip) {
-                    return;
-                }
-                // TODO: Fix audio clip cleanup for non downloaded songs (this is a memory leak)
-                // This does not compile and is possibly very unsafe
-                // {
-                //     auto clipPtr = clip.ptr();
+            coro(GetPreview(
+                newUrl,
 
-                //     // Audio clip fade out
-                //     std::function<void()> onFadeOutLambda = [clipPtr]() {
-                //         DEBUG("Crossfade to song preview, clearing the clip");
-                //         try {
-                //             if (clipPtr != nullptr && clipPtr->m_CachedPtr.m_value != nullptr) {
-                //                 UnityEngine::Object::Destroy(clipPtr);
-                //             }
-                //         } catch (...) {
-                //             ERROR("Error destroying clip: {}");
-                //         }
-                //     };
-                //     auto onFadeOut = BSML::MakeDelegate<System::Action*>(onFadeOutLambda);
+                std::function<void(UnityW<UnityEngine::AudioClip>)>([this, song](UnityW<UnityEngine::AudioClip> clip) {
+                    if (!clip) {
+                        return;
+                    }
+                    // Get current song
+                    auto currentSong = GetCurrentSong();
+                    // Return if the song has changed somehow
+                    if (currentSong == nullptr) {
+                        UnityEngine::Object::Destroy(clip);
+                        return;
+                    }
+                    if (song->hash() != currentSong->hash()) {
+                        DEBUG("Song hash changed, returning");
+                        UnityEngine::Object::Destroy(clip);
+                        return;
+                    }
 
-                //     ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), onFadeOut);
-                // }
-                ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
-            }));
+                    // Audio clip cleanup
+                    std::function<void()> onFadeOutLambda = [clip]() {
+                        try {
+                            if (clip) {
+                                UnityEngine::Object::Destroy(clip);
+                            }
+                        } catch (...) {
+                            ERROR("Error destroying clip");
+                        }
+                    };
+                    auto onFadeOut = BSML::MakeDelegate<System::Action*>(onFadeOutLambda);
+
+                    songPreviewPlayer->CrossfadeTo(clip, -5, 0, clip->get_length(), onFadeOut);
+                })
+            ));
         }
     }
 
