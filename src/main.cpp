@@ -52,23 +52,6 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
 }
 
 MAKE_HOOK_MATCH(
-    MainFlowCoordinator_DidActivate,
-    &GlobalNamespace::MainFlowCoordinator::DidActivate,
-    void,
-    GlobalNamespace::MainFlowCoordinator* self,
-    bool firstActivation,
-    bool addedToHierarchy,
-    bool screenSystemEnabling
-) {
-    MainFlowCoordinator_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
-    static bool debugstarted = false;
-    if (!debugstarted) {
-        debugstarted = true;
-        self->StartCoroutine(custom_types::Helpers::new_coro(manager.Debug()));
-    }
-}
-
-MAKE_HOOK_MATCH(
     ReturnToBSS,
     &HMUI::FlowCoordinator::DismissFlowCoordinator,
     void,
@@ -235,6 +218,24 @@ MAKE_HOOK_MATCH(
         useTestNoteCutSoundEffects
     );
 }
+
+// Debugging function
+// MAKE_HOOK_MATCH(
+//     MainFlowCoordinator_DidActivate,
+//     &GlobalNamespace::MainFlowCoordinator::DidActivate,
+//     void,
+//     GlobalNamespace::MainFlowCoordinator* self,
+//     bool firstActivation,
+//     bool addedToHierarchy,
+//     bool screenSystemEnabling
+// ) {
+//     MainFlowCoordinator_DidActivate(self, firstActivation, addedToHierarchy, screenSystemEnabling);
+//     static bool debugstarted = false;
+//     if (!debugstarted) {
+//         debugstarted = true;
+//         self->StartCoroutine(custom_types::Helpers::new_coro(manager.Debug()));
+//     }
+// }
 
 // Called later on in the game loading - a good time to install function hooks
 BSS_EXPORT_FUNC void late_load() {
