@@ -605,6 +605,15 @@ void ViewControllers::SongListController::UpdateDetails() {
         auto cover = BetterSongSearch::Util::getLocalCoverSync(beatmap);
         if (cover) {
             this->coverImage->set_sprite(cover);
+
+            // Cleanup old sprite
+            if (oldSprite && oldSprite.ptr() != defaultImage.ptr()) {
+                UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
+                if (texture) {
+                    UnityEngine::Object::DestroyImmediate(texture);
+                }
+                UnityEngine::Object::DestroyImmediate(oldSprite);
+            }
         } else {
             this->coverImage->set_sprite(defaultImage);
 
@@ -635,6 +644,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                         return;
                     }
                     if (song->hash() != currentSong->hash()) {
+                        DEBUG("Song hash changed, returning");
                         return;
                     }
                     auto spriteArray = ArrayW(data);
@@ -669,7 +679,7 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     // If the song is loaded then get it from local sources
     if (loaded) {
-        if (!levelCollectionViewController) {
+        if (!levelCollectionViewController || levelCollectionViewController->m_CachedPtr.m_value == nullptr) {
             return;
         }
 
@@ -677,7 +687,7 @@ void ViewControllers::SongListController::UpdateDetails() {
     } else {
         if (!getPluginConfig().LoadSongPreviews.GetValue()) {
         } else {
-            if (!songPreviewPlayer) {
+            if (!songPreviewPlayer || songPreviewPlayer->m_CachedPtr.m_value == nullptr) {
                 return;
             }
 
@@ -689,6 +699,26 @@ void ViewControllers::SongListController::UpdateDetails() {
                 if (!clip) {
                     return;
                 }
+                // TODO: Fix audio clip cleanup for non downloaded songs (this is a memory leak)
+                // This does not compile and is possibly very unsafe
+                // {
+                //     auto clipPtr = clip.ptr();
+
+                //     // Audio clip fade out
+                //     std::function<void()> onFadeOutLambda = [clipPtr]() {
+                //         DEBUG("Crossfade to song preview, clearing the clip");
+                //         try {
+                //             if (clipPtr != nullptr && clipPtr->m_CachedPtr.m_value != nullptr) {
+                //                 UnityEngine::Object::Destroy(clipPtr);
+                //             }
+                //         } catch (...) {
+                //             ERROR("Error destroying clip: {}");
+                //         }
+                //     };
+                //     auto onFadeOut = BSML::MakeDelegate<System::Action*>(onFadeOutLambda);
+
+                //     ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), onFadeOut);
+                // }
                 ssp->CrossfadeTo(clip, -5, 0, clip->get_length(), nullptr);
             }));
         }
