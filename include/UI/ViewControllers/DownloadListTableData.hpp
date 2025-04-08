@@ -1,32 +1,29 @@
 #pragma once
 
-#include "UI/ViewControllers/DownloadHistoryCell.hpp"
-#include "HMUI/Touchable.hpp"
-#include "bsml/shared/BSML.hpp"
 #include "assets.hpp"
+#include "bsml/shared/BSML.hpp"
+#include "HMUI/Touchable.hpp"
+#include "UI/ViewControllers/DownloadHistoryCell.hpp"
 
-const StringW ReuseIdentifier = "REUSECustomDownloadListTableCell";
+StringW const ReuseIdentifier = "REUSECustomDownloadListTableCell";
 
-namespace BetterSongSearch::UI::ViewControllers
-{
-    class DownloadListTableData
-    {
-    public:
-        static CustomDownloadListTableCell *GetCell(HMUI::TableView *tableView)
-        {
+namespace BetterSongSearch::UI::ViewControllers {
+    class DownloadListTableData {
+       public:
+        static CustomDownloadListTableCell* GetCell(HMUI::TableView* tableView) {
             auto tableCell = tableView->DequeueReusableCellForIdentifier(ReuseIdentifier);
-            if (!tableCell)
-            {
-                tableCell = UnityEngine::GameObject::New_ctor("CustomDownloadListTableCell")->AddComponent<CustomDownloadListTableCell *>();
+            if (!tableCell) {
+                tableCell = UnityEngine::GameObject::New_ctor("CustomDownloadListTableCell")->AddComponent<CustomDownloadListTableCell*>();
+                tableCell->_groupsAllowInteraction = true;  // needed for the cell to be interactable in 1.40.4
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(ReuseIdentifier);
                 BSML::parse_and_construct(Assets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);
-                
+
                 // Weird hack cause HMUI touchable is not there for some reason
-                tableCell->get_gameObject()->AddComponent<HMUI::Touchable *>();
+                tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();
             }
 
             return tableCell.cast<CustomDownloadListTableCell>();
         }
     };
-}
+}  // namespace BetterSongSearch::UI::ViewControllers
