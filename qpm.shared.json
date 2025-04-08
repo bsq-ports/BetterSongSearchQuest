@@ -17,7 +17,10 @@
     "workspace": {
       "scripts": {},
       "ndk": "^27.2.12479018",
-      "qmodIncludeDirs": [],
+      "qmodIncludeDirs": [
+        "./build",
+        "./extern/libs"
+      ],
       "qmodIncludeFiles": [],
       "qmodOutput": null
     },
@@ -34,12 +37,12 @@
       },
       {
         "id": "bs-cordl",
-        "versionRange": "^4030.0.0",
+        "versionRange": "^4004.0.0",
         "additionalData": {}
       },
       {
         "id": "bsml",
-        "versionRange": "^0.4.50",
+        "versionRange": "^0.4.51",
         "additionalData": {}
       },
       {
@@ -89,12 +92,12 @@
       },
       {
         "id": "songcore",
-        "versionRange": "^1.1.19",
+        "versionRange": "^1.1.20",
         "additionalData": {}
       },
       {
         "id": "web-utils",
-        "versionRange": "^0.6.6",
+        "versionRange": "^0.6.7",
         "additionalData": {}
       }
     ]
@@ -118,17 +121,17 @@
     {
       "dependency": {
         "id": "bsml",
-        "versionRange": "=0.4.50",
+        "versionRange": "=0.4.51",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.50/libbsml.so",
-          "debugSoLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.50/debug_libbsml.so",
+          "soLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.51/libbsml.so",
+          "debugSoLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.51/debug_libbsml.so",
           "overrideSoName": "libbsml.so",
-          "modLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.50/BSML.qmod",
-          "branchName": "version/v0_4_50",
+          "modLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.4.51/BSML.qmod",
+          "branchName": "version/v0_4_51",
           "cmake": true
         }
       },
-      "version": "0.4.50"
+      "version": "0.4.51"
     },
     {
       "dependency": {
@@ -172,17 +175,17 @@
     {
       "dependency": {
         "id": "songcore",
-        "versionRange": "=1.1.19",
+        "versionRange": "=1.1.20",
         "additionalData": {
-          "soLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.19/libsongcore.so",
-          "debugSoLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.19/debug_libsongcore.so",
+          "soLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.20/libsongcore.so",
+          "debugSoLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.20/debug_libsongcore.so",
           "overrideSoName": "libsongcore.so",
-          "modLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.19/SongCore.qmod",
-          "branchName": "version/v1_1_19",
+          "modLink": "https://github.com/raineaeternal/Quest-SongCore/releases/download/v1.1.20/SongCore.qmod",
+          "branchName": "version/v1_1_20",
           "cmake": true
         }
       },
-      "version": "1.1.19"
+      "version": "1.1.20"
     },
     {
       "dependency": {
@@ -287,10 +290,10 @@
     {
       "dependency": {
         "id": "bs-cordl",
-        "versionRange": "=4030.0.0",
+        "versionRange": "=4004.0.0",
         "additionalData": {
           "headersOnly": true,
-          "branchName": "version/v4030_0_0",
+          "branchName": "version/v4004_0_0",
           "compileOptions": {
             "includePaths": [
               "include"
@@ -306,7 +309,7 @@
           }
         }
       },
-      "version": "4030.0.0"
+      "version": "4004.0.0"
     },
     {
       "dependency": {
