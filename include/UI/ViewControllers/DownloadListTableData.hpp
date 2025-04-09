@@ -14,7 +14,6 @@ namespace BetterSongSearch::UI::ViewControllers {
             auto tableCell = tableView->DequeueReusableCellForIdentifier(ReuseIdentifier);
             if (!tableCell) {
                 tableCell = UnityEngine::GameObject::New_ctor("CustomDownloadListTableCell")->AddComponent<CustomDownloadListTableCell*>();
-                tableCell->_groupsAllowInteraction = true;  // needed for the cell to be interactable in 1.40.4
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(ReuseIdentifier);
                 BSML::parse_and_construct(Assets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);

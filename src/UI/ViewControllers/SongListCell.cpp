@@ -56,6 +56,9 @@ namespace BetterSongSearch::UI::ViewControllers {
     void CustomSongListTableCell::ctor() {
         // Subscribe to events
         SongCore::SongLoader::RuntimeSongLoader::get_instance()->SongsLoaded += {&CustomSongListTableCell::OnSongsLoaded, this};
+
+        // Make sure to call the base constructor, otherwise unpredictable things might happen in the next updates
+        INVOKE_BASE_CTOR(classof(HMUI::TableCell*));
     }
 
     void CustomSongListTableCell::OnDestroy() {
