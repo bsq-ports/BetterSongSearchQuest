@@ -341,7 +341,7 @@ custom_types::Helpers::Coroutine ViewControllers::SongListController::UpdateData
 
     FilterTypes::SortMode sort = dataHolder.sort;
     if (selectedSortMode != nullptr) {
-        int index = get_sortModeSelections()->IndexOf(reinterpret_cast<System::String*>(selectedSortMode.convert()));
+        int index = get_sortModeSelections()->IndexOf(static_cast<System::String*>(selectedSortMode.convert()));
         if (index < 0) {
         } else {
             if (index != getPluginConfig().SortMode.GetValue()) {
