@@ -36,9 +36,8 @@ namespace BetterSongSearch::UI::ViewControllers {
             return;
         }
         x->set_anchorMax(UnityEngine::Vector2(entry->downloadProgress, 1));
-        static auto forceUpdate = reinterpret_cast<function_ptr_t<void, UnityEngine::RectTransform*>>(
-            il2cpp_functions::resolve_icall("UnityEngine.RectTransform::ForceUpdateRectTransforms")
-        );
+        static auto forceUpdate =
+            il2cpp_utils::resolve_icall<void, UnityEngine::RectTransform*>("UnityEngine.RectTransform::ForceUpdateRectTransforms");
         forceUpdate(x);
     }
 
