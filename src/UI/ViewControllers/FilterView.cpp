@@ -29,17 +29,17 @@ DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, FilterViewController);
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
-#define SAVE_STRING_CONFIG(value, options, configName)                                            \
-    if (value != nullptr) {                                                                       \
-        int index = get_##options()->IndexOf(reinterpret_cast<System::String*>(value.convert())); \
-        if (index < 0) {                                                                          \
-            ERROR("WE HAVE A BUG WITH SAVING VALUE {}", (std::string) value);                     \
-        } else {                                                                                  \
-            if (index != getPluginConfig().configName.GetValue()) {                               \
-                filtersChanged = true;                                                            \
-                getPluginConfig().configName.SetValue(index);                                     \
-            }                                                                                     \
-        }                                                                                         \
+#define SAVE_STRING_CONFIG(value, options, configName)                                       \
+    if (value != nullptr) {                                                                  \
+        int index = get_##options()->IndexOf(static_cast<System::String*>(value.convert())); \
+        if (index < 0) {                                                                     \
+            ERROR("WE HAVE A BUG WITH SAVING VALUE {}", (std::string) value);                \
+        } else {                                                                             \
+            if (index != getPluginConfig().configName.GetValue()) {                          \
+                filtersChanged = true;                                                       \
+                getPluginConfig().configName.SetValue(index);                                \
+            }                                                                                \
+        }                                                                                    \
     }
 
 #define SAVE_NUMBER_CONFIG(value, configName)               \
@@ -473,13 +473,13 @@ void ViewControllers::FilterViewController::ForceRefreshUI() {
     SetSliderSettingValue(this->minimumVotesSlider, this->minimumVotes);
     SetSliderSettingValue(this->hideOlderThanSlider, this->hideOlderThan);
     SetStringSettingValue(this->uploadersStringControl, getPluginConfig().Uploaders.GetValue());
-    existingSongsSetting->set_Value(reinterpret_cast<System::String*>(this->existingSongs.convert()));
-    existingScoreSetting->set_Value(reinterpret_cast<System::String*>(this->existingScore.convert()));
-    rankedStateSetting->set_Value(reinterpret_cast<System::String*>(this->rankedState.convert()));
-    characteristicDropdown->set_Value(reinterpret_cast<System::String*>(this->characteristic.convert()));
-    difficultyDropdown->set_Value(reinterpret_cast<System::String*>(this->difficulty.convert()));
-    modsRequirementDropdown->set_Value(reinterpret_cast<System::String*>(this->mods.convert()));
-    mapStyleDropdown->set_Value(reinterpret_cast<System::String*>(this->mapStyleString.convert()));
+    existingSongsSetting->set_Value(static_cast<System::String*>(this->existingSongs.convert()));
+    existingScoreSetting->set_Value(static_cast<System::String*>(this->existingScore.convert()));
+    rankedStateSetting->set_Value(static_cast<System::String*>(this->rankedState.convert()));
+    characteristicDropdown->set_Value(static_cast<System::String*>(this->characteristic.convert()));
+    difficultyDropdown->set_Value(static_cast<System::String*>(this->difficulty.convert()));
+    modsRequirementDropdown->set_Value(static_cast<System::String*>(this->mods.convert()));
+    mapStyleDropdown->set_Value(static_cast<System::String*>(this->mapStyleString.convert()));
 
     UpdateGenreFilterText();
 }
