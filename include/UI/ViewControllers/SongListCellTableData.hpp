@@ -20,7 +20,6 @@ namespace BetterSongSearch::UI::ViewControllers {
                 //  *))->AddComponent<CustomSongListTableCell *>();
 
                 tableCell = UnityEngine::GameObject::New_ctor("CustomSongListTableCell")->AddComponent<CustomSongListTableCell*>();
-                tableCell->_groupsAllowInteraction = true;  // needed for the cell to be interactable in 1.40.4
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(CustomSongListTableCellReuseIdentifier);
                 BSML::parse_and_construct(Assets::SongListCell_bsml, tableCell->get_transform(), tableCell);
