@@ -3,6 +3,7 @@
 #include <mutex>
 #include <regex>
 #include <shared_mutex>
+#include <thread>
 
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
@@ -129,7 +130,7 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
         return;
     }
 
-    il2cpp_utils::il2cpp_aware_thread([this] {
+    std::thread([this] {
         try {
             DEBUG("Updating player scores");
             long long before = CurrentTimeMs();
