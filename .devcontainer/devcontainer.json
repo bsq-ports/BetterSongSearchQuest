@@ -1,0 +1,30 @@
+{
+  "name": "QPM",
+  "image": "ghcr.io/dantheman827/qpm-docker:master",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "codespace",
+      "userUid": "1000",
+      "userGid": "1000",
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": false,
+      "upgradePackages": false
+    }
+  },
+  "remoteUser": "codespace",
+  "containerUser": "codespace",
+  "onCreateCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}",
+  "postCreateCommand": "/bin/bash .devcontainer/postCreate.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "twxs.cmake",
+        "ms-vscode.cmake-tools",
+        "ms-vscode.PowerShell",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}
