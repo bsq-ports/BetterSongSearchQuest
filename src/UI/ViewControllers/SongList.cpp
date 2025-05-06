@@ -263,7 +263,7 @@ float ViewControllers::SongListController::CellSize() {
 }
 
 void ViewControllers::SongListController::ResetTable() {
-    if (songListTable() != nullptr) {
+    if (songListTable()) {
         songListTable()->ReloadData();
         songListTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
     }
@@ -870,7 +870,7 @@ void ViewControllers::SongListController::SongDataError(std::string message) {
 }
 
 void ViewControllers::SongListController::PlayerDataLoaded() {
-    if (songListTable() == nullptr) {
+    if (!songListTable()) {
         return;
     }
     // If it's searching, don't reload, it will be done after search
