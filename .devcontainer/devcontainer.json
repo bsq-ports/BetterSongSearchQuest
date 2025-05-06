@@ -10,6 +10,14 @@
       "installOhMyZsh": true,
       "installOhMyZshConfig": false,
       "upgradePackages": false
+    },
+    "ghcr.io/devcontainers-extra/features/zsh-plugins:0": {
+      "omzPlugins": [
+        "git",
+        "zsh-autosuggestions",
+        "zsh-syntax-highlighting",
+        "history-substring-search"
+      ]
     }
   },
   "remoteUser": "codespace",
@@ -20,7 +28,6 @@
     "vscode": {
       "extensions": [
         "llvm-vs-code-extensions.vscode-clangd",
-        "twxs.cmake",
         "ms-vscode.cmake-tools",
         "ms-vscode.PowerShell",
         "github.vscode-github-actions"
