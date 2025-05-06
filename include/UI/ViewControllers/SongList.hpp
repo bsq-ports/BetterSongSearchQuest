@@ -139,8 +139,8 @@ SongListController, HMUI::ViewController, classof(HMUI::TableView::IDataSource*)
 
     DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);
 
-    public : HMUI::TableView *
-    songListTable() {
+   public:
+    UnityW<HMUI::TableView> songListTable() {
         if (songList) {
             return songList->tableView;
         } else return nullptr;
