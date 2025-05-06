@@ -2,7 +2,7 @@
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, GenrePickerCell);
 
-StringW const GenrePickerCellReuseIdentifier = "REUSEGenreTableCell";
+std::string const GenrePickerCellReuseIdentifier = "REUSEGenreTableCell";
 
 namespace BetterSongSearch::UI::Modals {
     void GenrePickerCell::Refresh() {
