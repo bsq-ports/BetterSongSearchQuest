@@ -4,7 +4,7 @@
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, PresetsTableCell);
 
-StringW const PresetsTableCellReuseIdentifier = "REUSEPresetsTableCell";
+std::string const PresetsTableCellReuseIdentifier = "REUSEPresetsTableCell";
 
 namespace BetterSongSearch::UI::Modals {
     void PresetsTableCell::RefreshBgState() {

@@ -5,7 +5,7 @@
 #include "HMUI/Touchable.hpp"
 #include "UI/ViewControllers/DownloadHistoryCell.hpp"
 
-StringW const ReuseIdentifier = "REUSECustomDownloadListTableCell";
+std::string const ReuseIdentifier = "REUSECustomDownloadListTableCell";
 
 namespace BetterSongSearch::UI::ViewControllers {
     class DownloadListTableData {
