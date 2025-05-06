@@ -8,7 +8,7 @@
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
 
-StringW const CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";
+std::string const CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";
 
 namespace BetterSongSearch::UI::ViewControllers {
     class SongListTableData {
