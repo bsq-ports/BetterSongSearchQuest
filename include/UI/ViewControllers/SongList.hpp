@@ -141,7 +141,7 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
     DECLARE_INSTANCE_FIELD(System::Threading::CancellationTokenSource*, songAssetLoadCanceller);
 
    public:
-    HMUI::TableView* songListTable() {
+    UnityW<HMUI::TableView> songListTable() {
         if (songList) {
             return songList->tableView;
         } else {
