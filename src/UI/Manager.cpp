@@ -157,6 +157,7 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
         flow = BSML::Helpers::CreateFlowCoordinator<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>();
     }
     parentFlow = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+    // TODO: Recover in case parentFlow is null
     parentFlow->PresentFlowCoordinator(flow.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false, false);
 }
 

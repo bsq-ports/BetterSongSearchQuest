@@ -1,39 +1,34 @@
 #pragma once
 
-#include "bsml/shared/Helpers/creation.hpp"
 #include "bsml/shared/BSML.hpp"
+#include "bsml/shared/Helpers/creation.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "HMUI/NoTransitionsButton.hpp"
 #include "HMUI/ViewController.hpp"
-#include "HMUI/ViewController.hpp"
-#include "UnityEngine/UI/Button.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
+#include "UnityEngine/UI/Button.hpp"
 
 namespace BetterSongSearch::UI {
-    class Manager
-    {
+    class Manager {
         HMUI::FlowCoordinator* parentFlow;
-        UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
-        BSML::MenuButton * menuButton;
-        
+        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
+        BSML::MenuButton* menuButton;
 
-        public:
-            Manager(Manager const&) = delete; // no accidental copying
-            Manager() = default;
+       public:
+        Manager(Manager const&) = delete;  // no accidental copying
+        Manager() = default;
 
-            void Init();
+        void Init();
 
-            custom_types::Helpers::Coroutine Debug();
+        custom_types::Helpers::Coroutine Debug();
 
+        void ShowFlow(bool immediately);
 
-            void ShowFlow(bool immediately);
+        void Close(bool immediately = false, bool downloadAbortConfim = true);
 
-            void Close(bool immediately = false, bool downloadAbortConfim = true);
-
-            void GoToSongSelect();
-            void DestroyFlow();
+        void GoToSongSelect();
+        void DestroyFlow();
     };
 
-
     inline static Manager manager;
-}
+}  // namespace BetterSongSearch::UI
