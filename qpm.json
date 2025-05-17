@@ -36,17 +36,17 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4004.0.0",
+      "versionRange": "4005.*",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.51",
+      "versionRange": "^0.4.52",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^2.0.2",
+      "versionRange": "^2.0.3",
       "additionalData": {}
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.6.1",
+      "versionRange": "^4.6.4",
       "additionalData": {}
     },
     {
@@ -91,7 +91,7 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.20",
+      "versionRange": "^1.1.21",
       "additionalData": {}
     },
     {
