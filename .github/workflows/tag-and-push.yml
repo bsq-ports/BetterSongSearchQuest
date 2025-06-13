@@ -1,0 +1,53 @@
+name: Tag and Push
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "The ref to check out (branch, tag, or commit SHA). Leave blank for default branch."
+        required: false
+        default: ""
+      tag_name:
+        description: "The name of the tag to create."
+        required: true
+
+permissions:
+  contents: write # Grant write permissions to push tags
+  actions: write # Grant write permissions to trigger workflows
+
+jobs:
+  tag_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensure full history is fetched for tagging
+
+      - name: Checkout specific ref (if provided)
+        run: |
+          if [ "${{ github.event.inputs.ref }}" != "" ]; then
+            git fetch origin "${{ github.event.inputs.ref }}"
+            git checkout "${{ github.event.inputs.ref }}"
+          fi
+
+      - name: Create or replace the tag
+        run: |
+          git tag -f "${{ github.event.inputs.tag_name }}"
+
+      - name: Push the tag to origin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin "${{ github.event.inputs.tag_name }}" --force
+
+      - name: Trigger build-ndk.yml workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer $GITHUB_TOKEN" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/build-ndk.yml/dispatches \
+            -d '{"ref": "${{ github.event.inputs.tag_name }}"}'
