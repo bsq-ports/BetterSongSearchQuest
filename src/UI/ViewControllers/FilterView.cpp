@@ -481,6 +481,10 @@ void ViewControllers::FilterViewController::ForceRefreshUI() {
     modsRequirementDropdown->set_Value(static_cast<System::String*>(this->mods.convert()));
     mapStyleDropdown->set_Value(static_cast<System::String*>(this->mapStyleString.convert()));
 
+    onlyCuratedMapsToggle->set_Value(this->onlyCuratedMaps);
+    onlyVerifiedMappersToggle->set_Value(this->onlyVerifiedMappers);
+    onlyV3MapsToggle->set_Value(this->onlyV3Maps);
+
     UpdateGenreFilterText();
 }
 

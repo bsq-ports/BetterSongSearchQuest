@@ -47,12 +47,11 @@
 								<text text="Song Genre" align="MidlineLeft" italics="true"/>
 								<button id='genrePickButton' text="Any" preferred-width="29" on-click="ShowGenrePicker" all-uppercase="false"/>
 							</horizontal>
-							<checkbox-setting value="onlyCuratedMaps" text="Curated Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" />
-							<checkbox-setting value="onlyVerifiedMappers" text="Verified Mappers" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
-							<checkbox-setting value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
+							<checkbox-setting id="onlyCuratedMapsToggle" value="onlyCuratedMaps" text="Curated Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings" />
+							<checkbox-setting id="onlyVerifiedMappersToggle" value="onlyVerifiedMappers" text="Verified Mappers" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
+							<checkbox-setting id="onlyV3MapsToggle" value="onlyV3Maps" text="Only V3 Maps" bind-value='true' apply-on-change='true' on-change="UpdateFilterSettings"/>
 						</vertical>
 					</scroll-view>
-					
 				</vertical>
 				<vertical child-control-height='false' bg='panel-top' pad='2' pad-bottom='1' pad-top='1' preferred-width='64'>
 					<text text='&lt;color=#DDD>Characteristic / Difficulty' align='Center' underlined='true' bold='true' font-size='3.5' color='#69B' size-delta-y='5'/>

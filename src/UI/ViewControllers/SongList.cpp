@@ -738,6 +738,7 @@ void ViewControllers::SongListController::UpdateDetails() {
 void ViewControllers::SongListController::FilterByUploader() {
     auto currentSong = GetCurrentSong();
     if (!currentSong) {
+        WARNING("currentSong is null, returning");
         return;
     }
 
