@@ -15,33 +15,16 @@
   },
   "workspace": {
     "scripts": {
-      "build": [
-        "pwsh build.ps1 $0:?"
-      ],
-      "clean": [
-        "qpm s build -- -clean"
-      ],
-      "copy": [
-        "pwsh copy.ps1 $0:?"
-      ],
-      "log": [
-        "pwsh start-logging.ps1 $0:?"
-      ],
-      "qmod": [
-        "pwsh createqmod.ps1 BetterSongSearch"
-      ],
-      "restart": [
-        "pwsh restart-game.ps1 $0:?"
-      ],
-      "tomb": [
-        "pwsh tomb.ps1 $0:?"
-      ]
+      "build": ["pwsh build.ps1 $0:?"],
+      "clean": ["qpm s build -- -clean"],
+      "copy": ["pwsh copy.ps1 $0:?"],
+      "log": ["pwsh start-logging.ps1 $0:?"],
+      "qmod": ["pwsh createqmod.ps1 BetterSongSearch"],
+      "restart": ["pwsh restart-game.ps1 $0:?"],
+      "tomb": ["pwsh tomb.ps1 $0:?"]
     },
     "ndk": "^27.2.12479018",
-    "qmodIncludeDirs": [
-      "./build",
-      "./extern/libs"
-    ],
+    "qmodIncludeDirs": ["./build", "./extern/libs"],
     "qmodIncludeFiles": [],
     "qmodOutput": "BetterSongSearch.qmod"
   },
@@ -108,7 +91,7 @@
     },
     {
       "id": "song-details",
-      "versionRange": "^1.0.2",
+      "versionRange": "^1.0.3",
       "additionalData": {}
     },
     {
