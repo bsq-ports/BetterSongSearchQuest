@@ -28,7 +28,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, OnDestroy);
 
     DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
-    
+
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::GenrePicker>, genrePickerModal);
@@ -56,7 +56,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, ShowPresets);
 
 
-    // Options for dropdowns 
+    // Options for dropdowns
     BSML_OPTIONS_LIST_OBJECT(downloadedFilterOptions, "Show All", "Only Downloaded", "Hide Downloaded");
     BSML_OPTIONS_LIST_OBJECT(scoreFilterOptions, "Show All", "Hide Passed", "Only Passed");
     BSML_OPTIONS_LIST_OBJECT(rankedFilterOptions, "Show All", "ScoreSaber Ranked", "BeatLeader Ranked", "Scoresaber Qualified", "BeatLeader Qualified");
@@ -90,7 +90,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(bool, onlyVerifiedMappers);
     DECLARE_INSTANCE_FIELD(bool, onlyV3Maps);
 
-    // These are float because there is some bug in 
+    // These are float because there is some bug in
     DECLARE_INSTANCE_FIELD(float, minimumVotes);
     DECLARE_INSTANCE_FIELD(float, hideOlderThan);
 
@@ -124,15 +124,20 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ListSetting>, existingScoreSetting);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, rankedStateSetting);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, characteristicDropdown);
-    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, difficultyDropdown);   
-    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, modsRequirementDropdown);  
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, difficultyDropdown);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, modsRequirementDropdown);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::DropdownListSetting>, mapStyleDropdown);
 
     DECLARE_INSTANCE_FIELD(UnityW<UnityEngine::UI::Button>, genrePickButton);
-    
+
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, datasetInfoLabel);
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, versionLabel);
-    
+
+    // Toggles that need to be refreshed
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyCuratedMapsToggle);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyVerifiedMappersToggle);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyV3MapsToggle);
+
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:
