@@ -131,6 +131,11 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ClickableText>, datasetInfoLabel);
     DECLARE_INSTANCE_FIELD(UnityW<TMPro::TextMeshProUGUI>, versionLabel);
 
+    // Toggles that need to be refreshed
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyCuratedMapsToggle);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyVerifiedMappersToggle);
+    DECLARE_INSTANCE_FIELD(UnityW<BSML::ToggleSetting>, onlyV3MapsToggle);
+
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
     public:
