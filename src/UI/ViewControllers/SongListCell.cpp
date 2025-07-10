@@ -173,6 +173,10 @@ namespace BetterSongSearch::UI::ViewControllers {
             if (diffsLeft != 1 && i == diffs.size() - 1) {
                 diffs[i]->set_text(fmt::format("<color=#0AD>{} More", diffsLeft));
             } else {
+                // Bounds check to prevent out-of-bounds access to sortedDiffs
+                if (i >= static_cast<int>(sortedDiffs.size())) {
+                    continue;
+                }
                 bool passesFilter = sortedDiffs[i].passesFilter;
                 auto diffname = GetCombinedShortDiffName(entry->diffCount, sortedDiffs[i].diff);
                 std::string stars = "";

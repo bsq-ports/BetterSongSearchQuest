@@ -44,15 +44,15 @@ namespace BetterSongSearch::Util {
      * Removes special characters from a string
      */
     std::string removeSpecialCharacter(std::string_view const s) {
-        std::string stringy(s);
-        for (int i = 0; i < stringy.size(); i++) {
-            if (stringy[i] != ' ' && (stringy[i] < 'A' || stringy[i] > 'Z') && (stringy[i] < 'a' || stringy[i] > 'z') &&
-                (stringy[i] < '0' || stringy[i] > '9')) {
-                stringy.erase(i, 1);
-                i--;
+        std::string result;
+        result.reserve(s.size()); // Pre-allocate to avoid reallocations
+        
+        for (char c : s) {
+            if (c == ' ' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) {
+                result += c;
             }
         }
-        return stringy;
+        return result;
     }
 
     std::string toLower(std::string s) {
