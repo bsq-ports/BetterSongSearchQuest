@@ -131,33 +131,36 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
     }
 
     std::thread([this] {
+        // RAII guard to ensure updating flag is reset
+        struct UpdatingGuard {
+            std::atomic_bool& flag;
+            UpdatingGuard(std::atomic_bool& f) : flag(f) {}
+            ~UpdatingGuard() { flag.store(false); }
+        } guard(updating);
+        
         try {
             DEBUG("Updating player scores");
             long long before = CurrentTimeMs();
 
             if (!playerDataModel) {
                 WARNING("No player data model, cannot update scores");
-                updating.store(false);
                 return;
             }
 
             auto playerData = playerDataModel->get_playerData();
             if (!playerData) {
                 WARNING("No player data, cannot update scores");
-                updating.store(false);
                 return;
             }
 
             auto statsData = playerData->get_levelsStatsData();
             if (!statsData) {
                 WARNING("No stats data, cannot update scores");
-                updating.store(false);
                 return;
             }
 
             if (!this->songDetails || !this->songDetails->songs.get_isDataAvailable()) {
                 WARNING("No song details, cannot update scores");
-                updating.store(false);
                 return;
             }
 
@@ -207,8 +210,6 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             songsWithScoresTemp.swap(songsWithScores);
             lock.unlock();
 
-            updating.store(false);
-
             INFO("Updated player scores in {} ms", CurrentTimeMs() - before);
 
             if (isChanged && !isEmpty) {
@@ -224,7 +225,6 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
             }
         } catch (...) {
             WARNING("Failed to update player scores");
-            updating.store(false);
         }
     }).detach();
 }
@@ -340,6 +340,10 @@ void BetterSongSearch::DataHolder::Search() {
                     t[i] = std::thread([&index, &valuesMutex, totalSongs, this]() {
                         int i = index++;
                         while (i < totalSongs) {
+                            // Additional safety check to prevent out-of-bounds access
+                            if (i >= static_cast<int>(this->songDetails->songs.size())) {
+                                break;
+                            }
                             SongDetailsCache::Song const& item = this->songDetails->songs.at(i);
                             bool meetsFilter = MeetsFilter(&item);
                             if (meetsFilter) {
@@ -409,6 +413,10 @@ void BetterSongSearch::DataHolder::Search() {
                          possibleSongKey](std::vector<std::string> searchQuery) {
                             int j = index++;
                             while (j < totalSongs) {
+                                // Bounds check to prevent out-of-bounds access
+                                if (j >= static_cast<int>(this->_filteredSongList.size())) {
+                                    break;
+                                }
                                 auto songe = this->_filteredSongList[j];
 
                                 float resultWeight = 0;

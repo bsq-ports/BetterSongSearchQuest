@@ -109,12 +109,12 @@ MAKE_HOOK_MATCH(
 
     bool multiplayer = self->____showMultiplayer;
 
-    // Button instance
+    // Button instance - use a weak reference pattern to avoid use-after-free
     static SafePtrUnity<UnityEngine::GameObject> button;
 
     // Don't do anything if not in multiplayer to avoid messing with unity objects
     if (!multiplayer) {
-        if (button) {
+        if (button && button.isAlive()) {
             button->set_active(multiplayer);
         }
         return;
@@ -158,7 +158,9 @@ MAKE_HOOK_MATCH(
         t->add_selectionDidChangeEvent(action);
     }
 
-    button->set_active(multiplayer);
+    if (button && button.isAlive()) {
+        button->set_active(multiplayer);
+    }
 }
 
 MAKE_HOOK_MATCH(
