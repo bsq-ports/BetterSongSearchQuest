@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -44,14 +45,10 @@ namespace BetterSongSearch::Util {
      * Removes special characters from a string
      */
     std::string removeSpecialCharacter(std::string_view const s) {
-        std::string stringy(s);
-        for (int i = 0; i < stringy.size(); i++) {
-            if (stringy[i] != ' ' && (stringy[i] < 'A' || stringy[i] > 'Z') && (stringy[i] < 'a' || stringy[i] > 'z') &&
-                (stringy[i] < '0' || stringy[i] > '9')) {
-                stringy.erase(i, 1);
-                i--;
-            }
-        }
+        auto filteredView = s | std::views::filter([](char c) {
+                                return std::isalnum(c) || c == ' ';
+                            });
+        std::string stringy(filteredView.begin(), filteredView.end());
         return stringy;
     }
 
