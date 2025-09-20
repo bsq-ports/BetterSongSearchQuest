@@ -130,7 +130,7 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
         return;
     }
 
-    std::thread([this] {
+    il2cpp_utils::il2cpp_aware_thread([this] {
         try {
             DEBUG("Updating player scores");
             long long before = CurrentTimeMs();
