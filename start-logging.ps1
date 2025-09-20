@@ -1,20 +1,22 @@
+#!/usr/bin/env pwsh
+
 Param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $self,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $all,
 
-    [Parameter(Mandatory=$false)]
-    [String] $custom="",
+    [Parameter(Mandatory = $false)]
+    [String] $custom = "",
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $file,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $help,
 
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory = $false)]
     [Switch] $excludeHeader
 )
 
@@ -48,7 +50,8 @@ if ($all -eq $false) {
 
 if ($self -eq $true) {
     $command += " | Select-String -pattern `"(BetterSongSearch|AndroidRuntime|SongDetails|CRASH)`""
-} elseif ($custom -ne "") {
+}
+elseif ($custom -ne "") {
     $pattern = "(" + $custom + "|AndriodRuntime|CRASH)"
     $command += " | Select-String -pattern `"$pattern`""
 }

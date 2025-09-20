@@ -1,3 +1,5 @@
+#!/usr/bin/env pwsh
+
 adb push ./assets/DownloadHistory.bsml /sdcard/DownloadHistory.bsml
 adb push ./assets/DownloadHistoryCell.bsml /sdcard/DownloadHistoryCell.bsml
 adb push ./assets/DownloadListCell.bsml /sdcard/DownloadListCell.bsml
