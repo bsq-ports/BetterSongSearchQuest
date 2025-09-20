@@ -1,21 +1,22 @@
+#!/usr/bin/env pwsh
 param (
     [string]$p1
- )
+)
 
 if (Test-Path ./logs/) {
     Write-Host "Folder Exists"
-}else
-{
+}
+else {
     new-item ./logs/ -itemtype directory  | Out-Null
 }
 
 
 adb pull "/storage/emulated/0/Android/data/com.beatgames.beatsaber/files/tombstone_$p1" ./logs/
 
-if (Test-Path "./ndkpath.txt")
-{
+if (Test-Path "./ndkpath.txt") {
     $NDKPath = Get-Content ./ndkpath.txt
-} else {
+}
+else {
     $NDKPath = $ENV:ANDROID_NDK_HOME
 }
 
