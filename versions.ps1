@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # File with versions of beat saber to build for mapped to branches
 # If releasing for new version of beat saber, add new version to the end of the list and add new branch to branches list
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 # Script to delete tags from remote and local if they failed to build
 
 
@@ -14,7 +15,7 @@ if ($modVersion -eq "") {
     exit
 }
 
-# Check if version is in format x.x.x and have no other characters 
+# Check if version is in format x.x.x and have no other characters
 if ($modVersion -notmatch '^\d+\.\d+\.\d+$') {
     Write-Host "Version is not in format x.x.x (example: 0.2.12) or have other characters! it's the first argument"
     exit
@@ -33,7 +34,7 @@ Write-Host "-----------------"
 for ($i = 0; $i -lt $versions.Length; $i++) {
     # Get version
     $v = $versions[$i]
-    
+
     # Print tag
     Write-Host "v$modVersion-bs-$v"
 
@@ -43,7 +44,7 @@ for ($i = 0; $i -lt $versions.Length; $i++) {
 Write-Host "-----------------"
 
 
-  
+
 # Ask if we should continue
 Write-Host "Delete these tags? (y/n)"
 $continue = Read-Host
@@ -64,7 +65,7 @@ Write-Host "Done!"
 for ($i = 0; $i -lt $new_tags.Length; $i++) {
     # Get tag
     $tag = $new_tags[$i]
-   
+
 
     # Check if the tag already exists, if it does then skip it
     $tagExists = git tag | Select-String -Pattern $tag
@@ -81,8 +82,8 @@ for ($i = 0; $i -lt $new_tags.Length; $i++) {
     git tag -d $tag
     Write-Host "Done!"
 
-    
-    Write-Host "Remove tag $tag from local and remote..." 
+
+    Write-Host "Remove tag $tag from local and remote..."
 }
 
 

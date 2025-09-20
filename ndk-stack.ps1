@@ -1,3 +1,4 @@
+#!/usr/bin/env pwsh
 $NDKPath = Get-Content ./ndkpath.txt
 
 $stackScript = "$NDKPath/ndk-stack"
