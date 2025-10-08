@@ -15,33 +15,16 @@
   },
   "workspace": {
     "scripts": {
-      "build": [
-        "pwsh build.ps1 $0:?"
-      ],
-      "clean": [
-        "qpm s build -- -clean"
-      ],
-      "copy": [
-        "pwsh copy.ps1 $0:?"
-      ],
-      "log": [
-        "pwsh start-logging.ps1 $0:?"
-      ],
-      "qmod": [
-        "pwsh createqmod.ps1 BetterSongSearch"
-      ],
-      "restart": [
-        "pwsh restart-game.ps1 $0:?"
-      ],
-      "tomb": [
-        "pwsh tomb.ps1 $0:?"
-      ]
+      "build": ["pwsh build.ps1 $0:?"],
+      "clean": ["qpm s build -- -clean"],
+      "copy": ["pwsh copy.ps1 $0:?"],
+      "log": ["pwsh start-logging.ps1 $0:?"],
+      "qmod": ["pwsh createqmod.ps1 BetterSongSearch"],
+      "restart": ["pwsh restart-game.ps1 $0:?"],
+      "tomb": ["pwsh tomb.ps1 $0:?"]
     },
     "ndk": "^27.3.13750724",
-    "qmodIncludeDirs": [
-      "./build",
-      "./extern/libs"
-    ],
+    "qmodIncludeDirs": ["./build", "./extern/libs"],
     "qmodIncludeFiles": [],
     "qmodOutput": "BetterSongSearch.qmod"
   },
@@ -53,7 +36,7 @@
     },
     {
       "id": "beatsaverplusplus",
-      "versionRange": "^0.2.1",
+      "versionRange": "^0.2.3",
       "additionalData": {}
     },
     {
@@ -73,7 +56,7 @@
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.18.3",
+      "versionRange": "^0.18.4",
       "additionalData": {}
     },
     {
@@ -90,7 +73,7 @@
     },
     {
       "id": "paper2_scotland2",
-      "versionRange": "^4.6.4",
+      "versionRange": "^4.7.0",
       "additionalData": {}
     },
     {
@@ -108,17 +91,17 @@
     },
     {
       "id": "song-details",
-      "versionRange": "^1.0.3",
+      "versionRange": "^1.0.4",
       "additionalData": {}
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.24",
+      "versionRange": "^1.1.25",
       "additionalData": {}
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.7",
+      "versionRange": "^0.6.8",
       "additionalData": {}
     }
   ]
