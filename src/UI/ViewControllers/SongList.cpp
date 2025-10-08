@@ -184,11 +184,9 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         // If loaded, refresh
         if (dataHolder.loaded) {
-            DEBUG("Loaded is true");
             // Initial search
             dataHolder.forceReload = true;
             fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-            fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
         } else {
             this->DownloadSongList();
         }
@@ -213,7 +211,6 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         dataHolder.needsRefresh = false;  // Clear the flag
         dataHolder.forceReload = true;
         fcInstance->SongListController->SortAndFilterSongs(dataHolder.sort, dataHolder.search, true);
-        fcInstance->FilterViewController->datasetInfoLabel->set_text(fmt::format("{} songs in dataset ", dataHolder.songDetails->songs.size()));
     }
 
     // Restore search songs count
@@ -665,7 +662,8 @@ void ViewControllers::SongListController::UpdateDetails() {
                 coverLoading->set_enabled(false);
 
                 // Cleanup old sprite
-                if (oldSprite && oldSprite.ptr() != defaultImage.ptr() &&  // Old sprite is not default image
+                if (
+                    oldSprite && oldSprite.ptr() != defaultImage.ptr() &&  // Old sprite is not default image
                     this->coverImage->get_sprite().ptr() != oldSprite.ptr()  // Old sprite is not the current sprite
                 ) {
                     UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();

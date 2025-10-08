@@ -25,13 +25,14 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_CTOR(ctor);
     DECLARE_INSTANCE_METHOD(void, OnDestroy);
 
-    DECLARE_OVERRIDE_METHOD_MATCH(void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling);
+    DECLARE_OVERRIDE_METHOD_MATCH(
+        void, DidActivate, &HMUI::ViewController::DidActivate, bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling
+    );
 
     // Modals
     DECLARE_INSTANCE_FIELD(UnityW<Modals::Presets>, presetsModal);
     DECLARE_INSTANCE_FIELD(UnityW<Modals::GenrePicker>, genrePickerModal);
     DECLARE_INSTANCE_FIELD(UnityW<BSML::ModalView>, sponsorModal);
-
 
     DECLARE_INSTANCE_METHOD(void, PostParse);
 
@@ -53,15 +54,18 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
     DECLARE_INSTANCE_METHOD(void, ClearFilters);
     DECLARE_INSTANCE_METHOD(void, ShowPresets);
 
-
     // Options for dropdowns
     BSML_OPTIONS_LIST_OBJECT(downloadedFilterOptions, "Show All", "Only Downloaded", "Hide Downloaded");
     BSML_OPTIONS_LIST_OBJECT(scoreFilterOptions, "Show All", "Hide Passed", "Only Passed");
-    BSML_OPTIONS_LIST_OBJECT(rankedFilterOptions, "Show All", "ScoreSaber Ranked", "BeatLeader Ranked", "Scoresaber Qualified", "BeatLeader Qualified");
-    BSML_OPTIONS_LIST_OBJECT(characteristics, "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless");
+    BSML_OPTIONS_LIST_OBJECT(
+        rankedFilterOptions, "Show All", "ScoreSaber Ranked", "BeatLeader Ranked", "Scoresaber Qualified", "BeatLeader Qualified"
+    );
+    BSML_OPTIONS_LIST_OBJECT(
+        characteristics, "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"
+    );
     BSML_OPTIONS_LIST_OBJECT(difficulties, "Any", "Easy", "Normal", "Hard", "Expert", "Expert+");
     BSML_OPTIONS_LIST_OBJECT(modOptions, "Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema", "None");
-    BSML_OPTIONS_LIST_OBJECT(mapStyles,  "Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech");
+    BSML_OPTIONS_LIST_OBJECT(mapStyles, "Any", "accuracy", "balanced", "challenge", "dance", "fitness", "speed", "tech");
 
     // Values for dropdowns
     DECLARE_INSTANCE_FIELD(StringW, existingSongs);
@@ -96,6 +100,7 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
 
     // Used to refresh the filter text
     DECLARE_INSTANCE_METHOD(void, UpdateGenreFilterText);
+    DECLARE_INSTANCE_METHOD(void, SetDatasetInfoText);
 
     // BG layout stuff
     DECLARE_INSTANCE_FIELD(UnityEngine::UI::HorizontalLayoutGroup*, filterbarContainer);
@@ -138,11 +143,10 @@ DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::ViewControllers, FilterViewControlle
 
     // DECLARE_INSTANCE_METHOD(StringW, minRatingSliderFormatFunction, float value);
     // DECLARE_INSTANCE_METHOD(StringW, minUploadDateSliderFormatFunciton, float monthsSinceFirstUpload);
-    public:
-        custom_types::Helpers::Coroutine _UpdateFilterSettings();
-        void OnLoaded();
-        void OnFailed(std::string error);
-        void OnSearchComplete();
-        BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateFilterSettings = nullptr;
-}
-;
+   public:
+    custom_types::Helpers::Coroutine _UpdateFilterSettings();
+    void OnLoaded();
+    void OnFailed(std::string error);
+    void OnSearchComplete();
+    BetterSongSearch::Util::RatelimitCoroutine* limitedUpdateFilterSettings = nullptr;
+};

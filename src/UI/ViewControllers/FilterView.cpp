@@ -332,18 +332,21 @@ void ViewControllers::FilterViewController::PostParse() {
     }
 
     if (this->datasetInfoLabel && dataHolder.songDetails->songs.get_isDataAvailable()) {
-        std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
-
-        std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
-        std::tm local_tm = *std::localtime(&tt);
-
-        std::string timeScrapedString = fmt::format("{:%d %b %y - %H:%M}", local_tm);
-
-        this->datasetInfoLabel->set_text(fmt::format("{} songs in dataset.  Last update: {}", dataHolder.songDetails->songs.size(), timeScrapedString)
-        );
+        SetDatasetInfoText();
     } else {
         datasetInfoLabel->set_text("Loading...");
     }
+}
+
+void ViewControllers::FilterViewController::SetDatasetInfoText() {
+    std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
+
+    std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
+    std::tm local_tm = *std::localtime(&tt);
+
+    std::string timeScrapedString = fmt::format("{:%d %b - %H:%M}", local_tm);
+
+    this->datasetInfoLabel->set_text(fmt::format("{} songs in dataset.  Last update: {}", dataHolder.songDetails->songs.size(), timeScrapedString));
 }
 
 void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bool addedToHeirarchy, bool screenSystemDisabling) {
@@ -593,15 +596,7 @@ void ViewControllers::FilterViewController::OnLoaded() {
     }
 
     BSML::MainThreadScheduler::Schedule([this] {
-        std::chrono::sys_seconds timeScraped = dataHolder.songDetails->get_scrapeEndedTimeUnix();
-
-        std::time_t tt = std::chrono::system_clock::to_time_t(timeScraped);
-        std::tm local_tm = *std::localtime(&tt);
-
-        std::string timeScrapedString = fmt::format("{:%d %b %y - %H:%M}", local_tm);
-
-        this->datasetInfoLabel->set_text(fmt::format("{} songs in dataset.  Last update: {}", dataHolder.songDetails->songs.size(), timeScrapedString)
-        );
+        SetDatasetInfoText();
     });
 }
 
