@@ -31,7 +31,7 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^6.4.2",
+      "versionRange": "^7.4.0",
       "additionalData": {}
     },
     {
@@ -41,22 +41,22 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "4008.*",
+      "versionRange": "^4100.0.1",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.4.55",
+      "versionRange": "^0.6.0",
       "additionalData": {}
     },
     {
       "id": "config-utils",
-      "versionRange": "^2.0.3",
+      "versionRange": "^2.0.4",
       "additionalData": {}
     },
     {
       "id": "custom-types",
-      "versionRange": "^0.18.4",
+      "versionRange": "^0.19.0",
       "additionalData": {}
     },
     {
@@ -96,12 +96,17 @@
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.25",
+      "versionRange": "^1.2.0",
       "additionalData": {}
     },
     {
       "id": "web-utils",
       "versionRange": "^0.6.8",
+      "additionalData": {}
+    },
+    {
+      "id": "flamingo",
+      "versionRange": "^1.1.2",
       "additionalData": {}
     }
   ]
