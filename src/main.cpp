@@ -28,6 +28,7 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "Util/TextUtil.hpp"
+#include "bsml/shared/Helpers/delegates.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -62,26 +63,23 @@ MAKE_HOOK_MATCH(
     System::Action* finishedCallback,
     bool immediately
 ) {
-    if (!getPluginConfig().ReturnToBSS.GetValue()) {
+    if (
+        !fromBSS ||
+        !getPluginConfig().ReturnToBSS.GetValue() ||
+        !(flowCoordinator->get_gameObject()->get_name() == "SoloFreePlayFlowCoordinator")
+    ) return ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
+    auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
+    UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> betterSongSearchFlowCoordinator =
+        UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault(
+        );
+    if (betterSongSearchFlowCoordinator && currentFlowCoordinator && currentFlowCoordinator->_parentFlowCoordinator) {
+        // Replace current with BSS
+        currentFlowCoordinator->_parentFlowCoordinator->ReplaceChildFlowCoordinator(
+            betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false
+        );
+    } else {
+        ERROR("Could not find Better Song Search flow coordinator to return to, falling back to normal return");
         ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
-        return;
-    }
-    if (!(flowCoordinator->get_gameObject()->get_name() == "SoloFreePlayFlowCoordinator")) {
-        ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
-        return;
-    }
-
-    ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, true);
-    if (fromBSS) {
-        auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-        UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> betterSongSearchFlowCoordinator =
-            UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault(
-            );
-        if (betterSongSearchFlowCoordinator) {
-            currentFlowCoordinator->PresentFlowCoordinator(
-                betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, true, false
-            );
-        }
     }
 };
 
