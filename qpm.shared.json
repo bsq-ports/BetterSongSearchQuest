@@ -231,16 +231,19 @@
     },
     {
       "dependency": {
-        "id": "scotland2",
-        "versionRange": "=0.1.6",
+        "id": "libil2cpp",
+        "versionRange": "=0.5.0",
         "additionalData": {
-          "soLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.6/libsl2.so",
-          "debugSoLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.6/debug_libsl2.so",
-          "overrideSoName": "libsl2.so",
-          "branchName": "version/v0_1_6"
+          "headersOnly": true,
+          "compileOptions": {
+            "systemIncludes": [
+              "il2cpp/external/baselib/Include",
+              "il2cpp/external/baselib/Platforms/Android/Include"
+            ]
+          }
         }
       },
-      "version": "0.1.6"
+      "version": "0.5.0"
     },
     {
       "dependency": {
@@ -325,62 +328,42 @@
     },
     {
       "dependency": {
-        "id": "libil2cpp",
-        "versionRange": "=0.5.0",
-        "additionalData": {
-          "headersOnly": true,
-          "compileOptions": {
-            "systemIncludes": [
-              "il2cpp/external/baselib/Include",
-              "il2cpp/external/baselib/Platforms/Android/Include"
-            ]
-          }
-        }
-      },
-      "version": "0.5.0"
-    },
-    {
-      "dependency": {
         "id": "rapidjson-macros",
-        "versionRange": "=2.1.0",
+        "versionRange": "=3.0.0",
         "additionalData": {
           "headersOnly": true,
+          "branchName": "version/v3_0_0",
           "cmake": false
         }
       },
-      "version": "2.1.0"
+      "version": "3.0.0"
+    },
+    {
+      "dependency": {
+        "id": "scotland2",
+        "versionRange": "=0.1.7",
+        "additionalData": {
+          "soLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.7/libsl2.so",
+          "debugSoLink": "https://github.com/sc2ad/scotland2/releases/download/v0.1.7/debug_libsl2.so",
+          "overrideSoName": "libsl2.so",
+          "branchName": "version/v0_1_7"
+        }
+      },
+      "version": "0.1.7"
     },
     {
       "dependency": {
         "id": "config-utils",
-        "versionRange": "=2.1.0",
+        "versionRange": "=2.0.4",
         "additionalData": {
           "headersOnly": true,
+          "soLink": "https://github.com/darknight1050/config-utils/releases/download/v2.0.4/libconfig-utils_test.so",
           "overrideSoName": "libconfig-utils_test.so",
+          "branchName": "version/v2_0_4",
           "cmake": true
         }
       },
-      "version": "2.1.0"
-    },
-    {
-      "dependency": {
-        "id": "beatsaber-hook",
-        "versionRange": "=7.4.0",
-        "additionalData": {
-          "soLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.0/libbeatsaber-hook.so",
-          "debugSoLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.0/debug_libbeatsaber-hook.so",
-          "overrideSoName": "libbeatsaber-hook.so",
-          "modLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.0/beatsaber-hook.qmod",
-          "branchName": "version/v7_4_0",
-          "compileOptions": {
-            "cppFlags": [
-              "-Wno-extra-qualification"
-            ]
-          },
-          "cmake": true
-        }
-      },
-      "version": "7.4.0"
+      "version": "2.0.4"
     },
     {
       "dependency": {
@@ -403,6 +386,26 @@
         }
       },
       "version": "1.2.0"
+    },
+    {
+      "dependency": {
+        "id": "beatsaber-hook",
+        "versionRange": "=7.4.2",
+        "additionalData": {
+          "soLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.2/libbeatsaber-hook.so",
+          "debugSoLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.2/debug_libbeatsaber-hook.so",
+          "overrideSoName": "libbeatsaber-hook.so",
+          "modLink": "https://github.com/QuestPackageManager/beatsaber-hook/releases/download/v7.4.2/beatsaber-hook.qmod",
+          "branchName": "version/v7_4_2",
+          "compileOptions": {
+            "cppFlags": [
+              "-Wno-extra-qualification"
+            ]
+          },
+          "cmake": true
+        }
+      },
+      "version": "7.4.2"
     }
   ]
 }
