@@ -69,13 +69,14 @@ MAKE_HOOK_MATCH(
         !(flowCoordinator->get_gameObject()->get_name() == "SoloFreePlayFlowCoordinator")
     ) return ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
     auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-    UnityW<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> betterSongSearchFlowCoordinator =
-        UnityEngine::Resources::FindObjectsOfTypeAll<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*>()->FirstOrDefault(
-        );
+    
+    auto betterSongSearchFlowCoordinator = manager.flow;
     if (betterSongSearchFlowCoordinator && currentFlowCoordinator && currentFlowCoordinator->_parentFlowCoordinator) {
         // Replace current with BSS
+        // This is here because the modals in hmui suck and it just does not hide in songcore.
+        // TODO: Fix it in songcore maybe? Idk how
         currentFlowCoordinator->_parentFlowCoordinator->ReplaceChildFlowCoordinator(
-            betterSongSearchFlowCoordinator, nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false
+            betterSongSearchFlowCoordinator.ptr(), nullptr, HMUI::ViewController::AnimationDirection::Horizontal, false
         );
     } else {
         ERROR("Could not find Better Song Search flow coordinator to return to, falling back to normal return");

@@ -11,10 +11,10 @@
 namespace BetterSongSearch::UI {
     class Manager {
         HMUI::FlowCoordinator* parentFlow;
-        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
         BSML::MenuButton* menuButton;
 
        public:
+        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
         Manager(Manager const&) = delete;  // no accidental copying
         Manager() = default;
 
