@@ -199,7 +199,7 @@ MAKE_HOOK_MATCH(
     ::GlobalNamespace::AudioClipAsyncLoader* audioClipAsyncLoader,
     ::GlobalNamespace::SettingsManager* settingsManager,
     ::GlobalNamespace::BeatmapDataLoader* beatmapDataLoader,
-    bool useTestNoteCutSoundEffects
+    ::GlobalNamespace::GameplayAdditionalInformation* gameplayAdditionalInformation
 ) {
     // Close manager first
     manager.Close(true, false);
@@ -217,7 +217,7 @@ MAKE_HOOK_MATCH(
         audioClipAsyncLoader,
         settingsManager,
         beatmapDataLoader,
-        useTestNoteCutSoundEffects
+        gameplayAdditionalInformation
     );
 }
 
