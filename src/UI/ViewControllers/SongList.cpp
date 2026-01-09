@@ -291,6 +291,8 @@ void ViewControllers::SongListController::OnDestroy() {
     dataHolder.loadingFailed -= {&ViewControllers::SongListController::SongDataError, this};
     dataHolder.searchEnded -= {&ViewControllers::SongListController::SearchDone, this};
     dataHolder.playerDataLoaded -= {&ViewControllers::SongListController::PlayerDataLoaded, this};
+
+    SongCore::SongLoader::RuntimeSongLoader::get_instance()->SongsLoaded -= {&SongListController::OnSongsLoaded, this};
 }
 
 void ViewControllers::SongListController::SelectRandom() {
@@ -662,8 +664,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                 coverLoading->set_enabled(false);
 
                 // Cleanup old sprite
-                if (
-                    oldSprite && oldSprite.ptr() != defaultImage.ptr() &&  // Old sprite is not default image
+                if (oldSprite && oldSprite.ptr() != defaultImage.ptr() &&  // Old sprite is not default image
                     this->coverImage->get_sprite().ptr() != oldSprite.ptr()  // Old sprite is not the current sprite
                 ) {
                     UnityW<UnityEngine::Texture2D> texture = oldSprite->get_texture();
@@ -892,22 +893,14 @@ void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::Song
         return;
     }
 
-    // Ensure it runs on the main thread
-    bool isMainThread = BSML::MainThreadScheduler::CurrentThreadIsMainThread();
-    if (!isMainThread) {
-        ERROR("Calling OnSongsLoaded not on the main thread, sending to main thread");
-        BSML::MainThreadScheduler::Schedule([this, songs] {
-            this->OnSongsLoaded(songs);
-        });
-        return;
-    }
-
     auto song = currentSong;
     DEBUG("Song index is: {}", song->index);
     auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
     bool loaded = beatmap != nullptr;
 
-    SetIsDownloaded(loaded);
+    BSML::MainThreadScheduler::Schedule([this, loaded] {
+        SetIsDownloaded(loaded);
+    });
 }
 
 SongDetailsCache::Song const* ViewControllers::SongListController::GetCurrentSong() {
