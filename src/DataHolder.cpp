@@ -169,14 +169,14 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
                 auto statsDataKeys = statsDataEnumerator.get_Current();
                 auto x = statsDataKeys.value;
 
-                if (!x->get_validScore() || x->get_highScore() == 0 || x->get_levelID()->get_Length() < 13 + 40) {
+                if (!x->_validScore || x->_highScore == 0 || x->_levelID->get_Length() < 13 + 40) {
                     continue;
                 }
-                std::u16string_view levelid = x->get_levelID();
+                std::u16string_view levelid = x->_levelID;
                 if (!levelid.starts_with(u"custom_level_")) {
                     continue;
                 };
-                auto sh = std::regex_replace((std::string) x->get_levelID(), std::basic_regex("custom_level_"), "");
+                auto sh = std::regex_replace((std::string) x->_levelID, std::basic_regex("custom_level_"), "");
 
                 auto& song = dataHolder.songDetails->songs.FindByHash(sh);
 
@@ -187,7 +187,7 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
                 bool foundDiff = false;
 
                 for (auto& diff : song) {
-                    if (diff.difficulty == SongDetailsCache::MapDifficulty((int) x->____difficulty.value__)) {
+                    if (diff.difficulty == SongDetailsCache::MapDifficulty((int) x->_difficulty.value__)) {
                         foundDiff = true;
                         break;
                     }
