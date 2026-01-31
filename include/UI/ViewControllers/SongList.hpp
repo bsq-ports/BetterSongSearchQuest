@@ -181,5 +181,5 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongList
 
    private:
     std::shared_mutex _currentSongMutex;
-    SongDetailsCache::Song const* _currentSong = nullptr;
+    std::string _currentSongHash = "";
 };
