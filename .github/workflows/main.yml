@@ -7,14 +7,14 @@ env:
 
 on:
   push:
-    branches: [ main, dev, BSML-rewrite, song-details ]
+    branches: [ main, 1.40.8, 1.37.0]
   pull_request:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v4
       name: Checkout
@@ -32,7 +32,7 @@ jobs:
         workflow_token: ${{secrets.GITHUB_TOKEN}}
         restore: true # will run restore on download
         cache: true #will cache dependencies
-        
+
     - name: Build
       run: |
         cd ${GITHUB_WORKSPACE}
@@ -49,7 +49,7 @@ jobs:
         cd ./build/
         pattern="lib${module_id}*.so"
         files=( $pattern )
-        echo "NAME=${files[0]}" >> ${GITHUB_OUTPUT} 
+        echo "NAME=${files[0]}" >> ${GITHUB_OUTPUT}
 
     - name: Upload non-debug artifact
       uses: actions/upload-artifact@v4
