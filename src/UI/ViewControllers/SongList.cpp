@@ -905,10 +905,25 @@ void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::Song
 
 SongDetailsCache::Song const* ViewControllers::SongListController::GetCurrentSong() {
     std::shared_lock<std::shared_mutex> lock(_currentSongMutex);
+    auto currentSongHash = _currentSongHash;
+
+    // Store current song by hash to prevent dangling pointer issues
+    SongDetailsCache::Song const* _currentSong = nullptr;
+    if (currentSongHash != "") {
+        auto& song = dataHolder.songDetails->songs.FindByHash(currentSongHash);
+        if (song != SongDetailsCache::Song::none) {
+            _currentSong = &song;
+        }
+    }
     return _currentSong;
 }
 
 void ViewControllers::SongListController::SetCurrentSong(SongDetailsCache::Song const* song) {
     std::unique_lock<std::shared_mutex> lock(_currentSongMutex);
-    _currentSong = song;
+    // This is here to make sure that the pointer to the song is valid, I can't be sure if other mods don't corrupt memory
+    if (song != nullptr && song->index >= 0 && song->index < dataHolder.songDetails->songs.size()) {
+        _currentSongHash = song->hash();
+    } else {
+        _currentSongHash = "";
+    }
 }
