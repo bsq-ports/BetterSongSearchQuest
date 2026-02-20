@@ -1,5 +1,8 @@
 #include "UI/ViewControllers/DownloadHistoryCell.hpp"
 
+#include <mutex>
+#include <shared_mutex>
+
 #include "UnityEngine/RectTransform.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, CustomDownloadListTableCell)
@@ -8,8 +11,11 @@ namespace BetterSongSearch::UI::ViewControllers {
     CustomDownloadListTableCell* CustomDownloadListTableCell::PopulateWithSongData(DownloadHistoryEntry* entry) {
         songName->set_text(entry->songName);
         levelAuthorName->set_text(entry->levelAuthorName);
-        statusLabel->set_text(entry->statusMessage());
         this->entry = entry;
+        statusLabel->set_text(entry->statusMessage());
+
+        // Cells persist so it seems to be safe to just store this. If the entry changes we will just update the cell with the new data
+        std::unique_lock<std::shared_mutex> lock(entry->syncMutex);
         entry->UpdateProgressHandler = [this]() {
             UpdateProgress();
         };
@@ -25,8 +31,10 @@ namespace BetterSongSearch::UI::ViewControllers {
         if (!entry) {
             return;
         }
-        auto clr = entry->status == DownloadHistoryEntry::Failed                 ? UnityEngine::Color::get_red()
-                 : entry->status != DownloadHistoryEntry::DownloadStatus::Queued ? UnityEngine::Color::get_green()
+        std::shared_lock<std::shared_mutex> lock(entry->syncMutex);
+        auto status = entry->status;
+        auto clr = status == DownloadStatus::Failed                 ? UnityEngine::Color::get_red()
+                 : status != DownloadStatus::Queued ? UnityEngine::Color::get_green()
                                                                                  : UnityEngine::Color::get_gray();
         clr.a = 0.5f + (entry->downloadProgress * 0.4f);
         bgProgress->set_color(clr);
@@ -40,6 +48,7 @@ namespace BetterSongSearch::UI::ViewControllers {
     }
 
     void CustomDownloadListTableCell::UpdateProgress() {
+        if (!entry) return;
         statusLabel->set_text(entry->statusMessage());
         RefreshBar();
     }
@@ -56,6 +65,8 @@ namespace BetterSongSearch::UI::ViewControllers {
         if (!entry) {
             return;
         }
+        std::unique_lock<std::shared_mutex> lock(entry->syncMutex);
         entry->UpdateProgressHandler = nullptr;
+        entry = nullptr;
     }
 }  // namespace BetterSongSearch::UI::ViewControllers

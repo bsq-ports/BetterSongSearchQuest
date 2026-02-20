@@ -1,5 +1,8 @@
 #include "UI/ViewControllers/DownloadHistory.hpp"
 
+#include <mutex>
+#include <shared_mutex>
+
 #include "assets.hpp"
 #include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -23,9 +26,9 @@ using namespace BetterSongSearch::Util;
 
 DEFINE_TYPE(BetterSongSearch::UI::ViewControllers, DownloadHistoryViewController);
 
-// TODO: Make entry access thread safe
 void errored(std::string message, DownloadHistoryEntry* entry) {
-    entry->status = DownloadHistoryEntry::DownloadStatus::Failed;
+    std::unique_lock<std::shared_mutex> lock(entry->syncMutex);
+    entry->status = DownloadStatus::Failed;
     entry->statusDetails = fmt::format(": {}", message);
     entry->retries = 69;
 }
@@ -88,23 +91,27 @@ void ViewControllers::DownloadHistoryViewController::SelectSong(HMUI::TableView*
         return;
     }
 
-    DEBUG("Cell is clicked");
-    if (id >= NumberOfCells()) {
-        WARNING("Non existent song id");
+    std::shared_lock<std::shared_mutex> lock(downloadListMutex);
+    auto length = downloadEntryList.size();
+    if (id >= length) {
+        WARNING("Non existent song id, id: {}, length: {}", id, length);
         return;
     }
-
     auto entry = downloadEntryList[id];
+    lock.unlock();
     INFO("Selecting a song {}", entry->songName);
 
     // If downloaded then select the song
-    if (entry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+    auto entryStatus = entry->getStatus();
+    if (entryStatus == DownloadStatus::Downloaded) {
         DEBUG("DOWNLOADED");
         auto controller = fcInstance->SongListController;
         controller->SelectSongByHash(entry->hash);
         controller->songListTable()->ClearSelection();
-    } else if (entry->status == DownloadHistoryEntry::DownloadStatus::Failed) {
+    } else if (entryStatus == DownloadStatus::Failed) {
+        std::unique_lock<std::shared_mutex> lock(entry->syncMutex);
         entry->retries = 0;
+        lock.unlock();
         ProcessDownloads(true);
     }
 
@@ -117,6 +124,7 @@ float ViewControllers::DownloadHistoryViewController::CellSize() {
 }
 
 int ViewControllers::DownloadHistoryViewController::NumberOfCells() {
+    std::shared_lock<std::shared_mutex> lock(downloadListMutex);
     return downloadEntryList.size();
 }
 
@@ -127,18 +135,26 @@ void ViewControllers::DownloadHistoryViewController::ctor() {
 
 // BSML::CustomCellInfo
 HMUI::TableCell* ViewControllers::DownloadHistoryViewController::CellForIdx(HMUI::TableView* tableView, int idx) {
-    return ViewControllers::DownloadListTableData::GetCell(tableView)->PopulateWithSongData(downloadEntryList[idx]);
+    std::shared_lock<std::shared_mutex> lock(downloadListMutex);
+    auto entry = downloadEntryList[idx];
+    lock.unlock();
+
+    return ViewControllers::DownloadListTableData::GetCell(tableView)->PopulateWithSongData(entry);
 }
 
 bool ViewControllers::DownloadHistoryViewController::TryAddDownload(SongDetailsCache::Song const* song, bool isBatch) {
     DownloadHistoryEntry* existingDLHistoryEntry = nullptr;
 
-    for (auto entry : downloadEntryList) {
-        if (entry->key == song->key()) {
-            existingDLHistoryEntry = entry;
-            break;
+    {
+        std::shared_lock<std::shared_mutex> lock(downloadListMutex);
+        for (auto entry : downloadEntryList) {
+            if (entry->key == song->key()) {
+                existingDLHistoryEntry = entry;
+                break;
+            }
         }
     }
+
 
     if (existingDLHistoryEntry) {
         existingDLHistoryEntry->ResetIfFailed();
@@ -149,12 +165,15 @@ bool ViewControllers::DownloadHistoryViewController::TryAddDownload(SongDetailsC
     }
 
     if (existingDLHistoryEntry == nullptr) {
-        // var newPos = downloadList.FindLastIndex(x => x.status > DownloadHistoryEntry.DownloadStatus.Queued);
+        std::unique_lock<std::shared_mutex> lock(downloadListMutex);
         downloadEntryList.push_back(new DownloadHistoryEntry(song));
+        lock.unlock();
+
         downloadHistoryTable()->ReloadData();
         downloadHistoryTable()->ScrollToCellWithIdx(0, HMUI::TableView::ScrollPositionType::Beginning, false);
     } else {
-        existingDLHistoryEntry->status = DownloadHistoryEntry::DownloadStatus::Queued;
+        std::unique_lock<std::shared_mutex> lock(existingDLHistoryEntry->syncMutex);
+        existingDLHistoryEntry->status = DownloadStatus::Queued;
     }
 
     ProcessDownloads(!isBatch);
@@ -167,33 +186,40 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         return;
     }
 
-    // Count the ones  that need to be downloaded
-    int count = 0;
-    for (auto entry : downloadEntryList) {
-        if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
-                DownloadHistoryEntry::DownloadStatus::Preparing | DownloadHistoryEntry::DownloadStatus::Downloading
-            ))) {
-            count++;
+    int count = 0; // Count the ones  that need to be downloaded
+    {
+        std::shared_lock<std::shared_mutex> lock(downloadListMutex);
+        for (auto entry : downloadEntryList) {
+            if (entry->IsInAnyOfStates((DownloadStatus)(
+                    DownloadStatus::Preparing | DownloadStatus::Downloading
+                ))) {
+                count++;
+            }
         }
     }
+
     if (count >= MAX_PARALLEL_DOWNLOADS) {
         if (forceTableReload) {
             this->RefreshTable();
         }
         return;
     }
+
     // Get first entry
     DownloadHistoryEntry* currentEntry = nullptr;
-    for (auto entry : downloadEntryList) {
-        if (entry->retries < RETRY_COUNT && entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
-                                                DownloadHistoryEntry::DownloadStatus::Failed | DownloadHistoryEntry::DownloadStatus::Queued
-                                            ))) {
-            if (!currentEntry) {
-                currentEntry = entry;
-                continue;
-            }
-            if (entry->orderValue() > currentEntry->orderValue()) {
-                currentEntry = entry;
+    {
+        std::shared_lock<std::shared_mutex> downloadEntryListLock(downloadListMutex);
+        for (auto entry : downloadEntryList) {
+            if (entry->getRetries() < RETRY_COUNT && entry->IsInAnyOfStates((DownloadStatus)(
+                                                    DownloadStatus::Failed | DownloadStatus::Queued
+                                                ))) {
+                if (!currentEntry) {
+                    currentEntry = entry;
+                    continue;
+                }
+                if (entry->orderValue() > currentEntry->orderValue()) {
+                    currentEntry = entry;
+                }
             }
         }
     }
@@ -204,41 +230,50 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
     }
 
     // We have the entry, now we need to download
-    if (currentEntry->status == DownloadHistoryEntry::DownloadStatus::Failed) {
+    if (currentEntry->getStatus() == DownloadStatus::Failed) {
+        std::unique_lock<std::shared_mutex> lock(currentEntry->syncMutex);
         currentEntry->retries++;
     }
-    currentEntry->downloadProgress = 0.0f;
-    currentEntry->status = DownloadHistoryEntry::DownloadStatus::Preparing;
-    currentEntry->lastUpdate = CurrentTimeMs();
-    RefreshTable(true);
+
+    {
+        std::unique_lock<std::shared_mutex> lock(currentEntry->syncMutex);
+        currentEntry->downloadProgress = 0.0f;
+        currentEntry->status = DownloadStatus::Downloading;
+        currentEntry->lastUpdate = CurrentTimeMs();
+    }
 
     std::function<void(float)> progressUpdate = [this, currentEntry](float downloadProgress) {
+        std::shared_lock<std::shared_mutex> lock(currentEntry->syncMutex);
         auto now = CurrentTimeMs();
         if (now - currentEntry->lastUpdate < 50) {
             return;
         }
+        lock.unlock();
 
-        currentEntry->statusDetails = fmt::format(
-            "({}%{})",
-            (int) round(downloadProgress * 100),
-            currentEntry->retries == 0 ? "" : fmt::format(", retry {} / {}", currentEntry->retries, RETRY_COUNT)
-        );
-        currentEntry->lastUpdate = now;
-
-        currentEntry->downloadProgress = downloadProgress;
+        {
+            std::unique_lock<std::shared_mutex> uniqueLock(currentEntry->syncMutex);
+            currentEntry->statusDetails = fmt::format(
+                "({}%{})",
+                (int) round(downloadProgress * 100),
+                currentEntry->retries == 0 ? "" : fmt::format(", retry {} / {}", currentEntry->retries, RETRY_COUNT)
+            );
+            currentEntry->lastUpdate = now;
+            currentEntry->downloadProgress = downloadProgress;
+            uniqueLock.unlock();
+        }
 
         BSML::MainThreadScheduler::Schedule([currentEntry] {
-            if (currentEntry->UpdateProgressHandler != nullptr) {
-                currentEntry->UpdateProgressHandler();
+            std::shared_lock<std::shared_mutex> lock(currentEntry->syncMutex);
+            auto handler = currentEntry->UpdateProgressHandler;
+            lock.unlock();
+            if (handler == nullptr) {
+                return;
             }
+            handler();
         });
 
         DEBUG("DownloadProgress: {}", downloadProgress);
     };
-    DEBUG("Hash {}", currentEntry->hash);
-
-    currentEntry->downloadProgress = 0.0f;
-    currentEntry->status = DownloadHistoryEntry::DownloadStatus::Downloading;
 
     RefreshTable(true);
 
@@ -310,9 +345,12 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                 RefreshTable(true);
                 this->ProcessDownloads(forceTableReload);
             } else {
-                currentEntry->status = DownloadHistoryEntry::DownloadStatus::Downloaded;
-                currentEntry->statusDetails = "";
-                currentEntry->downloadProgress = 1.0f;
+                {
+                    std::unique_lock<std::shared_mutex> lock(currentEntry->syncMutex);
+                    currentEntry->status = DownloadStatus::Downloaded;
+                    currentEntry->statusDetails = "";
+                    currentEntry->downloadProgress = 1.0f;
+                }
                 DEBUG("Success downloading the song");
                 RefreshTable(true);
                 hasUnloadedDownloads = true;
@@ -330,7 +368,8 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
             if (fcInstance && fcInstance->SongListController) {
                 auto currentSong = fcInstance->SongListController->GetCurrentSong();
                 if (currentSong != nullptr) {
-                    if (currentEntry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+                    auto entryStatus = currentEntry->getStatus();
+                    if (entryStatus == DownloadStatus::Downloaded) {
                         // NESTING HELLLL
                         if (currentSong->hash() == currentEntry->hash) {
                             fcInstance->SongListController->SetIsDownloaded(true);
@@ -353,9 +392,12 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
     BSML::MainThreadScheduler::Schedule([this] {
         DEBUG("Refreshing table");
         // Sort entry list
-        std::stable_sort(downloadEntryList.begin(), downloadEntryList.end(), [](DownloadHistoryEntry* entry1, DownloadHistoryEntry* entry2) {
-            return (entry1->orderValue() < entry2->orderValue());
-        });
+        {
+            std::unique_lock<std::shared_mutex> lock(downloadListMutex);
+            std::stable_sort(downloadEntryList.begin(), downloadEntryList.end(), [](DownloadHistoryEntry* entry1, DownloadHistoryEntry* entry2) {
+                return (entry1->orderValue() < entry2->orderValue());
+            });
+        }
         DEBUG("Starting coroutine to refresh table");
         this->StartCoroutine(custom_types::Helpers::new_coro(this->limitedFullTableReload->Call()));
     });
@@ -367,6 +409,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(
 };
 
 DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string hash) {
+    std::shared_lock<std::shared_mutex> lock(downloadListMutex);
     for (auto entry : this->downloadEntryList) {
         if (entry->hash == hash) {
             return entry;
@@ -380,13 +423,13 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(Downloa
     if (dlElem == nullptr) {
         return true;
     }
-    if (dlElem->retries == 3 && dlElem->status == DownloadHistoryEntry::DownloadStatus::Failed) {
+    if (dlElem->getRetries() == 3 && dlElem->getStatus() == DownloadStatus::Failed) {
         return true;
     }
 
-    if (!dlElem->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
-            DownloadHistoryEntry::DownloadStatus::Preparing | DownloadHistoryEntry::DownloadStatus::Downloading |
-            DownloadHistoryEntry::DownloadStatus::Queued
+    if (!dlElem->IsInAnyOfStates((DownloadStatus)(
+            DownloadStatus::Preparing | DownloadStatus::Downloading |
+            DownloadStatus::Queued
         )) &&
         !CheckIsDownloaded(dlElem->hash)) {
         return true;
@@ -399,7 +442,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloaded(std::stri
     auto entry = this->GetDownloadByHash(songHash);
     bool downloadedInList = false;
 
-    if (entry != nullptr && entry->status == DownloadHistoryEntry::DownloadStatus::Downloaded) {
+    if (entry != nullptr && entry->getStatus() == DownloadStatus::Downloaded) {
         downloadedInList = true;
     };
     return (downloadedInList || CheckIsDownloadedAndLoaded(songHash));
@@ -411,9 +454,10 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::st
 }
 
 bool ViewControllers::DownloadHistoryViewController::HasPendingDownloads() {
+    std::shared_lock<std::shared_mutex> lock(downloadListMutex);
     for (auto entry : downloadEntryList) {
-        if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
-                DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued
+        if (entry->IsInAnyOfStates((DownloadStatus)(
+                DownloadStatus::Downloading | DownloadStatus::Queued
             ))) {
             return true;
         }

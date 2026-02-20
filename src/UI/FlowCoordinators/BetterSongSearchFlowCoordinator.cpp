@@ -92,14 +92,20 @@ bool BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::Co
 void BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator::ConfirmCancelCallback(bool doCancel) {
     if (doCancel) {
         // Fail all dls
+        std::shared_lock<std::shared_mutex> lock(DownloadHistoryViewController->downloadListMutex);
         for (auto entry : DownloadHistoryViewController->downloadEntryList) {
-            if (entry->IsInAnyOfStates((DownloadHistoryEntry::DownloadStatus)(
-                    DownloadHistoryEntry::DownloadStatus::Downloading | DownloadHistoryEntry::DownloadStatus::Queued
+            if (entry->IsInAnyOfStates((DownloadStatus)(
+                    DownloadStatus::Downloading | DownloadStatus::Queued
                 ))) {
+
+                // Update entry status
+                std::unique_lock<std::shared_mutex> entryLock(entry->syncMutex);
                 entry->retries = 69;
-                entry->status = DownloadHistoryEntry::DownloadStatus::Failed;
+                entry->status = DownloadStatus::Failed;
+                entryLock.unlock();
             }
         }
+        lock.unlock();
 
         // closeCancelSource?.Cancel();
         cancelConfirmCallback();

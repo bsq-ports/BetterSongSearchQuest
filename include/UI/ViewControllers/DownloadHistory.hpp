@@ -1,5 +1,6 @@
 #pragma once
 
+#include <shared_mutex>
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView.hpp"
@@ -29,37 +30,65 @@
 
 inline static const int RETRY_COUNT = 3;
 
+enum DownloadStatus {
+    Downloading = 1,
+    Preparing = 2,
+    Extracting = 4,
+    Queued = 8,
+    Failed = 16,
+    Downloaded = 32,
+    Loaded = 64
+};
 
 // Make sure to access it only from the main thread (not thread safe)
 class DownloadHistoryEntry {
 public:
-    enum DownloadStatus {
-        Downloading = 1,
-        Preparing = 2,
-        Extracting = 4,
-        Queued = 8,
-        Failed = 16,
-        Downloaded = 32,
-        Loaded = 64
-    };
+    // These fields are immutable, so no need to synchronize access to them
+    const std::string songName;
+    const std::string levelAuthorName;
+    const std::string key;
+    const std::string hash;
+
+    // Used to synchronize access to the entry across threads
+    std::shared_mutex syncMutex;
+
+    // Mutable fields
     DownloadStatus status = DownloadStatus::Queued;
     std::string statusDetails = "";
-    std::string statusMessage() {return fmt::format("{} {}", StatusToString(status), statusDetails);}
     float downloadProgress = 1.0f;
     int retries = 0;
-    bool isDownloading() { return status == DownloadStatus::Downloading || status == DownloadStatus::Preparing || status == DownloadStatus::Extracting;}
-    bool isQueued() { return status == DownloadStatus::Queued || (status == DownloadStatus::Failed && retries < RETRY_COUNT);}
-    std::string songName;
-    std::string levelAuthorName;
-    std::string key;
-    std::string hash;
-
     // Last update used to limit progress updates cause I can't code in c++
     long long lastUpdate;
+    std::function<void()> UpdateProgressHandler;
 
-    int orderValue() { return ((int)status * 100) + retries; }
+    std::string statusMessage() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return fmt::format("{} {}", StatusToString(status), statusDetails);
+    }
+    DownloadStatus getStatus() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return status;
+    }
+    int getRetries() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return retries;
+    }
+    bool isDownloading() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return status == DownloadStatus::Downloading || status == DownloadStatus::Preparing || status == DownloadStatus::Extracting;
+    }
+    bool isQueued() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return status == DownloadStatus::Queued || (status == DownloadStatus::Failed && retries < RETRY_COUNT);
+    }
+
+    int orderValue() {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
+        return ((int)status * 100) + retries;
+    }
 
     bool IsInAnyOfStates(DownloadStatus states) {
+        std::shared_lock<std::shared_mutex> lock(syncMutex);
         return (status & states) != 0;
     }
 
@@ -86,10 +115,10 @@ public:
             return "Loaded";
         }
         return "";
-
     }
 
     void ResetIfFailed() {
+        std::unique_lock<std::shared_mutex> uniqueLock(syncMutex);
         if(status != DownloadStatus::Failed || retries < RETRY_COUNT)
             return;
 
@@ -97,14 +126,11 @@ public:
         retries = 0;
     }
 
-    DownloadHistoryEntry(const SongDetailsCache::Song* song) {
-        songName = song->songName();
-        levelAuthorName = song->levelAuthorName();
-        key = song->key();
-        hash = song->hash();
-    }
-
-    std::function<void()> UpdateProgressHandler;
+    DownloadHistoryEntry(const SongDetailsCache::Song* song)
+        : songName(song->songName()),
+          levelAuthorName(song->levelAuthorName()),
+          key(song->key()),
+          hash(song->hash()) {}
 };
 
 #ifdef HotReload
@@ -127,7 +153,10 @@ DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, Download
 
 public:
     UnityW<HMUI::TableView> downloadHistoryTable() {if(downloadList) {return downloadList->tableView;} else return nullptr;}
+
     std::vector<DownloadHistoryEntry*> downloadEntryList;
+    std::shared_mutex downloadListMutex;
+
     void ProcessDownloads(bool forceTableReload = false);
     void RefreshTable(bool fullReload = true);
     BetterSongSearch::Util::RatelimitCoroutine* limitedFullTableReload = nullptr;
