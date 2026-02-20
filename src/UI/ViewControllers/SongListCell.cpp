@@ -63,8 +63,7 @@ namespace BetterSongSearch::UI::ViewControllers {
 
     void CustomSongListTableCell::OnDestroy() {
         // Unsub from events
-        // The only way this can be destroyed is if the game is closing,
-        // so no need to unsub, since songcore will be destroyed too
+        SongCore::SongLoader::RuntimeSongLoader::get_instance()->SongsLoaded -= {&CustomSongListTableCell::OnSongsLoaded, this};
     }
 
     void CustomSongListTableCell::OnSongsLoaded(std::span<SongCore::SongLoader::CustomBeatmapLevel* const> songs) {

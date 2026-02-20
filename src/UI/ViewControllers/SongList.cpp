@@ -919,6 +919,10 @@ SongDetailsCache::Song const* ViewControllers::SongListController::GetCurrentSon
 }
 
 void ViewControllers::SongListController::SetCurrentSong(SongDetailsCache::Song const* song) {
+    if (!dataHolder.songDetails) {
+        return;
+    }
+
     std::unique_lock<std::shared_mutex> lock(_currentSongMutex);
     // This is here to make sure that the pointer to the song is valid, I can't be sure if other mods don't corrupt memory
     if (song != nullptr && song->index >= 0 && song->index < dataHolder.songDetails->songs.size()) {
