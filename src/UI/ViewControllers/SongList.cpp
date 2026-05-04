@@ -74,7 +74,7 @@ std::vector<std::string> const CHAR_FILTER_OPTIONS = {
     "Any", "Custom", "Standard", "One Saber", "No Arrows", "90 Degrees", "360 Degrees", "Lightshow", "Lawless"
 };
 std::vector<std::string> const DIFFS = {"Easy", "Normal", "Hard", "Expert", "Expert+"};
-std::vector<std::string> const REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Cinema"};
+std::vector<std::string> const REQUIREMENTS = {"Any", "Noodle Extensions", "Mapping Extensions", "Chroma", "Vivify", "Cinema"};
 
 void ViewControllers::SongListController::_UpdateSearchedSongsList() {
     dataHolder.Search();

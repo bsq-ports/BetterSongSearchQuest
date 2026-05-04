@@ -35,7 +35,7 @@ namespace FilterTypes {
         Lawless,
     };
 
-    enum class Requirement { Any, NoodleExtensions, MappingExtensions, Chroma, Cinema, None };
+    enum class Requirement { Any, NoodleExtensions, MappingExtensions, Chroma, Vivify, Cinema, None };
 
     enum class SortMode { Newest, Oldest, Latest_Ranked, Most_Stars, Least_Stars, Best_rated, Worst_rated };
 

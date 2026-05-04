@@ -38,8 +38,10 @@ std::string BetterSongSearch::Util::RequirementTypeToString(int requirementType)
         case 3:
             return "Chroma";
         case 4:
-            return "Cinema";
+            return "Vivify";
         case 5:
+            return "Cinema";
+        case 6:
             return "None";
         default:
             return "Unknown";
