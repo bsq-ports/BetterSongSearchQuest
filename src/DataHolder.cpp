@@ -44,7 +44,6 @@ void BetterSongSearch::DataHolder::Init() {
 
 void BetterSongSearch::DataHolder::SongDataDone() {
     DEBUG("SongDataDone");
-    PreprocessTags();
     UpdatePlayerScores();
 
     loading = false;
@@ -55,6 +54,10 @@ void BetterSongSearch::DataHolder::SongDataDone() {
     // Needed if songdetails is loaded in the background by other mods
     if (this->songDetails == nullptr) {
         this->songDetails = SongDetailsCache::SongDetails::Init().get();
+    }
+
+    if (this->songDetails != nullptr && songDetails->songs.get_isDataAvailable()) {
+        PreprocessTags();
     }
 
     loadingFinished.invoke();

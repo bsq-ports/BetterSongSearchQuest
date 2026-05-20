@@ -110,7 +110,7 @@ void Modals::GenrePicker::OpenModal() {
     INFO("Opening genre picker modal");
     this->genrePickerModal->Show();
 
-    if (!dataHolder.songDetails->tags.get_isDataAvailable()) {
+    if (!dataHolder.songDetails || !dataHolder.songDetails->tags.get_isDataAvailable()) {
         return;
     }
 

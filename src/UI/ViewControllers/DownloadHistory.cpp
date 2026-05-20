@@ -155,7 +155,6 @@ bool ViewControllers::DownloadHistoryViewController::TryAddDownload(SongDetailsC
         }
     }
 
-
     if (existingDLHistoryEntry) {
         existingDLHistoryEntry->ResetIfFailed();
     }
@@ -186,13 +185,11 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
         return;
     }
 
-    int count = 0; // Count the ones  that need to be downloaded
+    int count = 0;  // Count the ones  that need to be downloaded
     {
         std::shared_lock<std::shared_mutex> lock(downloadListMutex);
         for (auto entry : downloadEntryList) {
-            if (entry->IsInAnyOfStates((DownloadStatus)(
-                    DownloadStatus::Preparing | DownloadStatus::Downloading
-                ))) {
+            if (entry->IsInAnyOfStates((DownloadStatus) (DownloadStatus::Preparing | DownloadStatus::Downloading))) {
                 count++;
             }
         }
@@ -210,9 +207,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
     {
         std::shared_lock<std::shared_mutex> downloadEntryListLock(downloadListMutex);
         for (auto entry : downloadEntryList) {
-            if (entry->getRetries() < RETRY_COUNT && entry->IsInAnyOfStates((DownloadStatus)(
-                                                    DownloadStatus::Failed | DownloadStatus::Queued
-                                                ))) {
+            if (entry->getRetries() < RETRY_COUNT && entry->IsInAnyOfStates((DownloadStatus) (DownloadStatus::Failed | DownloadStatus::Queued))) {
                 if (!currentEntry) {
                     currentEntry = entry;
                     continue;
@@ -427,10 +422,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(Downloa
         return true;
     }
 
-    if (!dlElem->IsInAnyOfStates((DownloadStatus)(
-            DownloadStatus::Preparing | DownloadStatus::Downloading |
-            DownloadStatus::Queued
-        )) &&
+    if (!dlElem->IsInAnyOfStates((DownloadStatus) (DownloadStatus::Preparing | DownloadStatus::Downloading | DownloadStatus::Queued)) &&
         !CheckIsDownloaded(dlElem->hash)) {
         return true;
     }
@@ -456,9 +448,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::st
 bool ViewControllers::DownloadHistoryViewController::HasPendingDownloads() {
     std::shared_lock<std::shared_mutex> lock(downloadListMutex);
     for (auto entry : downloadEntryList) {
-        if (entry->IsInAnyOfStates((DownloadStatus)(
-                DownloadStatus::Downloading | DownloadStatus::Queued
-            ))) {
+        if (entry->IsInAnyOfStates((DownloadStatus) (DownloadStatus::Downloading | DownloadStatus::Queued))) {
             return true;
         }
     }
