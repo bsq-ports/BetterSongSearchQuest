@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "beatsaber-hook/shared/callback.hpp"
 #include "FilterOptions.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
@@ -33,10 +34,10 @@ namespace BetterSongSearch {
         SongDetailsCache::SongDetails* songDetails = nullptr;  // Song details cache
 
         // Events
-        UnorderedEventCallback<> loadingFinished;  // Gets called when the loading is done
-        UnorderedEventCallback<std::string> loadingFailed;  // Gets called when the loading failed with the error message
-        UnorderedEventCallback<> playerDataLoaded;  // Callback when we process more player data
-        UnorderedEventCallback<> searchEnded;  // Callback when the search is done and we have the results
+        unordered_event_callback<> loadingFinished;  // Gets called when the loading is done
+        unordered_event_callback<std::string> loadingFailed;  // Gets called when the loading failed with the error message
+        unordered_event_callback<> playerDataLoaded;  // Callback when we process more player data
+        unordered_event_callback<> searchEnded;  // Callback when the search is done and we have the results
 
         std::vector<PreprocessedTag> tags = {};  // Preprocessed tags for filter UI
         std::unordered_map<std::string, uint64_t> tagMap = {};

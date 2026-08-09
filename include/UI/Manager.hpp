@@ -1,5 +1,6 @@
 #pragma once
 
+#include "beatsaber-hook/shared/safeptr.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/Helpers/creation.hpp"
 #include "HMUI/FlowCoordinator.hpp"
@@ -14,7 +15,7 @@ namespace BetterSongSearch::UI {
         BSML::MenuButton* menuButton;
 
        public:
-        SafePtrUnity<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator> flow;
+        safe_ptr<BetterSongSearch::UI::FlowCoordinators::BetterSongSearchFlowCoordinator*> flow;
         Manager(Manager const&) = delete;  // no accidental copying
         Manager() = default;
 

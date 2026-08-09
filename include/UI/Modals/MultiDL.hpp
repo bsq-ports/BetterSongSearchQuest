@@ -11,8 +11,6 @@
 #include "custom-types/shared/macros.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
 
-#define GET_FIND_METHOD(mPtr) il2cpp_utils::il2cpp_type_check::MetadataGetter<mPtr>::get()
-
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, MultiDL, UnityEngine::MonoBehaviour) {
     DECLARE_INSTANCE_METHOD(void, OnEnable);
     DECLARE_CTOR(ctor);

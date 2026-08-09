@@ -23,16 +23,6 @@ void Modals::Presets::OnEnable() {
 }
 
 void Modals::Presets::PostParse() {
-    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
-    // work
-    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
-    if (platformHelper == nullptr) {
-    } else {
-        for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
-            x->____platformHelper = platformHelper;
-        }
-    }
-
     if (this->presetListTableData) {
         INFO("Table exists");
         this->presetListTableData->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource*>(this), false);

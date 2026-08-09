@@ -5,6 +5,7 @@
 #include <shared_mutex>
 #include <thread>
 
+#include "beatsaber-hook/shared/threading.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/PlayerDataModel.hpp"
@@ -130,7 +131,7 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
         return;
     }
 
-    il2cpp_utils::il2cpp_aware_thread([this] {
+    il2cpp_thread([this] {
         try {
             DEBUG("Updating player scores");
             long long before = CurrentTimeMs();

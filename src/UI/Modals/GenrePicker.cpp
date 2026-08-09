@@ -24,15 +24,6 @@ void Modals::GenrePicker::OnEnable() {
 }
 
 void Modals::GenrePicker::PostParse() {
-    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
-    // TODO: Move to getting it from BSML when the patches are merged and released
-    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
-    if (platformHelper == nullptr) {
-    } else {
-        for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
-            x->____platformHelper = platformHelper;
-        }
-    }
 }
 
 void Modals::GenrePicker::CloseModal() {

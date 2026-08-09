@@ -162,9 +162,11 @@ void BetterSongSearch::UI::Manager::ShowFlow(bool immediately) {
 }
 
 void BetterSongSearch::UI::Manager::GoToSongSelect() {
-    SafePtrUnity<UnityEngine::GameObject> songSelectButton = UnityEngine::GameObject::Find("SoloButton").unsafePtr();
+    auto songSelectButtonObject = UnityEngine::GameObject::Find("SoloButton");
+    safe_ptr<UnityEngine::GameObject*> songSelectButton = songSelectButtonObject.unsafe_ptr();
     if (!songSelectButton) {
-        songSelectButton = UnityEngine::GameObject::Find("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton");
+        songSelectButtonObject = UnityEngine::GameObject::Find("Wrapper/BeatmapWithModifiers/BeatmapSelection/EditButton");
+        songSelectButton = songSelectButtonObject.unsafe_ptr();
     }
     if (!songSelectButton) {
         return;

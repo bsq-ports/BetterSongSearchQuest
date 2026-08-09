@@ -3,7 +3,6 @@
 #include "HMUI/ViewController.hpp"
 #include "HMUI/FlowCoordinator.hpp"
 #include "custom-types/shared/macros.hpp"
-#include "beatsaber-hook/shared/utils/il2cpp-utils.hpp"
 
 #include "UI/ViewControllers/SongList.hpp"
 #include "UI/ViewControllers/FilterView.hpp"

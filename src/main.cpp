@@ -1,6 +1,7 @@
 #include "main.hpp"
 
 #include "_config.h"
+#include "beatsaber-hook/shared/safeptr.hpp"
 #include "bsml/shared/BSML/SharedCoroutineStarter.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
@@ -12,7 +13,7 @@
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
 #include "GlobalNamespace/MenuTransitionsHelper.hpp"
-#include "GlobalNamespace/MultiplayerLevelScenesTransitionSetupDataSO.hpp"
+#include "GlobalNamespace/MultiplayerLevelScenesTransitionSetupData.hpp"
 #include "GlobalNamespace/MultiplayerResultsViewController.hpp"
 #include "GlobalNamespace/PlayerData.hpp"
 #include "GlobalNamespace/SelectLevelCategoryViewController.hpp"
@@ -43,14 +44,7 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.version_long = GIT_COMMIT;
     modInfo.assign(info);
 
-    getPluginConfig().Init(modInfo);
-
     INFO("Completed setup!");
-
-    std::thread([] {
-        // Init the data holder (sub to events)
-        dataHolder.Init();
-    }).detach();
 }
 
 MAKE_HOOK_MATCH(
@@ -109,7 +103,7 @@ MAKE_HOOK_MATCH(
     bool multiplayer = self->____showMultiplayer;
 
     // Button instance
-    static SafePtrUnity<UnityEngine::GameObject> button;
+    static safe_ptr<UnityEngine::GameObject*> button;
 
     // Don't do anything if not in multiplayer to avoid messing with unity objects
     if (!multiplayer) {
@@ -129,7 +123,9 @@ MAKE_HOOK_MATCH(
             return;
         }
 
-        button = UnityEngine::GameObject::Instantiate(x->get_transform()->GetChild(x->get_transform()->GetChildCount() - 1), x)->get_gameObject();
+        button = UnityEngine::GameObject::Instantiate(x->get_transform()->GetChild(x->get_transform()->GetChildCount() - 1), x)
+                     ->get_gameObject()
+                     .unsafe_ptr();
         if (!button) {
             ERROR("Could not create button somehow");
             return;
@@ -183,12 +179,12 @@ MAKE_HOOK_MATCH(
 }
 
 MAKE_HOOK_MATCH(
-    MultiplayerLevelScenesTransitionSetupDataSO_Init,
-    &GlobalNamespace::MultiplayerLevelScenesTransitionSetupDataSO::Init,
+    MultiplayerLevelScenesTransitionSetupData_Init,
+    &GlobalNamespace::MultiplayerLevelScenesTransitionSetupData::Init,
     void,
-    GlobalNamespace::MultiplayerLevelScenesTransitionSetupDataSO* self,
+    GlobalNamespace::MultiplayerLevelScenesTransitionSetupData* self,
     StringW gameMode,
-    ByRef<::GlobalNamespace::BeatmapKey> beatmapKey,
+    by_ref<::GlobalNamespace::BeatmapKey> beatmapKey,
     ::GlobalNamespace::BeatmapLevel* beatmapLevel,
     ::GlobalNamespace::IBeatmapLevelData* beatmapLevelData,
     ::GlobalNamespace::ColorScheme* overrideColorScheme,
@@ -203,7 +199,7 @@ MAKE_HOOK_MATCH(
 ) {
     // Close manager first
     manager.Close(true, false);
-    MultiplayerLevelScenesTransitionSetupDataSO_Init(
+    MultiplayerLevelScenesTransitionSetupData_Init(
         self,
         gameMode,
         beatmapKey,
@@ -241,14 +237,20 @@ MAKE_HOOK_MATCH(
 
 // Called later on in the game loading - a good time to install function hooks
 BSS_EXPORT_FUNC void late_load() {
-    il2cpp_functions::Init();
     BSML::Init();
     custom_types::Register::AutoRegister();
+
+    getPluginConfig().Init(modInfo);
+
+    std::thread([] {
+        // Init the data holder (sub to events)
+        dataHolder.Init();
+    }).detach();
 
     INSTALL_HOOK(Logger, ReturnToBSS);
     INSTALL_HOOK(Logger, GameplaySetupViewController_RefreshContent);
     INSTALL_HOOK(Logger, LevelFilteringNavigationController_Setup);
-    INSTALL_HOOK(Logger, MultiplayerLevelScenesTransitionSetupDataSO_Init);
+    INSTALL_HOOK(Logger, MultiplayerLevelScenesTransitionSetupData_Init);
     INSTALL_HOOK(Logger, MenuTransitionsHelper_RestartGame);
 
     // Automatic testing

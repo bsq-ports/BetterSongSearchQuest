@@ -36,6 +36,13 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
+& qpm qmod manifest
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Output "Failed to generate mod.json, exiting..."
+    exit $LASTEXITCODE
+}
+
 Write-Output "Creating qmod from mod.json"
 
 $schemaUrl = "https://raw.githubusercontent.com/Lauriethefish/QuestPatcher.QMod/main/QuestPatcher.QMod/Resources/qmod.schema.json"

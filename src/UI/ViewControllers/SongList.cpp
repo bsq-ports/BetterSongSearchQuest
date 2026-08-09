@@ -113,23 +113,14 @@ void ViewControllers::SongListController::PostParse() {
     }
 
     // Get the default cover image
-    defaultImage = BSML::Utilities::LoadSpriteRaw(Assets::CustomLevelsCover_png);
+    auto defaultImageData = static_cast<std::span<uint8_t>>(Assets::CustomLevelsCover_png);
+    defaultImage = BSML::Utilities::LoadSpriteRaw(ArrayW<uint8_t>(i2c::view<uint8_t>(defaultImageData)));
     // Set default cover image
     coverImage->set_sprite(defaultImage);
 
     // Get song preview player
     songPreviewPlayer = BSML::Helpers::GetDiContainer()->Resolve<SongPreviewPlayer*>();
     levelCollectionViewController = BSML::Helpers::GetDiContainer()->Resolve<LevelCollectionViewController*>();
-
-    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
-    // work
-    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
-    if (platformHelper == nullptr) {
-    } else {
-        for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
-            x->____platformHelper = platformHelper;
-        }
-    }
 
     // Make the sort dropdown bigger
     auto c = std::min(9, this->get_sortModeSelections()->____size);
@@ -449,7 +440,7 @@ void ViewControllers::SongListController::EnterSolo(GlobalNamespace::BeatmapLeve
         ERROR("CustomLevelsPack is null, refusing to continue");
         return;
     }
-    if (customLevelsPack->____beatmapLevels->get_Length() == 0) {
+    if (customLevelsPack->____beatmapLevels.empty()) {
         ERROR("CustomLevelsPack has no levels, refusing to continue");
         return;
     }
@@ -647,7 +638,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                         DEBUG("Song hash changed, returning");
                         return;
                     }
-                    auto spriteArray = ArrayW(data);
+                    auto spriteArray = ArrayW<uint8_t>(data);
                     UnityW<UnityEngine::Sprite> sprite = BSML::Lite::ArrayToSprite(spriteArray);
                     if (sprite) {
                         DEBUG("Setting sprite");
@@ -714,7 +705,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                     }
 
                     // Audio clip cleanup
-                    std::function<void()> onFadeOutLambda = [clip]() {
+                    std::function<void()> onFadeOutLambda = [clip = clip.unsafe_ptr()]() {
                         try {
                             if (clip) {
                                 UnityEngine::Object::Destroy(clip);

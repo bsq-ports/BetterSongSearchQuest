@@ -1,6 +1,7 @@
 #include "UI/Modals/UploadDetails.hpp"
 
 #include "assets.hpp"
+#include "beatsaber-hook/shared/api.hpp"
 #include "BeatSaverRegionManager.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
@@ -43,7 +44,7 @@ void Modals::UploadDetails::CloseModal() {
 
 void Modals::UploadDetails::OpenBeatSaver() {
     try {
-        static auto UnityEngine_Application_OpenURL = il2cpp_utils::resolve_icall<void, StringW>("UnityEngine.Application::OpenURL");
+        static auto UnityEngine_Application_OpenURL = i2c::resolve_icall<void, StringW>("UnityEngine.Application::OpenURL").value();
         UnityEngine_Application_OpenURL(StringW("https://beatsaver.com/maps/" + selectedSongKey->get_text()));
     } catch (...) {
         ERROR("Failed to OpenBeatSaver");
@@ -52,7 +53,7 @@ void Modals::UploadDetails::OpenBeatSaver() {
 
 void Modals::UploadDetails::OpenMapPreview() {
     try {
-        static auto UnityEngine_Application_OpenURL = il2cpp_utils::resolve_icall<void, StringW>("UnityEngine.Application::OpenURL");
+        static auto UnityEngine_Application_OpenURL = i2c::resolve_icall<void, StringW>("UnityEngine.Application::OpenURL").value();
         UnityEngine_Application_OpenURL(StringW("https://allpoland.github.io/ArcViewer/?id=" + selectedSongKey->get_text()));
     } catch (...) {
         ERROR("Failed to open map preview");
@@ -63,7 +64,7 @@ void Modals::UploadDetails::CopyBSR() {
     try {
         auto bsr = selectedSongKey->get_text();
         static auto UnityEngine_GUIUtility_set_systemCopyBuffer =
-            il2cpp_utils::resolve_icall<void, StringW>("UnityEngine.GUIUtility::set_systemCopyBuffer");
+            i2c::resolve_icall<void, StringW>("UnityEngine.GUIUtility::set_systemCopyBuffer").value();
         UnityEngine_GUIUtility_set_systemCopyBuffer(bsr);
     } catch (...) {
         ERROR("Failed to copy BSR");

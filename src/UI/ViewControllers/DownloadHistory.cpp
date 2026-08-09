@@ -67,16 +67,6 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
         downloadList->tableView->SetDataSource(reinterpret_cast<HMUI::TableView::IDataSource*>(this), false);
     }
 
-    // BSML has a bug that stops getting the correct platform helper and on game reset it dies and the scrollhelper stays invalid and scroll doesn't
-    // work
-    auto platformHelper = BSML::Helpers::GetDiContainer()->Resolve<GlobalNamespace::IVRPlatformHelper*>();
-    if (platformHelper == nullptr) {
-    } else {
-        for (auto x : this->GetComponentsInChildren<HMUI::ScrollView*>()) {
-            x->____platformHelper = platformHelper;
-        }
-    }
-
 #ifdef HotReload
     fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/DownloadHistory.bsml";
     fileWatcher->checkInterval = 0.5f;

@@ -39,11 +39,6 @@
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "Util/RatelimitCoroutine.hpp"
 
-#ifndef DECLARE_OVERRIDE_METHOD_MATCH
-#define DECLARE_OVERRIDE_METHOD_MATCH(retval, method, mptr, ...) \
-    DECLARE_OVERRIDE_METHOD(retval, method, il2cpp_utils::il2cpp_type_check::MetadataGetter<mptr>::get(), __VA_ARGS__)
-#endif
-
 namespace BetterSongSearch::UI {
     inline bool fromBSS = false;
     inline bool openToCustom = false;
@@ -54,7 +49,7 @@ DECLARE_CLASS_CUSTOM_INTERFACES(
     BetterSongSearch::UI::ViewControllers,
     SongListController,
     BSML::HotReloadViewController,
-    std::vector<Il2CppClass*>({classof(HMUI::TableView::IDataSource*)})
+    std::vector<Il2CppClass*>({i2c::class_of<HMUI::TableView::IDataSource*>()})
 ) {
 #else
 DECLARE_CLASS_CODEGEN_INTERFACES(BetterSongSearch::UI::ViewControllers, SongListController, HMUI::ViewController, HMUI::TableView::IDataSource*)

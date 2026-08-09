@@ -9,6 +9,10 @@ using namespace rapidjson;
 using namespace UnityEngine;
 using namespace BetterSongSearch::Util;
 
+static std::string GetPresetsDir() {
+    return fmt::format("/sdcard/ModData/{}/Mods/{}/Presets/", modloader::get_application_id().c_str(), MOD_ID);
+}
+
 bool BetterSongSearch::FilterProfile::IsDefault() {
     // clang-format off
     return (
@@ -143,7 +147,7 @@ void BetterSongSearch::FilterProfile::CopyFrom(FilterProfile const& other) {
 }
 
 std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::LoadFromPreset(std::string presetName) {
-    std::string presetsDir = getDataDir(modInfo) + "/Presets/";
+    std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
     if (!direxists(presetsDir)) {
@@ -169,7 +173,7 @@ std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::
 }
 
 bool BetterSongSearch::FilterProfile::SaveToPreset(std::string presetName) const {
-    std::string presetsDir = getDataDir(modInfo) + "/Presets/";
+    std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
     if (!direxists(presetsDir)) {
@@ -192,7 +196,7 @@ bool BetterSongSearch::FilterProfile::SaveToPreset(std::string presetName) const
 std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
     std::vector<std::string> presetNames;
 
-    std::string presetsDir = getDataDir(modInfo) + "/Presets/";
+    std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
     if (!direxists(presetsDir)) {
@@ -289,7 +293,7 @@ std::tuple<int, int> BetterSongSearch::FilterProfile::CountTags() {
 }
 
 bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
-    std::string presetsDir = getDataDir(modInfo) + "/Presets/";
+    std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
     if (!direxists(presetsDir)) {

@@ -16,6 +16,7 @@
 #include "HMUI/ImageView.hpp"
 #include "logging.hpp"
 #include "PluginConfig.hpp"
+#include "System/String.hpp"
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
 #include "Util/BSMLStuff.hpp"
@@ -148,7 +149,7 @@ custom_types::Helpers::Coroutine ViewControllers::FilterViewController::_UpdateF
 }
 
 UnityEngine::Sprite* GetBGSprite(std::string str) {
-    return UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>()->First([str](UnityEngine::Sprite* x) {
+    return UnityEngine::Resources::FindObjectsOfTypeAll<UnityEngine::Sprite*>().front([str](UnityEngine::Sprite* x) {
         return x->get_name() == str;
     });
 }

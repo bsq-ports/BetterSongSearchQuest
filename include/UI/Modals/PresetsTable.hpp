@@ -17,6 +17,7 @@
 #include "assets.hpp"
 
 DECLARE_CLASS_CODEGEN(BetterSongSearch::UI::Modals, PresetsTableCell, HMUI::TableCell) {
+    DECLARE_DEFAULT_CTOR();
     DECLARE_OVERRIDE_METHOD_MATCH(void, SelectionDidChange, &HMUI::SelectableCell::SelectionDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, HighlightDidChange, &HMUI::SelectableCell::HighlightDidChange, HMUI::SelectableCell::TransitionType transitionType);
     DECLARE_OVERRIDE_METHOD_MATCH(void, WasPreparedForReuse, &HMUI::TableCell::WasPreparedForReuse);
