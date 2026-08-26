@@ -1,5 +1,7 @@
 #include "UI/ViewControllers/DownloadHistory.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 #include "assets.hpp"
 #include "beatsaverplusplus/shared/BeatSaver.hpp"
 #include "bsml/shared/BSML.hpp"
@@ -61,6 +63,7 @@ void ViewControllers::DownloadHistoryViewController::DidActivate(bool firstActiv
 
     INFO("Download contoller activated");
     BSML::parse_and_construct(Assets::DownloadHistory_bsml, this->get_transform(), this);
+    BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
 
     if (this->downloadList != nullptr) {
         INFO("Table exists");
@@ -243,13 +246,13 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
                 std::string message = "";
 
                 if (curlStatus != 0) {
-                    message = Util::curlErrorToString(curlStatus);
+                    message = ::BetterSongSearch::Util::curlErrorToString(curlStatus);
                     message = fmt::format("Curl: {}", message);
                 } else {
                     if (responseCode == 404) {
                         message = "Song is deleted";
                     } else {
-                        message = Util::httpErrorToString(responseCode);
+                        message = ::BetterSongSearch::Util::httpErrorToString(responseCode);
                     }
                 }
 
@@ -285,13 +288,13 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
 
                 std::string message = "";
                 if (curlStatus != 0) {
-                    message = Util::curlErrorToString(curlStatus);
+                    message = ::BetterSongSearch::Util::curlErrorToString(curlStatus);
                     message = fmt::format("Curl: {}", message);
                 } else {
                     if (responseCode == 404) {
                         message = "Song file not found";
                     } else {
-                        message = Util::httpErrorToString(responseCode);
+                        message = ::BetterSongSearch::Util::httpErrorToString(responseCode);
                     }
                 }
 

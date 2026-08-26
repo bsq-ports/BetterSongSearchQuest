@@ -1,5 +1,7 @@
 #include "UI/Modals/Presets.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
@@ -44,6 +46,7 @@ void Modals::Presets::ctor() {
 void Modals::Presets::OpenModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::Presets_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
     RefreshPresetsList();
@@ -53,6 +56,7 @@ void Modals::Presets::OpenModal() {
 void Modals::Presets::OpenSavePresetModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::Presets_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
     this->savePresetModal->Show();

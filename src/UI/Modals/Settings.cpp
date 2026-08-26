@@ -1,5 +1,7 @@
 #include "UI/Modals/Settings.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "DataHolder.hpp"
@@ -29,6 +31,7 @@ void Modals::Settings::ctor() {
 void Modals::Settings::OpenModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::Settings_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
     this->settingsModal->Show();

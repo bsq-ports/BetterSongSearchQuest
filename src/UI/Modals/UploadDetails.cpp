@@ -10,6 +10,7 @@
 #include "UnityEngine/Application.hpp"
 #include "UnityEngine/GUIUtility.hpp"
 #include "Util/CurrentTimeMs.hpp"
+#include "Util/BSMLStuff.hpp"
 
 using namespace BetterSongSearch::UI;
 using namespace BetterSongSearch::Util;
@@ -75,6 +76,7 @@ void Modals::UploadDetails::ctor() {
 void Modals::UploadDetails::OpenModal(SongDetailsCache::Song const* song) {
     if (!initialized) {
         BSML::parse_and_construct(Assets::UploadDetails_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
 

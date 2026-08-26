@@ -168,6 +168,7 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
         }
 
         BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
 
         multiDlModal = this->get_gameObject()->AddComponent<UI::Modals::MultiDL*>();
         settingsModal = this->get_gameObject()->AddComponent<UI::Modals::Settings*>();

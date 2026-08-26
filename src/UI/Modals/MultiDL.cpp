@@ -1,5 +1,7 @@
 #include "UI/Modals/MultiDL.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "DataHolder.hpp"
@@ -61,6 +63,7 @@ void Modals::MultiDL::ctor() {
 void Modals::MultiDL::OpenModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::MultiDl_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
     this->modal->Show();

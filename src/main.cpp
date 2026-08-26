@@ -28,6 +28,7 @@
 #include "UI/ViewControllers/SongList.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
+#include "Util/BSMLStuff.hpp"
 #include "Util/TextUtil.hpp"
 #include "bsml/shared/Helpers/delegates.hpp"
 
@@ -43,6 +44,8 @@ BSS_EXPORT_FUNC void setup(CModInfo& info) {
     info.version = VERSION;
     info.version_long = GIT_COMMIT;
     modInfo.assign(info);
+
+    BetterSongSearch::UI::Util::BSMLStuff::PrepareColorEmojiShaderBundle();
 
     INFO("Completed setup!");
 }
@@ -239,6 +242,7 @@ MAKE_HOOK_MATCH(
 BSS_EXPORT_FUNC void late_load() {
     BSML::Init();
     custom_types::Register::AutoRegister();
+    BetterSongSearch::UI::Util::BSMLStuff::InstallColorEmojiShaderHook();
 
     getPluginConfig().Init(modInfo);
 

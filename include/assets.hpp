@@ -15,3 +15,4 @@ DECLARE_FILE(_binary_Settings_bsml, Assets, Settings_bsml);
 DECLARE_FILE(_binary_SongList_bsml, Assets, SongList_bsml);
 DECLARE_FILE(_binary_SongListCell_bsml, Assets, SongListCell_bsml);
 DECLARE_FILE(_binary_UploadDetails_bsml, Assets, UploadDetails_bsml);
+DECLARE_FILE(_binary_bss_color_emoji_shader_bundle, Assets, bss_color_emoji_shader_bundle);

@@ -1,6 +1,7 @@
 #include "UI/Modals/PresetsTable.hpp"
 
 #include "sombrero/shared/FastColor.hpp"
+#include "Util/BSMLStuff.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, PresetsTableCell);
 
@@ -44,6 +45,7 @@ namespace BetterSongSearch::UI::Modals {
             tableCell->set_interactable(true);
             tableCell->set_reuseIdentifier(PresetsTableCellReuseIdentifier);
             BSML::parse_and_construct(Assets::PresetsListCell_bsml, tableCell->get_transform(), tableCell);
+            BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(tableCell->get_transform());
 
             // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
             tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();

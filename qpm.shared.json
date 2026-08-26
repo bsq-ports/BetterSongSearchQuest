@@ -434,11 +434,7 @@
         "id": "bsml",
         "versionRange": "=0.5.4",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.5.4/libbsml.so",
-          "debugSoLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.5.4/debug_libbsml.so",
           "overrideSoName": "libbsml.so",
-          "modLink": "https://github.com/bsq-ports/Quest-BSML/releases/download/v0.5.4/BSML.qmod",
-          "branchName": "version/v0_5_4",
           "cmake": true
         }
       },

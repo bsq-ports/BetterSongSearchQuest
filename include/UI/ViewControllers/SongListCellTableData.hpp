@@ -7,6 +7,7 @@
 #include "TMPro/TextMeshProUGUI.hpp"
 #include "UI/ViewControllers/SongListCell.hpp"
 #include "UnityEngine/UI/HorizontalOrVerticalLayoutGroup.hpp"
+#include "Util/BSMLStuff.hpp"
 
 std::string const CustomSongListTableCellReuseIdentifier = "REUSECustomSongListTableCell";
 
@@ -23,6 +24,7 @@ namespace BetterSongSearch::UI::ViewControllers {
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(CustomSongListTableCellReuseIdentifier);
                 BSML::parse_and_construct(Assets::SongListCell_bsml, tableCell->get_transform(), tableCell);
+                BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(tableCell->get_transform());
 
                 // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
                 tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();

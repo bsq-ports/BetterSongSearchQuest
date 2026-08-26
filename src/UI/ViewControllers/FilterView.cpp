@@ -291,7 +291,8 @@ void ViewControllers::FilterViewController::PostParse() {
     m->get_transform().cast<UnityEngine::RectTransform>()->set_pivot(UnityEngine::Vector2(0.5f, 0.3f));
 
     if (versionLabel) {
-        versionLabel->set_text(fmt::format("{}", VERSION));
+        versionLabel->set_text(fmt::format("{} \U0001F496", VERSION));
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(versionLabel->get_transform());
     }
 
     if (mapStyleDropdown) {
@@ -366,6 +367,7 @@ void ViewControllers::FilterViewController::DidActivate(bool firstActivation, bo
 
     // Create bsml view
     BSML::parse_and_construct(Assets::FilterView_bsml, this->get_transform(), this);
+    BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
 
 #ifdef HotReload
     fileWatcher->filePath = "/sdcard/bsml/BetterSongSearch/FilterView.bsml";

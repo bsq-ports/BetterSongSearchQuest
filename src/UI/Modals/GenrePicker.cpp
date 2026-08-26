@@ -1,5 +1,7 @@
 #include "UI/Modals/GenrePicker.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 #include "assets.hpp"
 #include "bsml/shared/BSML.hpp"
 #include "bsml/shared/Helpers/getters.hpp"
@@ -95,6 +97,7 @@ void Modals::GenrePicker::RefreshGenreList() {
 void Modals::GenrePicker::OpenModal() {
     if (!initialized) {
         BSML::parse_and_construct(Assets::GenrePicker_bsml, this->get_transform(), this);
+        BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(this->get_transform());
         initialized = true;
     }
 

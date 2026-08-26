@@ -4,6 +4,7 @@
 #include "bsml/shared/BSML.hpp"
 #include "HMUI/Touchable.hpp"
 #include "UI/ViewControllers/DownloadHistoryCell.hpp"
+#include "Util/BSMLStuff.hpp"
 
 std::string const ReuseIdentifier = "REUSECustomDownloadListTableCell";
 
@@ -17,6 +18,7 @@ namespace BetterSongSearch::UI::ViewControllers {
                 tableCell->set_interactable(true);
                 tableCell->set_reuseIdentifier(ReuseIdentifier);
                 BSML::parse_and_construct(Assets::DownloadHistoryCell_bsml, tableCell->get_transform(), tableCell);
+                BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(tableCell->get_transform());
 
                 // Weird hack cause HMUI touchable is not there for some reason
                 tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();

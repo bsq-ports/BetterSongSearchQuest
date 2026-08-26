@@ -1,5 +1,7 @@
 #include "UI/Modals/GenrePickerCell.hpp"
 
+#include "Util/BSMLStuff.hpp"
+
 DEFINE_TYPE(BetterSongSearch::UI::Modals, GenrePickerCell);
 
 std::string const GenrePickerCellReuseIdentifier = "REUSEGenreTableCell";
@@ -50,6 +52,7 @@ namespace BetterSongSearch::UI::Modals {
             tableCell->set_interactable(true);
             tableCell->set_reuseIdentifier(GenrePickerCellReuseIdentifier);
             BSML::parse_and_construct(Assets::GenrePickerCell_bsml, tableCell->get_transform(), tableCell);
+            BetterSongSearch::UI::Util::BSMLStuff::ApplyColorEmojiFallback(tableCell->get_transform());
 
             // Weird hack cause HMUI touchable is not there for some reason, thanks RedBrumbler
             tableCell->get_gameObject()->AddComponent<HMUI::Touchable*>();

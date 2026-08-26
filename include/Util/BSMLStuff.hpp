@@ -9,11 +9,19 @@
 #include "HMUI/VerticalScrollIndicator.hpp"
 #include "System/Action.hpp"
 #include "System/Collections/IEnumerator.hpp"
+#include "TMPro/TMP_FontAsset.hpp"
 #include "UnityEngine/Coroutine.hpp"
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/MonoBehaviour.hpp"
+#include "UnityEngine/Transform.hpp"
 
 namespace BetterSongSearch::UI::Util::BSMLStuff {
+    bool PrepareColorEmojiShaderBundle();
+    void InstallColorEmojiShaderHook();
+    UnityW<TMPro::TMP_FontAsset> GetSystemFont();
+    void ApplySystemFont(UnityEngine::Transform* container);
+    void ApplyColorEmojiFallback(UnityEngine::Transform* container);
+
     custom_types::Helpers::Coroutine MergeSliders(UnityEngine::GameObject* container, bool constrictValuesMinMax = true);
 
     void SetStringSettingValue(BSML::StringSetting* element, std::string value);
