@@ -109,7 +109,7 @@
       },
       {
         "id": "song-details",
-        "versionRange": "^1.0.4",
+        "versionRange": "^1.0.5",
         "additionalData": {}
       },
       {
@@ -119,7 +119,7 @@
       },
       {
         "id": "web-utils",
-        "versionRange": "^0.6.8",
+        "versionRange": "^0.6.9",
         "additionalData": {}
       }
     ]
@@ -139,17 +139,17 @@
     {
       "dependency": {
         "id": "beatsaverplusplus",
-        "versionRange": "=0.2.3",
+        "versionRange": "=0.2.4",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.3/libbeatsaverplusplus.so",
-          "debugSoLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.3/debug_libbeatsaverplusplus.so",
+          "soLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.4/libbeatsaverplusplus.so",
+          "debugSoLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.4/debug_libbeatsaverplusplus.so",
           "overrideSoName": "libbeatsaverplusplus.so",
-          "modLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.3/BeatSaverPlusPlus.qmod",
-          "branchName": "version/v0_2_3",
+          "modLink": "https://github.com/bsq-ports/BeatSaverPlusPlus/releases/download/v0.2.4/BeatSaverPlusPlus.qmod",
+          "branchName": "version/v0_2_4",
           "cmake": false
         }
       },
-      "version": "0.2.3"
+      "version": "0.2.4"
     },
     {
       "dependency": {
@@ -212,17 +212,17 @@
     {
       "dependency": {
         "id": "web-utils",
-        "versionRange": "=0.6.8",
+        "versionRange": "=0.6.9",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.8/libweb-utils.so",
-          "debugSoLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.8/debug_libweb-utils.so",
+          "soLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.9/libweb-utils.so",
+          "debugSoLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.9/debug_libweb-utils.so",
           "overrideSoName": "libweb-utils.so",
-          "modLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.8/WebUtils.qmod",
-          "branchName": "version/v0_6_8",
+          "modLink": "https://github.com/bsq-ports/WebUtils/releases/download/v0.6.9/WebUtils.qmod",
+          "branchName": "version/v0_6_9",
           "cmake": false
         }
       },
-      "version": "0.6.8"
+      "version": "0.6.9"
     },
     {
       "dependency": {
@@ -243,17 +243,17 @@
     {
       "dependency": {
         "id": "song-details",
-        "versionRange": "=1.0.4",
+        "versionRange": "=1.0.5",
         "additionalData": {
-          "soLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.4/libsongdetails.so",
-          "debugSoLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.4/debug_libsongdetails.so",
+          "soLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.5/libsongdetails.so",
+          "debugSoLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.5/debug_libsongdetails.so",
           "overrideSoName": "libsongdetails.so",
-          "modLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.4/SongDetails.qmod",
-          "branchName": "version/v1_0_4",
+          "modLink": "https://github.com/bsq-ports/SongDetails/releases/download/v1.0.5/SongDetails.qmod",
+          "branchName": "version/v1_0_5",
           "cmake": false
         }
       },
-      "version": "1.0.4"
+      "version": "1.0.5"
     },
     {
       "dependency": {
@@ -308,12 +308,12 @@
     {
       "dependency": {
         "id": "paper2_scotland2",
-        "versionRange": "=4.7.0",
+        "versionRange": "=4.8.0",
         "additionalData": {
-          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.7.0/libpaper2_scotland2.so",
+          "soLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.8.0/libpaper2_scotland2.so",
           "overrideSoName": "libpaper2_scotland2.so",
-          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.7.0/paper2_scotland2.qmod",
-          "branchName": "version/v4_7_0",
+          "modLink": "https://github.com/Fernthedev/paperlog/releases/download/v4.8.0/paper2_scotland2.qmod",
+          "branchName": "version/v4_8_0",
           "compileOptions": {
             "systemIncludes": [
               "shared/utfcpp/source"
@@ -322,7 +322,7 @@
           "cmake": false
         }
       },
-      "version": "4.7.0"
+      "version": "4.8.0"
     },
     {
       "dependency": {
