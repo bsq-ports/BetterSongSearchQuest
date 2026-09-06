@@ -6,7 +6,6 @@
 #include "DataHolder.hpp"
 #include "logging.hpp"
 #include "PluginConfig.hpp"
-#include "sombrero/shared/FastColor.hpp"
 #include "song-details/shared/Data/MapCharacteristic.hpp"
 #include "songcore/shared/SongLoader/RuntimeSongLoader.hpp"
 #include "UI/FlowCoordinators/BetterSongSearchFlowCoordinator.hpp"
@@ -88,9 +87,11 @@ namespace BetterSongSearch::UI::ViewControllers {
         }
 
         // Colors
-        static auto verifiedSongColor = Sombrero::FastColor(.7f, 1.0f, .7f, 1.0f);
-        static auto verifiedUploaderColor = Sombrero::FastColor(.46f, .27f, .68f, 1.0f);
-        static auto normalUploaderColor = Sombrero::FastColor(.8f, .8f, .8f, 1.0f);
+        static const UnityEngine::Color verifiedSongColor(.7f, 1.0f, .7f, 1.0f);
+        static const UnityEngine::Color verifiedUploaderColor(.46f, .27f, .68f, 1.0f);
+        static const UnityEngine::Color normalUploaderColor(.8f, .8f, .8f, 1.0f);
+        static const UnityEngine::Color whiteSongColor(1.0f, 1.0f, 1.0f, 1.0f);
+        static const UnityEngine::Color downloadedSongColor(.53f, .53f, .53f, 1.0f);
 
         bool isCurated = hasFlags(entry->uploadFlags, SongDetailsCache::UploadFlags::Curated);
 
@@ -102,9 +103,9 @@ namespace BetterSongSearch::UI::ViewControllers {
         bool isDownloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(entry->hash());
 
         // Song name color
-        Sombrero::FastColor songColor = Sombrero::FastColor::white();
+        auto songColor = whiteSongColor;
         if (isDownloaded) {
-            songColor = Sombrero::FastColor(0.53f, 0.53f, 0.53f, 1.0f);
+            songColor = downloadedSongColor;
         } else {
             if (isCurated) {
                 songColor = verifiedSongColor;

@@ -1,6 +1,6 @@
 #include "UI/Modals/PresetsTable.hpp"
 
-#include "sombrero/shared/FastColor.hpp"
+#include "UnityEngine/Color.hpp"
 
 DEFINE_TYPE(BetterSongSearch::UI::Modals, PresetsTableCell);
 
@@ -8,15 +8,14 @@ std::string const PresetsTableCellReuseIdentifier = "REUSEPresetsTableCell";
 
 namespace BetterSongSearch::UI::Modals {
     void PresetsTableCell::RefreshBgState() {
+        static const UnityEngine::Color selectedHighlightedColor(0.0f, 0.5f, 0.5f, 0.9f);
+        static const UnityEngine::Color selectedColor(0.0f, 0.5f, 0.5f, 0.6f);
+        static const UnityEngine::Color highlightedColor(1.0f, 1.0f, 1.0f, 0.9f);
+        static const UnityEngine::Color normalColor(1.0f, 1.0f, 1.0f, 0.6f);
+
         // clang-format off
-        presetNameLabel->set_color(
-            Sombrero::FastColor(
-                selected? 0.0f : 1.0f,
-                selected? 0.5f : 1.0f,
-                selected? 0.5f : 1.0f,
-                highlighted? 0.9f : 0.6f
-            )
-        );
+        presetNameLabel->set_color(selected ? (highlighted ? selectedHighlightedColor : selectedColor)
+                                            : (highlighted ? highlightedColor : normalColor));
         // clang-format on
     }
 

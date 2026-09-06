@@ -37,7 +37,7 @@
         "pwsh tomb.ps1 $0:?"
       ]
     },
-    "ndk": "^27.3.13750724",
+    "ndk": "^29.0.14206865",
     "qmodIncludeDirs": [
       "./build",
       "./extern/libs"
@@ -48,7 +48,7 @@
   "dependencies": [
     {
       "id": "beatsaber-hook",
-      "versionRange": "^8.1.0",
+      "versionRange": "^8.2.1",
       "additionalData": {}
     },
     {
@@ -58,12 +58,12 @@
     },
     {
       "id": "bs-cordl",
-      "versionRange": "^4403.0.0",
+      "versionRange": "^4500.0.0",
       "additionalData": {}
     },
     {
       "id": "bsml",
-      "versionRange": "^0.5.4",
+      "versionRange": "^0.5.8",
       "additionalData": {}
     },
     {
@@ -112,23 +112,18 @@
       }
     },
     {
-      "id": "sombrero",
-      "versionRange": "^0.1.43",
-      "additionalData": {}
-    },
-    {
       "id": "song-details",
       "versionRange": "^1.0.4",
       "additionalData": {}
     },
     {
       "id": "songcore",
-      "versionRange": "^1.1.12",
+      "versionRange": "^1.3.2",
       "additionalData": {}
     },
     {
       "id": "web-utils",
-      "versionRange": "^0.6.8",
+      "versionRange": "^0.6.9",
       "additionalData": {}
     },
     {
