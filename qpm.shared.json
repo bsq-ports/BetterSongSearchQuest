@@ -38,7 +38,7 @@
           "pwsh tomb.ps1 $0:?"
         ]
       },
-      "ndk": "^27.3.13750724",
+      "ndk": "^29.0.14206865",
       "qmodIncludeDirs": [
         "./build",
         "./extern/libs"
@@ -59,7 +59,7 @@
       },
       {
         "id": "bs-cordl",
-        "versionRange": "^4500.0.0",
+        "versionRange": "^4500.1.0",
         "additionalData": {}
       },
       {
@@ -91,7 +91,7 @@
       },
       {
         "id": "paper2_scotland2",
-        "versionRange": "^4.7.0",
+        "versionRange": "^4.8.0",
         "additionalData": {}
       },
       {
@@ -152,20 +152,6 @@
     },
     {
       "dependency": {
-        "id": "metacore",
-        "versionRange": "=2.0.3",
-        "additionalData": {
-          "soLink": "https://github.com/Metalit/MetaCore/releases/download/v2.0.3/libmetacore.so",
-          "overrideSoName": "libmetacore.so",
-          "modLink": "https://github.com/Metalit/MetaCore/releases/download/v2.0.3/MetaCore.qmod",
-          "branchName": "version/v2_0_3",
-          "cmake": true
-        }
-      },
-      "version": "2.0.3"
-    },
-    {
-      "dependency": {
         "id": "bs-cordl",
         "versionRange": "=4500.1.0",
         "additionalData": {
@@ -186,6 +172,20 @@
         }
       },
       "version": "4500.1.0"
+    },
+    {
+      "dependency": {
+        "id": "metacore",
+        "versionRange": "=2.0.3",
+        "additionalData": {
+          "soLink": "https://github.com/Metalit/MetaCore/releases/download/v2.0.3/libmetacore.so",
+          "overrideSoName": "libmetacore.so",
+          "modLink": "https://github.com/Metalit/MetaCore/releases/download/v2.0.3/MetaCore.qmod",
+          "branchName": "version/v2_0_3",
+          "cmake": true
+        }
+      },
+      "version": "2.0.3"
     },
     {
       "dependency": {
