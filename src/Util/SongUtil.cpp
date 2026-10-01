@@ -14,24 +14,22 @@ namespace BetterSongSearch::Util {
             return nullptr;
         }
 
-        std::string imageFileName = "";
+        StringW imageFileName;
         {
             auto saveDataV2 = level->get_standardLevelInfoSaveDataV2();
             if (saveDataV2.has_value()) {
-                auto name = saveDataV2.value()->get_coverImageFilename();
-                imageFileName = static_cast<std::string>(name);
+                imageFileName = saveDataV2.value()->get_coverImageFilename();
             }
         }
         {
-            if (imageFileName.empty()) {
+            if (!imageFileName || imageFileName.empty()) {
                 auto saveData = level->get_beatmapLevelSaveDataV4();
                 if (saveData.has_value()) {
-                    auto name = saveData.value()->__cordl_internal_get_coverImageFilename();
-                    imageFileName = static_cast<std::string>(name);
+                    imageFileName = saveData.value()->__cordl_internal_get_coverImageFilename();
                 }
             }
         }
-        if (imageFileName.empty()) {
+        if (!imageFileName || imageFileName.empty()) {
             DEBUG("No cover image found in level data");
             return nullptr;
         }
@@ -61,19 +59,19 @@ namespace BetterSongSearch::Util {
     SongDetailsCache::RankedStates GetTargetedRankLeaderboardService(SongDetailsCache::SongDifficulty const* diff) {
         auto& rStates = diff->song().rankedStates;
 
-        auto& filterOptions = dataHolder.filterOptionsCache;
+        auto rankedType = static_cast<FilterTypes::RankedFilter>(dataHolder.filterOptionsCache.rankedType);
 
         // If song is scoresaber ranked
         if (hasFlags(rStates, RankedStates::ScoresaberRanked) &&
             // And Not Filtering by BeatLeader ranked
-            static_cast<FilterTypes::RankedFilter>(dataHolder.filterOptionsCache.rankedType) != FilterTypes::RankedFilter::BeatLeaderRanked &&
+            rankedType != FilterTypes::RankedFilter::BeatLeaderRanked &&
             (
                 // Beatleader is not preferred leaderboard
                 dataHolder.preferredLeaderboard != FilterTypes::PreferredLeaderBoard::BeatLeader ||
                 // Song has no BeatLeader rank
                 !hasFlags(rStates, RankedStates::BeatleaderRanked) ||
                 // Filtering by SS ranked
-                static_cast<FilterTypes::RankedFilter>(dataHolder.filterOptionsCache.rankedType) == FilterTypes::RankedFilter::ScoreSaberRanked
+                rankedType == FilterTypes::RankedFilter::ScoreSaberRanked
             )) {
             return SongDetailsCache::RankedStates::ScoresaberRanked;
         }
@@ -100,9 +98,9 @@ namespace BetterSongSearch::Util {
         return getStars(diff, GetTargetedRankLeaderboardService(diff));
     }
 
-    bool MeetsFilter(SongDetailsCache::Song const* song) {
+    bool MeetsFilter(SongDetailsCache::Song const* song, SongScores const* scoreSnapshot) {
         auto& filterOptions = dataHolder.filterOptionsCache;
-        std::string songHash = song->hash();
+        std::string songHash;
 
         if (filterOptions.onlyCuratedMaps) {
             if (!hasFlags(song->uploadFlags, SongDetailsCache::UploadFlags::Curated)) {
@@ -135,7 +133,7 @@ namespace BetterSongSearch::Util {
         }
 
         if (!filterOptions.uploaders.empty()) {
-            if (std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), removeSpecialCharacter(toLower(song->uploaderName()))) !=
+            if (std::find(filterOptions.uploaders.begin(), filterOptions.uploaders.end(), NormalizeSearchText(song->uploaderName())) !=
                 filterOptions.uploaders.end()) {
                 if (filterOptions.uploadersBlackList) {
                     return false;
@@ -158,13 +156,15 @@ namespace BetterSongSearch::Util {
             return false;
         }
 
+        if (song->songDurationSeconds < filterOptions.minLength || song->songDurationSeconds > filterOptions.maxLength) {
+            return false;
+        }
+
         // Skip if not needed
         auto localScoreType = static_cast<FilterTypes::LocalScoreFilter>(filterOptions.localScoreType);
         if (localScoreType != FilterTypes::LocalScoreFilter::All) {
-            bool hasLocalScore = false;
-            if (dataHolder.SongHasScore(songHash)) {
-                hasLocalScore = true;
-            }
+            songHash = song->hash();
+            bool hasLocalScore = scoreSnapshot ? scoreSnapshot->contains(songHash) : dataHolder.SongHasScore(songHash);
             if (hasLocalScore) {
                 if (localScoreType == FilterTypes::LocalScoreFilter::HidePassed) {
                     return false;
@@ -198,15 +198,11 @@ namespace BetterSongSearch::Util {
             return false;
         }
 
-        if (song->songDurationSeconds < filterOptions.minLength) {
-            return false;
-        }
-        if (song->songDurationSeconds > filterOptions.maxLength) {
-            return false;
-        }
-
         // This is the most heavy filter, check it last
         if (static_cast<FilterTypes::DownloadFilter>(filterOptions.downloadType) != FilterTypes::DownloadFilter::All) {
+            if (songHash.empty()) {
+                songHash = song->hash();
+            }
             bool downloaded = SongCore::API::Loading::GetLevelByHash(songHash) != nullptr;
             if (downloaded) {
                 if (static_cast<FilterTypes::DownloadFilter>(filterOptions.downloadType) == FilterTypes::DownloadFilter::HideDownloaded) {
@@ -238,13 +234,10 @@ namespace BetterSongSearch::Util {
         }
 
         // Min and max stars
-        if (currentFilter.maxStars != STAR_FILTER_MAX) {
-            if (getStars(diff) > currentFilter.maxStars) {
-                return false;
-            }
-        }
-        if (currentFilter.minStars > 0) {
-            if (getStars(diff) < currentFilter.minStars) {
+        if (currentFilter.maxStars != STAR_FILTER_MAX || currentFilter.minStars > 0) {
+            float stars = getStars(diff);
+            if ((currentFilter.maxStars != STAR_FILTER_MAX && stars > currentFilter.maxStars) ||
+                (currentFilter.minStars > 0 && stars < currentFilter.minStars)) {
                 return false;
             }
         }
@@ -308,15 +301,14 @@ namespace BetterSongSearch::Util {
         return true;
     }
 
-    using SortFunction = std::function<float(SongDetailsCache::Song const*)>;
     std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap = {
         {FilterTypes::SortMode::Newest,
-         [](SongDetailsCache::Song const* x)  // Newest
+         [](SongDetailsCache::Song const* x) -> float  // Newest
          {
              return (x->uploadTimeUnix);
          }},
         {FilterTypes::SortMode::Oldest,
-         [](SongDetailsCache::Song const* x)  // Oldest
+         [](SongDetailsCache::Song const* x) -> float  // Oldest
          {
              return (std::numeric_limits<uint32_t>::max() - x->uploadTimeUnix);
          }},
@@ -331,24 +323,22 @@ namespace BetterSongSearch::Util {
          [](SongDetailsCache::Song const* x)  // Most Stars
          {
              return x->max([x](auto const& diff) {
-                 bool passesFilter = DifficultyCheck(&diff, x);
-                 if (passesFilter && (getStars(&diff) > 0)) {
-                     return getStars(&diff);
-                 } else {
+                 if (!DifficultyCheck(&diff, x)) {
                      return 0.0f;
                  }
+                 float stars = getStars(&diff);
+                 return stars > 0 ? stars : 0.0f;
              });
          }},
         {FilterTypes::SortMode::Least_Stars,
          [](SongDetailsCache::Song const* x)  // Least Stars
          {
              return 420.0f - x->min([x](auto const& diff) {
-                 bool passesFilter = DifficultyCheck(&diff, x);
-                 if (passesFilter && (getStars(&diff) > 0)) {
-                     return getStars(&diff);
-                 } else {
+                 if (!DifficultyCheck(&diff, x)) {
                      return 420.0f;
                  }
+                 float stars = getStars(&diff);
+                 return stars > 0 ? stars : 420.0f;
              });
          }},
         {FilterTypes::SortMode::Best_rated,
@@ -359,7 +349,8 @@ namespace BetterSongSearch::Util {
         {FilterTypes::SortMode::Worst_rated,
          [](SongDetailsCache::Song const* x)  // Worst rated
          {
-             return 420.0f - (x->rating() != 0 ? x->rating() : 420.0f);
+             float rating = x->rating();
+             return 420.0f - (rating != 0 ? rating : 420.0f);
          }}
     };
 }  // namespace BetterSongSearch::Util

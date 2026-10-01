@@ -26,12 +26,17 @@ namespace BetterSongSearch::Util {
         return ret;
     }
 
-    std::string join(std::vector<std::string> strings, std::string_view const delimeter) {
+    std::string join(std::vector<std::string> const& strings, std::string_view const delimeter) {
         if (strings.empty()) {
             return "";
         }
 
+        std::size_t length = delimeter.size() * (strings.size() - 1);
+        for (auto const& string : strings) {
+            length += string.size();
+        }
         std::string ret;
+        ret.reserve(length);
         for (size_t i = 0; i < strings.size(); i++) {
             ret += strings[i];
             if (i != strings.size() - 1) {
@@ -45,15 +50,27 @@ namespace BetterSongSearch::Util {
      * Removes special characters from a string
      */
     std::string removeSpecialCharacter(std::string_view const s) {
-        auto filteredView = s | std::views::filter([](char c) {
+        auto filteredView = s | std::views::filter([](unsigned char c) {
                                 return std::isalnum(c) || c == ' ';
                             });
         std::string stringy(filteredView.begin(), filteredView.end());
         return stringy;
     }
 
+    std::string NormalizeSearchText(std::string_view text) {
+        std::string result;
+        result.reserve(text.size());
+        for (unsigned char c : text) {
+            auto lower = static_cast<unsigned char>(std::tolower(c));
+            if (std::isalnum(lower) || lower == ' ') {
+                result.push_back(static_cast<char>(lower));
+            }
+        }
+        return result;
+    }
+
     std::string toLower(std::string s) {
-        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
         return s;
     }
 
@@ -66,7 +83,7 @@ namespace BetterSongSearch::Util {
     }
 
     bool IsSpace(char x) {
-        return x == ' ' || !isalnum(x);
+        return x == ' ' || !std::isalnum(static_cast<unsigned char>(x));
     };
 
     std::string httpErrorToString(int code) {

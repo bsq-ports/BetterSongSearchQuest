@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 #include "UnityEngine/MonoBehaviour.hpp"
 #include "UnityEngine/UI/VerticalLayoutGroup.hpp"
 #include "HMUI/TableView.hpp"
@@ -127,11 +129,11 @@ public:
     void RefreshTable(bool fullReload = true);
     BetterSongSearch::Util::RatelimitCoroutine* limitedFullTableReload = nullptr;
     bool TryAddDownload(const SongDetailsCache::Song* song, bool isBatch = false);
-    DownloadHistoryEntry* GetDownloadByHash(std::string hash);
-    bool CheckIsDownloadedAndLoaded(std::string songHash);
-    bool CheckIsDownloadable(std::string songHash);
+    DownloadHistoryEntry* GetDownloadByHash(std::string_view hash);
+    bool CheckIsDownloadedAndLoaded(std::string_view songHash);
+    bool CheckIsDownloadable(std::string_view songHash);
     bool CheckIsDownloadable(DownloadHistoryEntry* entry);
-    bool CheckIsDownloaded(std::string songHash);
+    bool CheckIsDownloaded(std::string_view songHash);
     const int MAX_PARALLEL_DOWNLOADS = 3;
     bool hasUnloadedDownloads = false;
     bool HasPendingDownloads();

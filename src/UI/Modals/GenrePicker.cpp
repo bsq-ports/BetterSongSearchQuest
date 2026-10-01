@@ -64,6 +64,7 @@ void Modals::GenrePicker::RefreshGenreList() {
     dataHolder.filterOptions.RecalculatePreprocessedValues();
 
     std::vector<GenreCellState> tempGenres;
+    tempGenres.reserve(dataHolder.tags.size());
     for (auto& genre : dataHolder.tags) {
         GenreCellStatus state = GenreCellStatus::None;
         auto mask = genre.mask;
@@ -110,7 +111,6 @@ void Modals::GenrePicker::OpenModal() {
         return;
     }
 
-    dataHolder.PreprocessTags();
     RefreshGenreList();
 }
 

@@ -3,8 +3,10 @@
 #include <algorithm>
 #include <cstdint>
 #include <future>
+#include <memory>
 #include <shared_mutex>
 #include <string>
+#include <utility>
 
 #include "assets.hpp"
 #include "BeatSaverRegionManager.hpp"
@@ -381,7 +383,7 @@ void ViewControllers::SongListController::Download() {
 }
 
 void GetByURLAsync(std::string url, std::function<void(bool success, std::vector<uint8_t>)> finished) {
-    std::thread([url, finished] {
+    std::thread([url = std::move(url), finished = std::move(finished)] {
         auto response = WebUtils::GetAsync<WebUtils::DataResponse>(WebUtils::URLOptions(url));
 
         response.wait();
@@ -400,9 +402,7 @@ void GetByURLAsync(std::string url, std::function<void(bool success, std::vector
             return;
         }
 
-        auto data = responseValue.responseData.value();
-
-        finished(true, data);
+        finished(true, std::move(responseValue.responseData.value()));
     }).detach();
 }
 
@@ -562,9 +562,10 @@ void ViewControllers::SongListController::UpdateDetails() {
 
     auto song = currentSong;
     DEBUG("Song index is: {}", song->index);
-    auto beatmap = SongCore::API::Loading::GetLevelByHash(std::string(song->hash()));
+    auto songHash = song->hash();
+    auto beatmap = SongCore::API::Loading::GetLevelByHash(songHash);
     bool loaded = beatmap != nullptr;
-    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(std::string(song->hash()));
+    bool downloaded = fcInstance->DownloadHistoryViewController->CheckIsDownloaded(songHash);
 
     float minNPS = 500000, maxNPS = 0;
     float minNJS = 500000, maxNJS = 0;
@@ -618,26 +619,27 @@ void ViewControllers::SongListController::UpdateDetails() {
         }
         coverLoading->set_enabled(false);
     } else {
-        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
+        std::string newUrl = fmt::format("{}/{}.jpg", BeatSaverRegionManager::coverDownloadUrl, toLower(songHash));
         DEBUG("{}", newUrl.c_str());
         coverLoading->set_enabled(true);
-        GetByURLAsync(newUrl, [this, song](bool success, std::vector<uint8_t> bytes) {
-            BSML::MainThreadScheduler::Schedule([this, bytes, song, success] {
+        GetByURLAsync(std::move(newUrl), [this, songHash](bool success, std::vector<uint8_t> bytes) {
+            // The scheduler copies callbacks, so share the buffer until the managed array is created.
+            auto data = std::make_shared<std::vector<uint8_t>>(std::move(bytes));
+            BSML::MainThreadScheduler::Schedule([this, data, songHash, success] {
                 // Get old sprite if it exists
                 UnityW<UnityEngine::Sprite> oldSprite = this->coverImage->get_sprite();
                 if (success) {
-                    std::vector<uint8_t> data = bytes;
-                    DEBUG("Image size: {}", pretty_bytes(bytes.size()));
+                    DEBUG("Image size: {}", pretty_bytes(data->size()));
                     auto currentSong = GetCurrentSong();
                     // Return if the song has changed somehow
                     if (currentSong == nullptr) {
                         return;
                     }
-                    if (song->hash() != currentSong->hash()) {
+                    if (songHash != currentSong->hash()) {
                         DEBUG("Song hash changed, returning");
                         return;
                     }
-                    auto spriteArray = ArrayW<uint8_t>(data);
+                    auto spriteArray = ArrayW<uint8_t>(*data);
                     UnityW<UnityEngine::Sprite> sprite = BSML::Lite::ArrayToSprite(spriteArray);
                     if (sprite) {
                         DEBUG("Setting sprite");
@@ -681,12 +683,12 @@ void ViewControllers::SongListController::UpdateDetails() {
                 return;
             }
 
-            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(song->hash()));
+            std::string newUrl = fmt::format("{}/{}.mp3", BeatSaverRegionManager::coverDownloadUrl, toLower(songHash));
 
             coro(GetPreview(
                 newUrl,
 
-                std::function<void(UnityW<UnityEngine::AudioClip>)>([this, song](UnityW<UnityEngine::AudioClip> clip) {
+                std::function<void(UnityW<UnityEngine::AudioClip>)>([this, songHash](UnityW<UnityEngine::AudioClip> clip) {
                     if (!clip) {
                         return;
                     }
@@ -697,7 +699,7 @@ void ViewControllers::SongListController::UpdateDetails() {
                         UnityEngine::Object::Destroy(clip);
                         return;
                     }
-                    if (song->hash() != currentSong->hash()) {
+                    if (songHash != currentSong->hash()) {
                         DEBUG("Song hash changed, returning");
                         UnityEngine::Object::Destroy(clip);
                         return;
@@ -895,12 +897,11 @@ void ViewControllers::SongListController::OnSongsLoaded(std::span<SongCore::Song
 
 SongDetailsCache::Song const* ViewControllers::SongListController::GetCurrentSong() {
     std::shared_lock<std::shared_mutex> lock(_currentSongMutex);
-    auto currentSongHash = _currentSongHash;
 
     // Store current song by hash to prevent dangling pointer issues
     SongDetailsCache::Song const* _currentSong = nullptr;
-    if (currentSongHash != "") {
-        auto& song = dataHolder.songDetails->songs.FindByHash(currentSongHash);
+    if (!_currentSongHash.empty()) {
+        auto& song = dataHolder.songDetails->songs.FindByHash(_currentSongHash);
         if (song != SongDetailsCache::Song::none) {
             _currentSong = &song;
         }

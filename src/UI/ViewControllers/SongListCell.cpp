@@ -121,45 +121,33 @@ namespace BetterSongSearch::UI::ViewControllers {
         this->entry = entry;
 
         std::vector<DiffIndex> sortedDiffs;
+        sortedDiffs.reserve(entry->diffCount);
         for (SongDetailsCache::SongDifficulty const& diff : *entry) {
             sortedDiffs.push_back({&diff, DifficultyCheck(&diff, entry), getStars(&diff)});
         };
 
-        // TODO: Actually sort diffs..
-        std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](DiffIndex const& a, DiffIndex const& b) {
-            auto diff1 = (a.passesFilter ? 1 : -3) + (a.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard ? 1 : 0);
-            auto diff2 = (b.passesFilter ? 1 : -3) + (b.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard ? 1 : 0);
+        auto sortMode = dataHolder.currentSort;
+        std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [sortMode](DiffIndex const& a, DiffIndex const& b) {
+            bool ranked1 = a.stars > 0;
+            bool ranked2 = b.stars > 0;
+            if (ranked1 != ranked2) {
+                return ranked1 < ranked2;
+            }
 
-            // Descending
-            return diff1 > diff2;
-        });
+            if (sortMode == FilterTypes::SortMode::Most_Stars && a.stars != b.stars) {
+                return a.stars > b.stars;
+            }
+            if (sortMode == FilterTypes::SortMode::Least_Stars) {
+                float stars1 = ranked1 ? a.stars : -420.0f;
+                float stars2 = ranked2 ? b.stars : -420.0f;
+                if (stars1 != stars2) {
+                    return stars1 < stars2;
+                }
+            }
 
-        // If most stars
-        if (dataHolder.currentSort == FilterTypes::SortMode::Most_Stars) {
-            std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](DiffIndex const& a, DiffIndex const& b) {
-                auto diff1 = -a.stars;
-                auto diff2 = -b.stars;
-
-                // Ascending
-                return diff1 < diff2;
-            });
-        }
-        // If least stars
-        if (dataHolder.currentSort == FilterTypes::SortMode::Least_Stars) {
-            std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](DiffIndex const& a, DiffIndex const& b) {
-                auto diff1 = a.stars > 0 ? a.stars : -420.0f;
-                auto diff2 = b.stars > 0 ? b.stars : -420.0f;
-                // Ascending
-                return diff1 < diff2;
-            });
-        }
-
-        // By ranked
-        std::stable_sort(sortedDiffs.begin(), sortedDiffs.end(), [entry](DiffIndex const& a, DiffIndex const& b) {
-            auto diff1 = a.stars > 0 ? 1 : 0;
-            auto diff2 = b.stars > 0 ? 1 : 0;
-            // Descending
-            return diff1 < diff2;
+            auto priority1 = (a.passesFilter ? 1 : -3) + (a.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard ? 1 : 0);
+            auto priority2 = (b.passesFilter ? 1 : -3) + (b.diff->characteristic == SongDetailsCache::MapCharacteristic::Standard ? 1 : 0);
+            return priority1 > priority2;
         });
 
         int diffsLeft = sortedDiffs.size();
@@ -180,9 +168,9 @@ namespace BetterSongSearch::UI::ViewControllers {
                 auto lbsvc = GetTargetedRankLeaderboardService(sortedDiffs[i].diff);
 
                 if (lbsvc == RankedStates::ScoresaberRanked && sortedDiffs[i].diff->starsSS > 0) {
-                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "D91" : "650"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
+                    stars = fmt::format(" <color=#{}>{:.1f}", (passesFilter ? "D91" : "650"), sortedDiffs[i].stars);
                 } else if (lbsvc == RankedStates::BeatleaderRanked && sortedDiffs[i].diff->starsBL > 0) {
-                    stars = fmt::format(" <color=#{}>{}", (passesFilter ? "B1D" : "606"), fmt::format("{:.{}f}", sortedDiffs[i].stars, 1));
+                    stars = fmt::format(" <color=#{}>{:.1f}", (passesFilter ? "B1D" : "606"), sortedDiffs[i].stars);
                 }
                 auto text = fmt::format("<color=#{}>{}</color>{}", (passesFilter ? "EEE" : "888"), diffname, stars);
                 diffs[i]->SetText(text, false);

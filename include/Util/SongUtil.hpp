@@ -11,6 +11,7 @@
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "FilterOptions.hpp"
 #include "UI/ViewControllers/SongList.hpp"
+#include "Util/SongScores.hpp"
 
 
 namespace BetterSongSearch::Util {
@@ -58,9 +59,9 @@ namespace BetterSongSearch::Util {
 
         #undef PROP_GET
 
-    bool MeetsFilter(const SongDetailsCache::Song* song);
+    bool MeetsFilter(const SongDetailsCache::Song* song, SongScores const* scoreSnapshot = nullptr);
     bool DifficultyCheck(const SongDetailsCache::SongDifficulty* diff, const SongDetailsCache::Song* song);
 
-    using SortFunction = std::function< float (SongDetailsCache::Song const*)>;
+    using SortFunction = float (*)(SongDetailsCache::Song const*);
     extern std::unordered_map<FilterTypes::SortMode, SortFunction> sortFunctionMap;
 }

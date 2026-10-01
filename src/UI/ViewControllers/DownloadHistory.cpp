@@ -122,9 +122,10 @@ HMUI::TableCell* ViewControllers::DownloadHistoryViewController::CellForIdx(HMUI
 
 bool ViewControllers::DownloadHistoryViewController::TryAddDownload(SongDetailsCache::Song const* song, bool isBatch) {
     DownloadHistoryEntry* existingDLHistoryEntry = nullptr;
+    auto songKey = song->key();
 
     for (auto entry : downloadEntryList) {
-        if (entry->key == song->key()) {
+        if (entry->key == songKey) {
             existingDLHistoryEntry = entry;
             break;
         }
@@ -270,7 +271,7 @@ void ViewControllers::DownloadHistoryViewController::ProcessDownloads(bool force
             return;
         }
 
-        auto beatmap = response.responseData.value();
+        auto const& beatmap = response.responseData.value();
         DEBUG("Beatmap name: {}", beatmap.GetName());
 
         auto dlInfo = CustomDownloadBeatmap(BeatSaver::API::BeatmapDownloadInfo(beatmap), progressUpdate);
@@ -351,12 +352,12 @@ void ViewControllers::DownloadHistoryViewController::RefreshTable(bool fullReloa
     });
 }
 
-bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(std::string songHash) {
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadedAndLoaded(std::string_view songHash) {
     auto level = SongCore::API::Loading::GetLevelByHash(songHash);
     return level != nullptr;
 };
 
-DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string hash) {
+DownloadHistoryEntry* ViewControllers::DownloadHistoryViewController::GetDownloadByHash(std::string_view hash) {
     for (auto entry : this->downloadEntryList) {
         if (entry->hash == hash) {
             return entry;
@@ -385,7 +386,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(Downloa
     return false;
 }
 
-bool ViewControllers::DownloadHistoryViewController::CheckIsDownloaded(std::string songHash) {
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloaded(std::string_view songHash) {
     auto entry = this->GetDownloadByHash(songHash);
     bool downloadedInList = false;
 
@@ -395,7 +396,7 @@ bool ViewControllers::DownloadHistoryViewController::CheckIsDownloaded(std::stri
     return (downloadedInList || CheckIsDownloadedAndLoaded(songHash));
 }
 
-bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::string songHash) {
+bool ViewControllers::DownloadHistoryViewController::CheckIsDownloadable(std::string_view songHash) {
     auto dlElem = this->GetDownloadByHash(songHash);
     return this->CheckIsDownloadable(dlElem);
 }

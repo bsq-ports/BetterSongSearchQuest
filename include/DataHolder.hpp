@@ -1,7 +1,10 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
+#include <memory>
 #include <shared_mutex>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -13,11 +16,15 @@
 #include "song-details/shared/Data/Song.hpp"
 #include "song-details/shared/Data/SongDifficulty.hpp"
 #include "song-details/shared/SongDetails.hpp"
+#include "Util/SongScores.hpp"
 
 /*
     Global data holder for the mod to simplify access to global data
 */
 namespace BetterSongSearch {
+    namespace Util {
+        class SearchTextCache;
+    }
 
     struct PreprocessedTag {
         std::string tag;
@@ -71,6 +78,7 @@ namespace BetterSongSearch {
         void UpdatePlayerScores();
         bool SongHasScore(SongDetailsCache::Song const* song);
         bool SongHasScore(std::string_view songhash);
+        std::shared_ptr<Util::SongScores const> GetScoreSnapshot() const;
         void Search();
         /// @brief Called when the song list UI is done updating the song list
         void SongListUIDone();
@@ -80,12 +88,17 @@ namespace BetterSongSearch {
         SongDetailsCache::Song const* GetDisplayedSongByIndex(std::size_t index);
 
        private:
+        std::atomic_uint64_t _songDataGeneration = 0;
+        std::shared_ptr<Util::SearchTextCache const> _searchTextCache;
+        std::shared_ptr<Util::SearchTextCache const> GetSearchTextCache();
+
         std::vector<SongDetailsCache::Song const*> _filteredSongList;  // Filtered songs
         std::vector<SongDetailsCache::Song const*> _searchedSongList;  // Searched songs
         std::vector<SongDetailsCache::Song const*> _displayedSongList;  // Sorted songs (actually displayed)
 
-        std::shared_mutex mutex_songsWithScores;
-        std::unordered_set<std::string> songsWithScores;  // Songs with scores (hashes) for played songs filtering
+        std::shared_ptr<Util::SongScores const> songsWithScores = std::make_shared<Util::SongScores const>();
+        std::shared_ptr<Util::SongScores const> _filteredScoreSnapshot;
+        bool PublishScoreSnapshot(std::shared_ptr<Util::SongScores const> scores);
         std::shared_mutex _displayedSongListMutex;
         void SongDataDone();
         void SongDataError(std::string message);

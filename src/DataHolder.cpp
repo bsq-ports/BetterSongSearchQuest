@@ -1,9 +1,10 @@
 #include "DataHolder.hpp"
 
+#include <array>
 #include <mutex>
-#include <regex>
 #include <shared_mutex>
 #include <thread>
+#include <utility>
 
 #include "beatsaber-hook/shared/threading.hpp"
 #include "bsml/shared/BSML/MainThreadScheduler.hpp"
@@ -16,6 +17,7 @@
 #include "song-details/shared/SongDetails.hpp"
 #include "System/Collections/Generic/Dictionary_2.hpp"
 #include "Util/CurrentTimeMs.hpp"
+#include "Util/SearchTextCache.hpp"
 #include "Util/SongUtil.hpp"
 #include "Util/TextUtil.hpp"
 
@@ -45,6 +47,12 @@ void BetterSongSearch::DataHolder::Init() {
 
 void BetterSongSearch::DataHolder::SongDataDone() {
     DEBUG("SongDataDone");
+    // Needed if songdetails is loaded in the background by other mods.
+    if (this->songDetails == nullptr) {
+        this->songDetails = SongDetailsCache::SongDetails::Init().get();
+    }
+    _songDataGeneration.fetch_add(1, std::memory_order_acq_rel);
+    std::atomic_store_explicit(&_searchTextCache, std::shared_ptr<SearchTextCache const>{}, std::memory_order_release);
     PreprocessTags();
     UpdatePlayerScores();
 
@@ -52,11 +60,6 @@ void BetterSongSearch::DataHolder::SongDataDone() {
     failed = false;
     loaded = true;
     needsRefresh = true;
-
-    // Needed if songdetails is loaded in the background by other mods
-    if (this->songDetails == nullptr) {
-        this->songDetails = SongDetailsCache::SongDetails::Init().get();
-    }
 
     loadingFinished.invoke();
 }
@@ -95,8 +98,8 @@ void BetterSongSearch::DataHolder::PreprocessTags() {
 
     std::vector<PreprocessedTag> tags;
 
-    for (auto tag : songDetails->tags) {
-        std::string tagString = tag.first;
+    for (auto const& tag : songDetails->tags) {
+        auto const& tagString = tag.first;
         uint64_t mask = tag.second;
 
         bool isStyle = mapStyles.end() != std::find(mapStyles.begin(), mapStyles.end(), tagString);
@@ -122,7 +125,7 @@ void BetterSongSearch::DataHolder::PreprocessTags() {
     });
 
     // Replace the tags with the preprocessed ones
-    this->tags = tags;
+    this->tags = std::move(tags);
 }
 
 void BetterSongSearch::DataHolder::UpdatePlayerScores() {
@@ -164,7 +167,8 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
 
             auto statsDataEnumerator = statsData->GetEnumerator();
 
-            std::unordered_set<std::string> songsWithScoresTemp;
+            auto songsWithScoresTemp = std::make_shared<SongScores>();
+            songsWithScoresTemp->reserve(statsData->get_Count());
 
             while (statsDataEnumerator.MoveNext()) {
                 auto statsDataKeys = statsDataEnumerator.get_Current();
@@ -177,7 +181,11 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
                 if (!levelid.starts_with(u"custom_level_")) {
                     continue;
                 };
-                auto sh = std::regex_replace((std::string) x->_levelID, std::basic_regex("custom_level_"), "");
+                auto sh = static_cast<std::string>(x->_levelID);
+                sh.erase(0, 13);
+                if (songsWithScoresTemp->contains(sh)) {
+                    continue;
+                }
 
                 auto& song = dataHolder.songDetails->songs.FindByHash(sh);
 
@@ -197,29 +205,21 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
                     continue;
                 }
 
-                songsWithScoresTemp.insert(sh);
+                songsWithScoresTemp->insert(std::move(sh));
             }
-            INFO("local scores checked. found {}", songsWithScoresTemp.size());
+            INFO("local scores checked. found {}", songsWithScoresTemp->size());
 
-            std::unique_lock<std::shared_mutex> lock(mutex_songsWithScores);
-            bool firstLoad = songsWithScores.empty() && songsWithScoresTemp.size() > 0;
-            bool isChanged = songsWithScores.size() != songsWithScoresTemp.size();
-            bool isEmpty = songsWithScoresTemp.empty() && songsWithScores.empty();
-            songsWithScoresTemp.swap(songsWithScores);
-            lock.unlock();
+            bool isChanged = PublishScoreSnapshot(std::move(songsWithScoresTemp));
 
             updating.store(false);
 
             INFO("Updated player scores in {} ms", CurrentTimeMs() - before);
 
-            if (isChanged && !isEmpty) {
-                BSML::MainThreadScheduler::Schedule([this, firstLoad] {
+            if (isChanged) {
+                BSML::MainThreadScheduler::Schedule([this] {
                     playerDataLoaded.invoke();
-                    // Make another search if we have the filter set and run the first time
-                    {
-                        if (firstLoad && !this->searchInProgress && this->filterOptions.getLocalScoreType() != FilterTypes::LocalScoreFilter::All) {
-                            this->Search();
-                        }
+                    if (!this->searchInProgress && this->filterOptions.getLocalScoreType() != FilterTypes::LocalScoreFilter::All) {
+                        this->Search();
                     }
                 });
             }
@@ -231,11 +231,20 @@ void BetterSongSearch::DataHolder::UpdatePlayerScores() {
 }
 
 bool BetterSongSearch::DataHolder::SongHasScore(std::string_view songhash) {
-    std::shared_lock<std::shared_mutex> lock(mutex_songsWithScores);
-    if (this->songsWithScores.empty()) {
+    return GetScoreSnapshot()->contains(songhash);
+}
+
+std::shared_ptr<BetterSongSearch::Util::SongScores const> BetterSongSearch::DataHolder::GetScoreSnapshot() const {
+    return std::atomic_load_explicit(&songsWithScores, std::memory_order_acquire);
+}
+
+bool BetterSongSearch::DataHolder::PublishScoreSnapshot(std::shared_ptr<SongScores const> scores) {
+    auto previousScores = GetScoreSnapshot();
+    if (*previousScores == *scores) {
         return false;
     }
-    return this->songsWithScores.contains(songhash.data());
+    std::atomic_store_explicit(&songsWithScores, std::move(scores), std::memory_order_release);
+    return true;
 }
 
 bool BetterSongSearch::DataHolder::SongHasScore(SongDetailsCache::Song const* song) {
@@ -251,6 +260,32 @@ struct xd {
     float searchWeight;
     float sortWeight;
 };
+
+std::shared_ptr<BetterSongSearch::Util::SearchTextCache const> BetterSongSearch::DataHolder::GetSearchTextCache() {
+    auto generation = _songDataGeneration.load(std::memory_order_acquire);
+    auto cached = std::atomic_load_explicit(&_searchTextCache, std::memory_order_acquire);
+    if (cached && cached->generation == generation && cached->SongCount() == songDetails->songs.size()) {
+        return cached;
+    }
+
+    auto cache = std::make_shared<SearchTextCache>(generation);
+    std::size_t characters = 0;
+    for (auto const& song : songDetails->songs) {
+        characters += song.songName().size() + song.songAuthorName().size() + song.levelAuthorName().size();
+    }
+    cache->Reserve(songDetails->songs.size(), characters);
+    for (auto const& song : songDetails->songs) {
+        auto songName = NormalizeSearchText(song.songName());
+        auto songAuthorName = NormalizeSearchText(song.songAuthorName());
+        auto levelAuthorName = NormalizeSearchText(song.levelAuthorName());
+        cache->Append(songName, songAuthorName, levelAuthorName);
+    }
+    if (_songDataGeneration.load(std::memory_order_acquire) == generation) {
+        std::atomic_store_explicit(&_searchTextCache, std::shared_ptr<SearchTextCache const>(cache), std::memory_order_release);
+    }
+    INFO("Cached search text for {} songs using {} bytes", cache->SongCount(), cache->MemoryBytes());
+    return cache;
+}
 
 void BetterSongSearch::DataHolder::Search() {
     DEBUG("BetterSongSearch::DataHolder::Search called");
@@ -275,7 +310,9 @@ void BetterSongSearch::DataHolder::Search() {
     // Detect changes
     bool currentSortChanged = this->sort != this->currentSort;
     bool currentSearchChanged = this->search != this->currentSearch;
-    bool currentFilterChanged = !this->filterOptionsCache.IsEqual(this->filterOptions);
+    auto scoreSnapshot = GetScoreSnapshot();
+    bool currentFilterChanged = !this->filterOptionsCache.IsEqual(this->filterOptions) ||
+                               (this->filterOptions.getLocalScoreType() != FilterTypes::LocalScoreFilter::All && scoreSnapshot != _filteredScoreSnapshot);
     bool currentForceReload = this->forceReload;
     DEBUG(
         "Current sort changed: {}, current search changed: {}, filter changed: {}, force reload: {}",
@@ -313,7 +350,7 @@ void BetterSongSearch::DataHolder::Search() {
     this->currentSort = this->sort;
     this->currentSearch = this->search;
 
-    std::thread([this, currentSearch, currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, currentForceReload] {
+    std::thread([this, currentSearch = std::move(currentSearch), scoreSnapshot = std::move(scoreSnapshot), currentSort, currentFilterChanged, currentSortChanged, currentSearchChanged, currentForceReload] {
         long long before = CurrentTimeMs();
 
         // 4 threads are fine
@@ -332,22 +369,16 @@ void BetterSongSearch::DataHolder::Search() {
                     this->_filteredSongList.push_back(&song);
                 }
             } else {
-                // Set up variables for threads
-                std::mutex valuesMutex;
-                std::atomic_int index = 0;
+                this->_filteredSongList.resize(totalSongs);
 
                 // Launch a group of threads
                 for (int i = 0; i < num_threads; ++i) {
-                    t[i] = std::thread([&index, &valuesMutex, totalSongs, this]() {
-                        int i = index++;
-                        while (i < totalSongs) {
-                            SongDetailsCache::Song const& item = this->songDetails->songs.at(i);
-                            bool meetsFilter = MeetsFilter(&item);
-                            if (meetsFilter) {
-                                std::lock_guard<std::mutex> lock(valuesMutex);
-                                _filteredSongList.push_back(&item);
-                            }
-                            i = index++;
+                    int startIndex = totalSongs * i / num_threads;
+                    int endIndex = totalSongs * (i + 1) / num_threads;
+                    t[i] = std::thread([startIndex, endIndex, this, &scoreSnapshot]() {
+                        for (int j = startIndex; j < endIndex; ++j) {
+                            SongDetailsCache::Song const& item = this->songDetails->songs.at(j);
+                            _filteredSongList[j] = MeetsFilter(&item, scoreSnapshot.get()) ? &item : nullptr;
                         }
                     });
                 }
@@ -356,13 +387,16 @@ void BetterSongSearch::DataHolder::Search() {
                 for (int i = 0; i < num_threads; ++i) {
                     t[i].join();
                 }
+                std::erase(this->_filteredSongList, nullptr);
             }
+            _filteredScoreSnapshot = this->filterOptionsCache.getLocalScoreType() == FilterTypes::LocalScoreFilter::All ? nullptr : scoreSnapshot;
         }
 
         INFO("Filtered in {} ms", CurrentTimeMs() - before);
 
         if (currentFilterChanged || currentSearchChanged || currentSortChanged || currentForceReload) {
             if (currentSearch.length() > 0) {
+                auto searchTextCache = GetSearchTextCache();
                 auto words = split(currentSearch, " ");
                 DEBUG("Words length {}", words.size());
                 for (int i = 0; i < words.size(); i++) {
@@ -379,8 +413,9 @@ void BetterSongSearch::DataHolder::Search() {
                     }
                 }
 
-                float maxSearchWeight = 0.0f;
-                float maxSortWeight = 0.0f;
+                std::array<float, num_threads> maxSearchWeights{};
+                std::array<float, num_threads> maxSortWeights{};
+                auto sortFunction = sortFunctionMap.at(currentSort);
 
                 DEBUG("Searching");
                 long long before = CurrentTimeMs();
@@ -388,37 +423,36 @@ void BetterSongSearch::DataHolder::Search() {
                 // Set up variables for threads
                 int totalSongs = this->_filteredSongList.size();
 
-                std::mutex valuesMutex;
-                std::atomic_int index = 0;
-
                 // Prefiltered songs
-                std::vector<xd> prefiltered;
+                std::vector<xd> prefiltered(totalSongs);
 
                 // Launch a group of threads
                 for (int i = 0; i < num_threads; ++i) {
+                    int startIndex = totalSongs * i / num_threads;
+                    int endIndex = totalSongs * (i + 1) / num_threads;
                     t[i] = std::thread(
                         [this,
-                         &index,
-                         &valuesMutex,
-                         totalSongs,
-                         currentSearch,
-                         words,
+                         startIndex,
+                         endIndex,
+                         &currentSearch,
+                         &words,
+                         &searchTextCache,
                          &prefiltered,
-                         &maxSearchWeight,
-                         &maxSortWeight,
-                         currentSort,
-                         possibleSongKey](std::vector<std::string> searchQuery) {
-                            int j = index++;
-                            while (j < totalSongs) {
+                         &maxSearchWeight = maxSearchWeights[i],
+                         &maxSortWeight = maxSortWeights[i],
+                         sortFunction,
+                         possibleSongKey] {
+                            for (int j = startIndex; j < endIndex; ++j) {
                                 auto songe = this->_filteredSongList[j];
 
                                 float resultWeight = 0;
                                 bool matchedAuthor = false;
                                 int prevMatchIndex = -1;
 
-                                std::string songName = removeSpecialCharacter(toLower(songe->songName()));
-                                std::string songAuthorName = removeSpecialCharacter(toLower(songe->songAuthorName()));
-                                std::string levelAuthorName = removeSpecialCharacter(toLower(songe->levelAuthorName()));
+                                auto text = searchTextCache->Get(songe->index);
+                                auto songName = text.songName;
+                                auto songAuthorName = text.songAuthorName;
+                                auto levelAuthorName = text.levelAuthorName;
                                 uint32_t songKey = songe->mapId();
 
                                 // If song key is present and mapid == songkey, pull it to the top
@@ -535,11 +569,8 @@ void BetterSongSearch::DataHolder::Search() {
                                 }
 
                                 if (resultWeight > 0) {
-                                    float sortWeight = sortFunctionMap.at(currentSort)(songe);
-
-                                    std::lock_guard<std::mutex> lock(valuesMutex);
-
-                                    prefiltered.push_back({songe, resultWeight, sortWeight});
+                                    float sortWeight = sortFunction(songe);
+                                    prefiltered[j] = {songe, resultWeight, sortWeight};
 
                                     // #if DEBUG
                                     //                         x.sortWeight = sortWeight;
@@ -553,10 +584,8 @@ void BetterSongSearch::DataHolder::Search() {
                                         maxSortWeight = sortWeight;
                                     }
                                 }
-                                j = index++;
                             }
-                        },
-                        words
+                        }
                     );
                 }
 
@@ -564,6 +593,9 @@ void BetterSongSearch::DataHolder::Search() {
                 for (int i = 0; i < num_threads; ++i) {
                     t[i].join();
                 }
+                std::erase_if(prefiltered, [](xd const& item) { return item.song == nullptr; });
+                float maxSearchWeight = *std::max_element(maxSearchWeights.begin(), maxSearchWeights.end());
+                float maxSortWeight = *std::max_element(maxSortWeights.begin(), maxSortWeights.end());
 
                 INFO("Calculated search indexes in {} ms", CurrentTimeMs() - before);
                 if (prefiltered.size() == 0) {
@@ -593,6 +625,7 @@ void BetterSongSearch::DataHolder::Search() {
                 long long before = CurrentTimeMs();
 
                 std::vector<xd> prefiltered;
+                prefiltered.reserve(this->_filteredSongList.size());
                 auto sortFunction = sortFunctionMap.at(currentSort);
                 for (auto item : _filteredSongList) {
                     auto score = sortFunction(item);
@@ -618,18 +651,18 @@ void BetterSongSearch::DataHolder::Search() {
         DEBUG("Search time: {}ms", CurrentTimeMs() - before);
         DEBUG("Found {} songs", _searchedSongList.size());
 
-        // Copy the list to the displayed one
-        DEBUG("Clearing displayedSongList");
+        // Publish results without copying the vector while holding the UI's mutex.
         std::unique_lock<std::shared_mutex> lock(_displayedSongListMutex);
-        this->_displayedSongList.clear();
-        this->_displayedSongList = this->_searchedSongList;
+        this->_displayedSongList.swap(this->_searchedSongList);
         lock.unlock();
 
-        this->searchInProgress = false;
-
         // Replace the list with the searched one in the main thread to prevent unsafe stuff
-        BSML::MainThreadScheduler::Schedule([this] {
+        BSML::MainThreadScheduler::Schedule([this, scoreSnapshot = std::move(scoreSnapshot)] {
+            this->searchInProgress = false;
             this->searchEnded.invoke();
+            if (this->filterOptions.getLocalScoreType() != FilterTypes::LocalScoreFilter::All && scoreSnapshot != GetScoreSnapshot()) {
+                this->Search();
+            }
         });
     }).detach();
 }

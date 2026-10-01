@@ -30,8 +30,9 @@ void Modals::MultiDL::StartMultiDownload() {
     auto songList = dataHolder.GetDisplayedSongList();  // Get the displayed song list copy
     for (int i = range->get_Item1(); i < songList.size(); i++) {
         auto song = songList[i];
+        auto songHash = song->hash();
         // Skip if can't dl or already downloading
-        if (dlController->CheckIsDownloaded(std::string(song->hash())) || !dlController->CheckIsDownloadable(std::string(song->hash()))) {
+        if (dlController->CheckIsDownloaded(songHash) || !dlController->CheckIsDownloadable(songHash)) {
             continue;
         }
 
