@@ -113,8 +113,7 @@ void ViewControllers::SongListController::PostParse() {
     }
 
     // Get the default cover image
-    auto defaultImageData = static_cast<std::span<uint8_t>>(Assets::CustomLevelsCover_png);
-    defaultImage = BSML::Utilities::LoadSpriteRaw(ArrayW<uint8_t>(i2c::view<uint8_t>(defaultImageData)));
+    defaultImage = BSML::Utilities::LoadSpriteRaw(ArrayW<uint8_t>(Assets::CustomLevelsCover_png));
     // Set default cover image
     coverImage->set_sprite(defaultImage);
 

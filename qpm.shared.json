@@ -83,13 +83,6 @@
         "additionalData": {}
       },
       {
-        "id": "kaleb",
-        "versionRange": "^0.1.9",
-        "additionalData": {
-          "private": true
-        }
-      },
-      {
         "id": "paper2_scotland2",
         "versionRange": "^4.8.0",
         "additionalData": {}
@@ -265,23 +258,6 @@
         }
       },
       "version": "1.2.1"
-    },
-    {
-      "dependency": {
-        "id": "kaleb",
-        "versionRange": "=0.1.9",
-        "additionalData": {
-          "headersOnly": true,
-          "branchName": "version/v0_1_9",
-          "compileOptions": {
-            "cppFlags": [
-              "-DKALEB_VERSION=\"0.1.9\""
-            ]
-          },
-          "cmake": false
-        }
-      },
-      "version": "0.1.9"
     },
     {
       "dependency": {
