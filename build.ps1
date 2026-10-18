@@ -23,13 +23,12 @@ else {
     echo "Building debug"
 }
 
-$NDKPath = Get-Content $PSScriptRoot/ndkpath.txt
-
 if (($clean.IsPresent) -or (-not (Test-Path -Path "build"))) {
     $out = new-item -Path build -ItemType Directory
 }
 
 & cmake -G "Ninja" -DCMAKE_BUILD_TYPE="$buildType" . -B build
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 & cmake --build ./build
 $ExitCode = $LastExitCode
 exit $ExitCode

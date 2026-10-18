@@ -9,6 +9,7 @@
 #include "DataHolder.hpp"
 #include "GlobalNamespace/BeatmapKey.hpp"
 #include "GlobalNamespace/BeatmapLevelPack.hpp"
+#include "GlobalNamespace/GameMode.hpp"
 #include "GlobalNamespace/GameplaySetupViewController.hpp"
 #include "GlobalNamespace/LevelFilteringNavigationController.hpp"
 #include "GlobalNamespace/MainFlowCoordinator.hpp"
@@ -183,8 +184,8 @@ MAKE_HOOK_MATCH(
     &GlobalNamespace::MultiplayerLevelScenesTransitionSetupData::Init,
     void,
     GlobalNamespace::MultiplayerLevelScenesTransitionSetupData* self,
-    StringW gameMode,
-    by_ref<::GlobalNamespace::BeatmapKey> beatmapKey,
+    GlobalNamespace::GameMode gameMode,
+    by_ref<::GlobalNamespace::BeatmapKey const> beatmapKey,
     ::GlobalNamespace::BeatmapLevel* beatmapLevel,
     ::GlobalNamespace::IBeatmapLevelData* beatmapLevelData,
     ::GlobalNamespace::ColorScheme* overrideColorScheme,
