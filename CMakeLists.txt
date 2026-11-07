@@ -9,7 +9,7 @@ include(cmake/assets.cmake)
 # add_compile_options(-DHotReload)
 
 # c++ standard
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 26)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # define that stores the actual source directory
