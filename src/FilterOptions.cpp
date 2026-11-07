@@ -1,5 +1,7 @@
 #include "FilterOptions.hpp"
 
+#include <filesystem>
+
 #include "DataHolder.hpp"
 #include "logging.hpp"
 #include "main.hpp"
@@ -150,7 +152,8 @@ std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::
     std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
-    if (!direxists(presetsDir)) {
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(presetsDir, directoryError)) {
         mkpath(presetsDir);
     }
 
@@ -176,7 +179,8 @@ bool BetterSongSearch::FilterProfile::SaveToPreset(std::string presetName) const
     std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
-    if (!direxists(presetsDir)) {
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(presetsDir, directoryError)) {
         mkpath(presetsDir);
     }
 
@@ -199,7 +203,8 @@ std::vector<std::string> BetterSongSearch::FilterProfile::GetPresetList() {
     std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
-    if (!direxists(presetsDir)) {
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(presetsDir, directoryError)) {
         mkpath(presetsDir);
     }
 
@@ -296,7 +301,8 @@ bool BetterSongSearch::FilterProfile::DeletePreset(std::string presetName) {
     std::string presetsDir = GetPresetsDir();
 
     // Ensure the directory exists
-    if (!direxists(presetsDir)) {
+    std::error_code directoryError;
+    if (!std::filesystem::is_directory(presetsDir, directoryError)) {
         mkpath(presetsDir);
     }
 
