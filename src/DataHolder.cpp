@@ -31,8 +31,7 @@ void BetterSongSearch::DataHolder::Init() {
     SongDetailsCache::SongDetails::dataAvailableOrUpdated += {&DataHolder::SongDataDone, this};
     SongDetailsCache::SongDetails::dataLoadFailed += {&DataHolder::SongDataError, this};
 
-    // Load configs
-    dataHolder.filterOptions.LoadFromConfig();
+    // Config selections are loaded and validated before this worker starts.
     dataHolder.filterOptionsCache.CopyFrom(dataHolder.filterOptions);
 
     // set preferred leaderboard

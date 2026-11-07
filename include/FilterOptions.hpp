@@ -101,6 +101,9 @@ namespace BetterSongSearch {
         // @brief Loads the profile from the mod config
         void LoadFromConfig();
 
+        // @brief Resets invalid dropdown selections to their defaults; returns whether anything changed.
+        bool ValidateSelections();
+
         // @brief Saves the profile to the mod config
         void SaveToConfig();
 

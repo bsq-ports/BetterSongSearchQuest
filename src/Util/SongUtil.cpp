@@ -280,8 +280,13 @@ namespace BetterSongSearch::Util {
                         return false;
                     }
                     break;
+                case FilterTypes::Requirement::Vivify:
+                    if (!hasFlags(diff->mods, MapMods::Vivify)) {
+                        return false;
+                    }
+                    break;
                 case FilterTypes::Requirement::None:
-                    if (!((diff->mods & (MapMods::NE | MapMods::ME)) == MapMods::None)) {
+                    if (diff->mods != MapMods::None) {
                         return false;
                     }
                     break;

@@ -163,10 +163,8 @@ void ViewControllers::SongListController::DidActivate(bool firstActivation, bool
 
         // Get sort setting from config
         auto sortMode = getPluginConfig().SortMode.GetValue();
-        if (sortMode < get_sortModeSelections()->get_Count()) {
-            selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
-            dataHolder.sort = (FilterTypes::SortMode) sortMode;
-        }
+        selectedSortMode = get_sortModeSelections()->get_Item(sortMode);
+        dataHolder.sort = (FilterTypes::SortMode) sortMode;
 
         BSML::parse_and_construct(Assets::SongList_bsml, this->get_transform(), this);
 

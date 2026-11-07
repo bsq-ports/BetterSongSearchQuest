@@ -35,7 +35,8 @@ namespace FilterTypes {
         Lawless,
     };
 
-    enum class Requirement { Any, NoodleExtensions, MappingExtensions, Chroma, Cinema, None };
+    // Persisted in configs and presets: keep existing IDs stable and append new options.
+    enum class Requirement { Any = 0, NoodleExtensions = 1, MappingExtensions = 2, Chroma = 3, Cinema = 4, None = 5, Vivify = 6 };
 
     enum class SortMode { Newest, Oldest, Latest_Ranked, Most_Stars, Least_Stars, Best_rated, Worst_rated };
 

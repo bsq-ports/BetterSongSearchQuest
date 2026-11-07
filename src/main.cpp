@@ -30,7 +30,6 @@
 #include "UnityEngine/GameObject.hpp"
 #include "UnityEngine/Resources.hpp"
 #include "Util/TextUtil.hpp"
-#include "bsml/shared/Helpers/delegates.hpp"
 
 #define coro(coroutine) BSML::SharedCoroutineStarter::get_instance()->StartCoroutine(custom_types::Helpers::CoroutineHelper::New(coroutine))
 
@@ -58,13 +57,11 @@ MAKE_HOOK_MATCH(
     System::Action* finishedCallback,
     bool immediately
 ) {
-    if (
-        !fromBSS ||
-        !getPluginConfig().ReturnToBSS.GetValue() ||
-        !(flowCoordinator->get_gameObject()->get_name() == "SoloFreePlayFlowCoordinator")
-    ) return ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
+    if (!fromBSS || !getPluginConfig().ReturnToBSS.GetValue() || !(flowCoordinator->get_gameObject()->get_name() == "SoloFreePlayFlowCoordinator")) {
+        return ReturnToBSS(self, flowCoordinator, animationDirection, finishedCallback, immediately);
+    }
     auto currentFlowCoordinator = BSML::Helpers::GetMainFlowCoordinator()->YoungestChildFlowCoordinatorOrSelf();
-    
+
     auto betterSongSearchFlowCoordinator = manager.flow;
     if (betterSongSearchFlowCoordinator && currentFlowCoordinator && currentFlowCoordinator->_parentFlowCoordinator) {
         // Replace current with BSS
@@ -242,6 +239,8 @@ BSS_EXPORT_FUNC void late_load() {
     custom_types::Register::AutoRegister();
 
     getPluginConfig().Init(modInfo);
+    // Load and validate filter options from config into the data holder
+    dataHolder.filterOptions.LoadFromConfig();
 
     std::thread([] {
         // Init the data holder (sub to events)

@@ -1,10 +1,12 @@
 #include "FilterOptions.hpp"
 
+#include <algorithm>
 #include <filesystem>
 
 #include "DataHolder.hpp"
 #include "logging.hpp"
 #include "main.hpp"
+#include "reflectcpp/include/rfl/enums.hpp"
 #include "Util/TextUtil.hpp"
 
 using namespace rapidjson;
@@ -47,7 +49,37 @@ bool BetterSongSearch::FilterProfile::IsDefault() {
     // clang-format on
 }
 
+template <typename Enum>
+static bool ValidateSelection(int& value, auto const& config) {
+    constexpr auto options = rfl::get_underlying_enumerator_array<Enum>();
+    if (std::ranges::any_of(options, [value](auto const& option) { return option.second == value; })) {
+        return false;
+    }
+
+    auto defaultValue = config.GetDefaultValue();
+    WARNING("Invalid {} value {}; resetting to {}", config.GetName(), value, defaultValue);
+    value = defaultValue;
+    return true;
+}
+
+bool BetterSongSearch::FilterProfile::ValidateSelections() {
+    bool changed = false;
+    auto const& config = getPluginConfig();
+    changed |= ValidateSelection<FilterTypes::DownloadFilter>(downloadType, config.DownloadType);
+    changed |= ValidateSelection<FilterTypes::LocalScoreFilter>(localScoreType, config.LocalScoreType);
+    changed |= ValidateSelection<FilterTypes::RankedFilter>(rankedType, config.RankedType);
+    changed |= ValidateSelection<FilterTypes::DifficultyFilter>(difficultyFilter, config.DifficultyType);
+    changed |= ValidateSelection<FilterTypes::CharFilter>(charFilter, config.CharacteristicType);
+    changed |= ValidateSelection<FilterTypes::Requirement>(modRequirement, config.RequirementType);
+    return changed;
+}
+
 void BetterSongSearch::FilterProfile::LoadFromConfig() {
+    auto sortMode = getPluginConfig().SortMode.GetValue();
+    if (ValidateSelection<FilterTypes::SortMode>(sortMode, getPluginConfig().SortMode)) {
+        getPluginConfig().SortMode.SetValue(sortMode);
+    }
+
     downloadType = getPluginConfig().DownloadType.GetValue();
     localScoreType = getPluginConfig().LocalScoreType.GetValue();
     minLength = getPluginConfig().MinLength.GetValue();
@@ -85,6 +117,10 @@ void BetterSongSearch::FilterProfile::LoadFromConfig() {
         uploaders = split(toLower(uploadersString), " ");
     } else {
         uploaders.clear();
+    }
+
+    if (ValidateSelections()) {
+        SaveToConfig();
     }
 }
 
@@ -166,6 +202,7 @@ std::optional<BetterSongSearch::FilterProfile> BetterSongSearch::FilterProfile::
     try {
         DEBUG("Loading preset: {}", presetName);
         auto preset = ReadFromFile<FilterProfile>(path);
+        preset.ValidateSelections();
         preset.PrintToDebug();
         DEBUG("Loaded preset: {}", presetName);
         return preset;
