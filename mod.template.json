@@ -15,5 +15,9 @@
   "libraryFiles": [],
   "fileCopies": [],
   "copyExtensions": [],
-  "coverImage": "cover.png"
+  "coverImage": "cover.png",
+  "ai": "assisted",
+  "funding": [
+    "https://ko-fi.com/frozenalex"
+  ]
 }
