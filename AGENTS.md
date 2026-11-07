@@ -11,14 +11,16 @@ If these notes conflict with the actual code, trust the code.
 - Current entry points are:
   - `BSS_EXPORT_FUNC void setup(CModInfo& info)`
   - `BSS_EXPORT_FUNC void late_load()`
-- `setup` assigns `modInfo`, initializes `getPluginConfig()`, logs setup completion, and starts `dataHolder.Init()` on a detached thread.
-- `late_load` initializes IL2CPP, BSML, custom types, installs hooks, and calls `manager.Init()`.
+- `setup` assigns `modInfo` and logs setup completion.
+- `late_load` initializes BSML and custom types, loads and validates config before starting `dataHolder.Init()` on a detached thread, installs hooks, and calls `manager.Init()`.
 
 ## Dependencies And Target
 
 - QPM metadata is in `qpm.json` and `qpm.shared.json`.
 - The mod ID is `BetterSongSearch`; do not change it.
 - Major dependencies include `beatsaber-hook`, `bsml`, `custom-types`, `config-utils`, `paper2_scotland2`, `songcore`, `song-details`, `web-utils`, and `beatsaverplusplus`.
+- Preserve caret dependency ranges (`^x.y.z`) in `qpm.json` and generated QMOD dependency requirements. Do not replace them with exact pins (`=x.y.z`) just to match the local cache or a build's resolved versions.
+- A concrete resolved version in `qpm.shared.json` is different from a dependency range; let QPM manage resolved metadata. Do not turn resolved versions into ranges or manually rewrite generated metadata to pin dependencies.
 
 ## Logging
 
@@ -38,7 +40,7 @@ If these notes conflict with the actual code, trust the code.
   - call the original method when behavior should continue
   - avoid per-frame allocations and expensive searches
   - avoid doing network, filesystem, or long-running work inside hooks
-- For Unity objects, prefer `UnityW<T>` or `SafePtrUnity<T>` where the surrounding code does.
+- Use Unity-aware alive checks before accessing Unity objects; `UnityW<T>` alone does not provide GC ownership (see below).
 
 ## Threading And Unity Safety
 
@@ -46,6 +48,17 @@ If these notes conflict with the actual code, trust the code.
 - Use `BSML::MainThreadScheduler::Schedule(...)` when returning from background work to UI/game objects.
 - Coroutines are commonly started with `BSML::SharedCoroutineStarter` and `custom_types::Helpers::CoroutineHelper::New(...)`.
 - `DataHolder` owns a lot of search/cache behavior; inspect `include/DataHolder.hpp` and `src/DataHolder.cpp` before changing search flow or song data lifetime.
+
+## Managed GC And Lifetime Safety
+
+These are the basic ownership rules from the workspace `../AGENTS.md` GC investigations:
+
+- Raw managed pointers, `UnityW`, native globals/containers, lambda captures and native coroutine frames do not root managed objects. A non-null pointer is not proof that the GC has kept its target alive.
+- Keep explicit strong roots, such as `safe_ptr<T*>` from beatsaber-hook, for managed objects retained by native state. Root objects before handing them to a worker, scheduling a callback, or suspending a coroutine, and retain the root until the final use. This includes managed tasks, cancellation tokens, results and UI references.
+- GC survival and Unity object lifetime are separate: a rooted managed wrapper can outlive its destroyed native Unity object. Check Unity liveness again when a scheduled callback executes; rooting does not make Unity/HMUI access safe on a worker thread.
+- Give retained roots an explicit owner and teardown path. On disable/destruction as appropriate, cancel outstanding work, invalidate stale callbacks, unsubscribe events, clear roots and release native state. Do not let a queued callback dereference a destroyed controller or a captured native `this` after its owner is gone.
+- Never call virtual `Finalize()` from a `DECLARE_DTOR` body: it can dispatch back into the same destructor and recurse. Avoid custom finalizers when there is no native resource to release, and do not perform Unity API work on the GC finalizer thread.
+- Build success does not validate GC behavior. For lifetime changes, verify repeated view open/close, scene transitions and delayed callbacks on device; distinguish that evidence from source/build checks.
 
 ## UI And Custom Types
 
@@ -85,6 +98,7 @@ If these notes conflict with the actual code, trust the code.
 - Build qmod:
   - `qpm s qmod`
   - or `pwsh ./createqmod.ps1 BetterSongSearch`
+  - For a release QMOD: `pwsh ./createqmod.ps1 BetterSongSearch -release`
 
 ## Packaging
 
@@ -93,6 +107,10 @@ If these notes conflict with the actual code, trust the code.
 - The built mod library is `libBetterSongSearch.so`.
 - The `.so` is packaged as a late mod file.
 - Keep metadata valid and minimal. Do not change the established mod ID.
+- Run packaging commands from this repository's root. `createqmod.ps1` builds first, runs `qpm qmod manifest`, validates the generated `mod.json` against the QMOD schema, and archives the manifest, cover and listed binaries. `qpm qmod manifest` alone does not build or package a QMOD.
+- Use `mod.template.json` and QPM metadata as the sources; do not hand-edit generated `mod.json` or replace its `^` dependency requirements with `=` pins.
+- After packaging, check the archive opens, contains every manifest-listed file and no obsolete payload, and that its `libBetterSongSearch.so` matches `build/libBetterSongSearch.so` byte-for-byte (or by SHA-256). Check the intended game/package version and late-mod entry. The script updates an existing archive, so stale entries must not be assumed absent.
+- Report build/package validation separately from device testing. Creating a QMOD does not install it or prove its runtime behavior.
 
 ## Code Style
 
